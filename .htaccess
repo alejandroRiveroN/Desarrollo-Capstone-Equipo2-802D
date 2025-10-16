@@ -1,0 +1,9 @@
+RewriteEngine On
+RewriteBase /sistema_soporte/
+
+# 1. Si la petición NO es para un archivo o directorio existente en /public
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# 2. Redirige la petición a public/index.php
+RewriteRule ^(.*)$ public/index.php/$1 [L,QSA]
