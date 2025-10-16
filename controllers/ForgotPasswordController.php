@@ -1,4 +1,5 @@
 <?php
+// Se crea el controlador para la contraseña olvidada
 namespace App\Controllers;
 
 use PHPMailer\PHPMailer\PHPMailer;

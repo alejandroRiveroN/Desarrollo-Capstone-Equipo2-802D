@@ -39,7 +39,7 @@ class PasswordController {
             $mensaje = 'La nueva contraseña y su confirmación no coinciden.';
             $mensaje_tipo = 'danger';
 
-        // Validar fuerza de la contraseña
+        // Se valida fuerza de la contraseña
         } elseif (
             !preg_match('/[a-z]/', $nueva_password) ||
             !preg_match('/[A-Z]/', $nueva_password) ||

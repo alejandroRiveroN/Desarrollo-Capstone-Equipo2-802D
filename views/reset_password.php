@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Se agrega la view de contraseña olvidada -->
 <html lang="es">
 <head>
     <meta charset="UTF-8">

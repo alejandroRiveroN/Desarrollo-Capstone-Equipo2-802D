@@ -6,6 +6,7 @@
     <title>MCE - Iniciar Sesión</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        /* --- Inicio de cambio de estilo para el login --- */
         body {
             background-color: #f2f4f7;
             display: flex;
@@ -108,7 +109,7 @@
                     <button type="submit" class="btn-acceder">Acceder</button>
                 </div>
             </form>
-
+            <!-- Se agrega la ruta de contraseña olvidada -->
             <div class="forgot-password">
                 <a href="/contraseña_olvidada">¿Olvidaste tu contraseña?</a>
             </div>
