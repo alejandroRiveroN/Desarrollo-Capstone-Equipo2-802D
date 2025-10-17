@@ -1,5 +1,4 @@
 <?php
-// Se crea el controlador para la contraseña olvidada
 namespace App\Controllers;
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -55,9 +54,9 @@ class ForgotPasswordController {
             $resetLink = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/reset_contraseña?token=' . $token;
 
             $mail->isHTML(true);
-            $mail->Subject = 'Recuperación de contraseña';
+            $mail->Subject = 'Recuperacion de contraseña';
             $mail->Body = "
-                <p>Hola, has solicitado restablecer tu contraseña.</p>
+                <p>Hola, has solicitado restablecer tu contraseña para Soporte MCE.</p>
                 <p><a href='$resetLink'>Haz clic aquí para restablecer tu contraseña</a></p>
             ";
 

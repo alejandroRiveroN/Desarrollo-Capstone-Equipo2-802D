@@ -103,22 +103,22 @@ Flight::route('POST /tickets', ['App\Controllers\TicketController', 'store']);
 // --- RUTAS PARA VER Y GESTIONAR UN TICKET ESPECÍFICO (Estandarizado a /tickets/ver/@id) ---
 
 // Muestra la página de un ticket
-Flight::route('GET /tickets/ver/@id', ['App\Controllers\TicketController', 'show']);
+Flight::route('GET /tickets/ver/@id_ticket:[0-9]+', ['App\Controllers\TicketController', 'show']);
 
 // Procesa la adición de un comentario
-Flight::route('POST /tickets/ver/@id/comentario', ['App\Controllers\TicketController', 'addComment']);
+Flight::route('POST /tickets/ver/@id_ticket/comentario', ['App\Controllers\TicketController', 'addComment']);
 
 // Procesa el cambio de estado
-Flight::route('POST /tickets/ver/@id/estado', ['App\Controllers\TicketController', 'updateStatus']);
+Flight::route('POST /tickets/ver/@id_ticket/estado', ['App\Controllers\TicketController', 'updateStatus']);
 
 // Procesa la asignación de agente
-Flight::route('POST /tickets/ver/@id/asignar', ['App\Controllers\TicketController', 'assignAgent']);
+Flight::route('POST /tickets/ver/@id_ticket/asignar', ['App\Controllers\TicketController', 'assignAgent']);
 
 // Procesa la actualización de costos
-Flight::route('POST /tickets/ver/@id/costo', ['App\Controllers\TicketController', 'updateCost']);
+Flight::route('POST /tickets/ver/@id_ticket/costo', ['App\Controllers\TicketController', 'updateCost']);
 
 // Procesa la anulación de un ticket
-Flight::route('POST /tickets/ver/@id/anular', ['App\Controllers\TicketController', 'cancel']);
+Flight::route('POST /tickets/ver/@id_ticket/anular', ['App\Controllers\TicketController', 'cancel']);
 
 
 // Imprimir Tickets

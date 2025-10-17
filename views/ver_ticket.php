@@ -1,4 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Detalle del Ticket - MCE</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* ==== ESTILO GENERAL ==== */
+body {
+  background-color: #f2f4f7;
+  font-family: "Segoe UI", sans-serif;
+  padding: 2rem;
+}
+
+/* ==== CABECERA ==== */
+.page-header {
+  background: #133C55;
+  color: #fff;
+  padding: 1.2rem 1.8rem;
+  border-radius: 10px;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.page-header h3 {
+  margin: 0;
+  font-weight: 600;
+}
+.page-header a.btn {
+  background-color: #00b894;
+  border: none;
+  font-weight: 600;
+}
+.page-header a.btn:hover {
+  background-color: #019875;
+}
+
+/* ==== TARJETAS ==== */
+.card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+.card-header {
+  background-color: #133C55;
+  color: white;
+  font-weight: 600;
+  border-radius: 12px 12px 0 0 !important;
+}
+.card-body {
+  background-color: #fff;
+}
+
+/* ==== FORMULARIOS ==== */
+.form-label {
+  font-weight: 500;
+}
+.form-control, .form-select {
+  border-radius: 8px;
+}
+.btn {
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* ==== ALERTAS ==== */
+.alert {
+  border-radius: 8px;
+}
+
+/* ==== COMENTARIOS ==== */
+.comment-box {
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #f9fafb;
+  border: 1px solid #e3e6ea;
+}
+.comment-box.bg-light {
+  background-color: #eef3f7 !important;
+}
+.comment-box strong {
+  color: #133C55;
+}
+.comment-box small {
+  color: #6c757d;
+}
+
+/* ==== BOTONES PERSONALIZADOS ==== */
+.btn-info {
+  background-color: #2d9cdb;
+  border: none;
+}
+.btn-info:hover {
+  background-color: #227bb0;
+}
+.btn-danger {
+  background-color: #e74c3c;
+  border: none;
+}
+.btn-danger:hover {
+  background-color: #c0392b;
+}
+.btn-success {
+  background-color: #00b894;
+  border: none;
+}
+.btn-success:hover {
+  background-color: #019875;
+}
+.btn-primary {
+  background-color: #133C55;
+  border: none;
+}
+.btn-primary:hover {
+  background-color: #0b2a3e;
+}
+
+/* ==== MODAL ==== */
+.modal-content {
+  border-radius: 10px;
+}
+
+/* ==== ADAPTATIVO ==== */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
+</style>
 <?php
+
 $status_classes = ['Abierto' => 'primary', 'En Progreso' => 'info', 'En Espera' => 'warning', 'Resuelto' => 'success', 'Cerrado' => 'secondary', 'Anulado' => 'dark'];
 $priority_classes = ['Baja' => 'success', 'Media' => 'warning', 'Alta' => 'danger', 'Urgente' => 'danger fw-bold'];
 $estados_disponibles = ['Abierto', 'En Progreso', 'En Espera', 'Resuelto'];
@@ -80,11 +216,27 @@ if (isset($_SESSION['mensaje_exito'])) {
             <div class="card-header fw-bold"><i class="bi bi-currency-dollar"></i> Gestión de Costos</div>
             <div class="card-body">
                 <?php if ($costos_bloqueados): ?>
-                    <div class="alert alert-success" role="alert"><i class="bi bi-check-circle-fill"></i> Este ticket ya ha sido pagado. No se permiten más cambios.</div>
+                    <div class="alert alert-success" role="alert">
+                        <i class="bi bi-check-circle-fill"></i> Este ticket ya ha sido pagado. No se permiten más cambios.
+                    </div>
                 <?php endif; ?>
+
                 <form action="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>/costo" method="POST">
-                    <div class="mb-3"><label for="costo" class="form-label">Costo</label><input type="text" class="form-control" id="costo" name="costo" value="<?php echo htmlspecialchars($ticket['costo'] ?? ''); ?>" <?php if ($costos_bloqueados) echo 'disabled'; ?>></div>
-                    <div class="mb-3"><label for="moneda" class="form-label">Moneda</label><input type="text" class="form-control" id="moneda" name="moneda" value="<?php echo htmlspecialchars($ticket['moneda'] ?? 'PEN'); ?>" <?php if ($costos_bloqueados) echo 'disabled'; ?>></div>
+                    <!-- Costo -->
+                    <div class="mb-3">
+                        <label for="costo" class="form-label">Costo</label>
+                        <input type="text" class="form-control" id="costo" name="costo"
+                            value="<?php echo isset($ticket['costo']) ? number_format($ticket['costo'], 0, ',', '.') : ''; ?>"
+                            <?php if ($costos_bloqueados) echo 'disabled'; ?>>
+                    </div>
+
+                    <!-- Moneda -->
+                    <div class="mb-3">
+                        <label for="moneda" class="form-label">Moneda</label>
+                        <input type="text" class="form-control" id="moneda" name="moneda" value="CLP" readonly>
+                    </div>
+
+                    <!-- Estado de Facturación -->
                     <div class="mb-3">
                         <label for="estado_facturacion" class="form-label">Estado de Facturación</label>
                         <select class="form-select" id="estado_facturacion" name="estado_facturacion" <?php if ($costos_bloqueados) echo 'disabled'; ?>>
@@ -94,11 +246,42 @@ if (isset($_SESSION['mensaje_exito'])) {
                             <option value="Anulado" <?php echo ($ticket['estado_facturacion'] == 'Anulado') ? 'selected' : ''; ?>>Anulado</option>
                         </select>
                     </div>
-                    <div class="mb-3" id="medio_pago_container"><label for="medio_pago" class="form-label">Medio de Pago</label><select class="form-select" id="medio_pago" name="medio_pago" <?php if ($costos_bloqueados) echo 'disabled'; ?>><option value="">Seleccione...</option><option value="Efectivo" <?php echo ($ticket['medio_pago'] == 'Efectivo') ? 'selected' : ''; ?>>Efectivo</option><option value="Tarjeta de Crédito/Débito" <?php echo ($ticket['medio_pago'] == 'Tarjeta de Crédito/Débito') ? 'selected' : ''; ?>>Tarjeta de Crédito/Débito</option><option value="Transferencia Bancaria" <?php echo ($ticket['medio_pago'] == 'Transferencia Bancaria') ? 'selected' : ''; ?>>Transferencia Bancaria</option><option value="Yape/Plin" <?php echo ($ticket['medio_pago'] == 'Yape/Plin') ? 'selected' : ''; ?>>Yape/Plin</option></select></div>
-                    <div class="d-grid"><button type="submit" name="guardar_costo" class="btn btn-success" <?php if ($costos_bloqueados) echo 'disabled'; ?>><i class="bi bi-save"></i> Guardar Costo</button></div>
+
+                    <!-- Medio de Pago -->
+                    <div class="mb-3" id="medio_pago_container">
+                        <label for="medio_pago" class="form-label">Medio de Pago</label>
+                        <select class="form-select" id="medio_pago" name="medio_pago" <?php if ($costos_bloqueados) echo 'disabled'; ?>>
+                            <option value="">Seleccione...</option>
+                            <option value="Efectivo" <?php echo ($ticket['medio_pago'] == 'Efectivo') ? 'selected' : ''; ?>>Efectivo</option>
+                            <option value="Tarjeta de Crédito/Débito" <?php echo ($ticket['medio_pago'] == 'Tarjeta de Crédito/Débito') ? 'selected' : ''; ?>>Tarjeta de Crédito/Débito</option>
+                            <option value="Transferencia Bancaria" <?php echo ($ticket['medio_pago'] == 'Transferencia Bancaria') ? 'selected' : ''; ?>>Transferencia Bancaria</option>
+                            <option value="Yape/Plin" <?php echo ($ticket['medio_pago'] == 'Yape/Plin') ? 'selected' : ''; ?>>Yape/Plin</option>
+                        </select>
+                    </div>
+
+                    <!-- Botón Guardar -->
+                    <div class="d-grid">
+                        <button type="submit" name="guardar_costo" class="btn btn-success" <?php if ($costos_bloqueados) echo 'disabled'; ?>>
+                            <i class="bi bi-save"></i> Guardar Costo
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const estadoFacturacionSelect = document.getElementById('estado_facturacion');
+            if (estadoFacturacionSelect) {
+                const medioPagoContainer = document.getElementById('medio_pago_container');
+                function toggleMedioPago() {
+                    medioPagoContainer.style.display = (estadoFacturacionSelect.value === 'Pagado') ? 'block' : 'none';
+                }
+                toggleMedioPago();
+                estadoFacturacionSelect.addEventListener('change', toggleMedioPago);
+            }
+        });
+        </script>
         <?php endif; ?>
     </div>
 
@@ -183,3 +366,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+

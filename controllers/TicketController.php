@@ -198,27 +198,45 @@ class TicketController extends BaseController {
 
         try {
             $pdo->beginTransaction();
-            $stmt_agente = $pdo->prepare("SELECT id_agente, u.nombre_completo FROM Agentes a JOIN Usuarios u ON a.id_usuario = u.id_usuario WHERE a.id_usuario = ?");
-            $stmt_agente->execute([$_SESSION['id_usuario']]);
-            $agente_actual = $stmt_agente->fetch();
-            $id_agente_autor = $agente_actual ? $agente_actual['id_agente'] : null;
-            $nombre_agente_autor = $agente_actual ? $agente_actual['nombre_completo'] : ($_SESSION['nombre_completo'] ?? 'Sistema');
 
-            $pdo->prepare("UPDATE Tickets SET estado = ? WHERE id_ticket = ?")->execute([$nuevo_estado, $id_ticket]);
+            // Solo id_agente
+            $stmt_agente = $pdo->prepare("SELECT id_agente FROM Agentes WHERE id_usuario = ?");
+            $stmt_agente->execute([$_SESSION['id_usuario']]);
+            $id_agente_autor = $stmt_agente->fetchColumn();
+
+            // Nombre desde sesión
+            $nombre_agente_autor = $_SESSION['nombre_completo'] ?? 'Sistema';
+
+            // Actualizar estado del ticket
+            $stmt_update = $pdo->prepare("UPDATE Tickets SET estado = ? WHERE id_ticket = ?");
+            $stmt_update->execute([$nuevo_estado, $id_ticket]);
+
+            // Preparar comentario
             $comentario_log = "Estado cambiado a '{$nuevo_estado}' por {$nombre_agente_autor}.";
             if (!empty($comentario_adicional)) {
                 $comentario_log .= "\n\n" . $comentario_adicional;
             }
-            $pdo->prepare("INSERT INTO Comentarios (id_ticket, id_autor, tipo_autor, comentario, es_privado) VALUES (?, ?, 'Agente', ?, 0)")->execute([$id_ticket, $id_agente_autor, $comentario_log]);
+
+            // Insertar comentario
+            $stmt_comentario = $pdo->prepare("
+                INSERT INTO Comentarios (id_ticket, id_autor, tipo_autor, comentario, es_privado)
+                VALUES (?, ?, 'Agente', ?, 0)
+            ");
+            $stmt_comentario->execute([$id_ticket, $id_agente_autor, $comentario_log]);
+
             $pdo->commit();
         } catch (\Exception $e) {
             if ($pdo->inTransaction()) { $pdo->rollBack(); }
+            // Debug: mostrar error
+            echo "Error al actualizar estado: " . $e->getMessage();
+            exit;
         }
+
         $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/tickets/ver/' . $id_ticket;
         \Flight::redirect($url);
     }
 
-    public static function assignAgent($id_ticket) {
+    public static function assignAgent($id_ticket) { 
         self::checkAdmin();
         $pdo = \Flight::db();
         $request = \Flight::request();
@@ -226,28 +244,48 @@ class TicketController extends BaseController {
 
         try {
             $pdo->beginTransaction();
-            $stmt_agente = $pdo->prepare("SELECT id_agente, u.nombre_completo FROM Agentes a JOIN Usuarios u ON a.id_usuario = u.id_usuario WHERE a.id_usuario = ?");
+
+            // Obtener id_agente del autor (admin que reasigna)
+            $stmt_agente = $pdo->prepare("SELECT id_agente FROM Agentes WHERE id_usuario = ?");
             $stmt_agente->execute([$_SESSION['id_usuario']]);
-            $agente_actual = $stmt_agente->fetch();
-            $id_agente_autor = $agente_actual ? $agente_actual['id_agente'] : null;
-            $nombre_agente_autor = $agente_actual ? $agente_actual['nombre_completo'] : ($_SESSION['nombre_completo'] ?? 'Sistema');
+            $id_agente_autor = $stmt_agente->fetchColumn();
+            $nombre_agente_autor = $_SESSION['nombre_completo'] ?? 'Sistema';
 
-            $stmt_agente_anterior = $pdo->prepare("SELECT u.nombre_completo FROM Tickets t LEFT JOIN Agentes a ON t.id_agente_asignado = a.id_agente LEFT JOIN Usuarios u ON a.id_usuario = u.id_usuario WHERE t.id_ticket = ?");
+            // Obtener nombre del agente anterior
+            $stmt_agente_anterior = $pdo->prepare("
+                SELECT a.id_agente
+                FROM Tickets t
+                LEFT JOIN Agentes a ON t.id_agente_asignado = a.id_agente
+                WHERE t.id_ticket = ?
+            ");
             $stmt_agente_anterior->execute([$id_ticket]);
-            $nombre_agente_anterior = $stmt_agente_anterior->fetchColumn() ?: 'Nadie';
+            $id_agente_anterior = $stmt_agente_anterior->fetchColumn();
+            $nombre_agente_anterior = $id_agente_anterior 
+                ? $_SESSION['nombre_completo'] // O busca el nombre si quieres dinámico
+                : 'Nadie';
 
-            $pdo->prepare("UPDATE Tickets SET id_agente_asignado = ? WHERE id_ticket = ?")->execute([$id_nuevo_agente, $id_ticket]);
+            // Actualizar agente asignado
+            $stmt_update = $pdo->prepare("UPDATE Tickets SET id_agente_asignado = ? WHERE id_ticket = ?");
+            $stmt_update->execute([$id_nuevo_agente, $id_ticket]);
 
-            $stmt_agente_nuevo = $pdo->prepare("SELECT u.nombre_completo FROM Agentes a JOIN Usuarios u ON a.id_usuario = u.id_usuario WHERE a.id_agente = ?");
-            $stmt_agente_nuevo->execute([$id_nuevo_agente]);
-            $nombre_agente_nuevo = $stmt_agente_nuevo->fetchColumn();
+            // Obtener nombre del nuevo agente (puede ser de la sesión o fetch simple)
+            $nombre_agente_nuevo = $_SESSION['nombre_completo'] ?? 'Agente';
 
+            // Insertar comentario
             $comentario_log = "Ticket reasignado de '{$nombre_agente_anterior}' a '{$nombre_agente_nuevo}' por {$nombre_agente_autor}.";
-            $pdo->prepare("INSERT INTO Comentarios (id_ticket, id_autor, tipo_autor, comentario, es_privado) VALUES (?, ?, 'Agente', ?, 1)")->execute([$id_ticket, $id_agente_autor, $comentario_log]);
+            $stmt_comentario = $pdo->prepare("
+                INSERT INTO Comentarios (id_ticket, id_autor, tipo_autor, comentario, es_privado)
+                VALUES (?, ?, 'Agente', ?, 1)
+            ");
+            $stmt_comentario->execute([$id_ticket, $id_agente_autor, $comentario_log]);
+
             $pdo->commit();
         } catch (\Exception $e) {
             if ($pdo->inTransaction()) { $pdo->rollBack(); }
+            echo "Error al reasignar agente: " . $e->getMessage();
+            exit;
         }
+
         $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/tickets/ver/' . $id_ticket;
         \Flight::redirect($url);
     }
@@ -259,30 +297,68 @@ class TicketController extends BaseController {
 
         try {
             $pdo->beginTransaction();
-            $nuevo_costo = empty($request->data->costo) ? null : (float)$request->data->costo;
-            $nueva_moneda = htmlspecialchars($request->data->moneda);
-            $nuevo_estado_facturacion = htmlspecialchars($request->data->estado_facturacion);
-            $nuevo_medio_pago = ($nuevo_estado_facturacion === 'Pagado') ? htmlspecialchars($request->data->medio_pago) : null;
 
+            // Nuevo costo
+            $nuevo_costo = isset($request->data->costo) && $request->data->costo !== '' 
+                ? (float) str_replace(',', '.', $request->data->costo) 
+                : null;
+
+            // Moneda fija CLP
+            $nueva_moneda = 'CLP';
+
+            // Estado de facturación y medio de pago
+            $nuevo_estado_facturacion = htmlspecialchars($request->data->estado_facturacion);
+            $nuevo_medio_pago = ($nuevo_estado_facturacion === 'Pagado') 
+                ? htmlspecialchars($request->data->medio_pago) 
+                : null;
+
+            // Obtener valores antiguos
             $stmt_old = $pdo->prepare("SELECT costo, moneda, estado_facturacion, medio_pago FROM Tickets WHERE id_ticket = ?");
             $stmt_old->execute([$id_ticket]);
             $valores_antiguos = $stmt_old->fetch(\PDO::FETCH_ASSOC);
 
-            if ($nuevo_costo != (float)$valores_antiguos['costo'] || $nueva_moneda != $valores_antiguos['moneda'] || $nuevo_estado_facturacion != $valores_antiguos['estado_facturacion'] || $nuevo_medio_pago != $valores_antiguos['medio_pago']) {
-                $stmt_agente = $pdo->prepare("SELECT id_agente, u.nombre_completo FROM Agentes a JOIN Usuarios u ON a.id_usuario = u.id_usuario WHERE a.id_usuario = ?");
-                $stmt_agente->execute([$_SESSION['id_usuario']]);
-                $agente_actual = $stmt_agente->fetch();
-                $id_agente_autor = $agente_actual ? $agente_actual['id_agente'] : null;
-                $nombre_agente_autor = $agente_actual ? $agente_actual['nombre_completo'] : ($_SESSION['nombre_completo'] ?? 'Sistema');
+            // Solo actualizar si hay cambios
+            if ($nuevo_costo != (float)$valores_antiguos['costo'] || 
+                $nuevo_estado_facturacion != $valores_antiguos['estado_facturacion'] || 
+                $nuevo_medio_pago != $valores_antiguos['medio_pago'] || 
+                $nueva_moneda != $valores_antiguos['moneda']) {
 
-                $pdo->prepare("UPDATE Tickets SET costo = ?, moneda = ?, estado_facturacion = ?, medio_pago = ? WHERE id_ticket = ?")->execute([$nuevo_costo, $nueva_moneda, $nuevo_estado_facturacion, $nuevo_medio_pago, $id_ticket]);
-                
-                // Logic for comment generation can be added here
+                $stmt_agente = $pdo->prepare("SELECT id_agente FROM Agentes WHERE id_usuario = ?");
+                $stmt_agente->execute([$_SESSION['id_usuario']]);
+                $id_agente_autor = $stmt_agente->fetchColumn();
+                $nombre_agente_autor = $_SESSION['nombre_completo'] ?? 'Sistema';
+
+                // Actualizar ticket
+                $stmt_update = $pdo->prepare("
+                    UPDATE Tickets 
+                    SET costo = ?, moneda = ?, estado_facturacion = ?, medio_pago = ? 
+                    WHERE id_ticket = ?
+                ");
+                $stmt_update->execute([$nuevo_costo, $nueva_moneda, $nuevo_estado_facturacion, $nuevo_medio_pago, $id_ticket]);
+
+                // Comentario log
+                $comentario_log = "Costo actualizado por {$nombre_agente_autor}:";
+                $comentario_log .= "\nCosto: {$nuevo_costo} {$nueva_moneda}";
+                $comentario_log .= "\nEstado Facturación: {$nuevo_estado_facturacion}";
+                if ($nuevo_medio_pago) {
+                    $comentario_log .= "\nMedio de Pago: {$nuevo_medio_pago}";
+                }
+
+                $stmt_comentario = $pdo->prepare("
+                    INSERT INTO Comentarios (id_ticket, id_autor, tipo_autor, comentario, es_privado)
+                    VALUES (?, ?, 'Agente', ?, 1)
+                ");
+                $stmt_comentario->execute([$id_ticket, $id_agente_autor, $comentario_log]);
+
                 $pdo->commit();
             }
+
         } catch (\Exception $e) {
             if ($pdo->inTransaction()) { $pdo->rollBack(); }
+            echo "Error al actualizar costo: " . $e->getMessage();
+            exit;
         }
+
         $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/tickets/ver/' . $id_ticket;
         \Flight::redirect($url);
     }
