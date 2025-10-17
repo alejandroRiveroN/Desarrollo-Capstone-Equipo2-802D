@@ -42,7 +42,7 @@
         </div>
     </div>
 </div>
-
+<!-- Se agrega script para reforzar la contraseña -->
 <script>
 const nueva = document.getElementById('nueva_password');
 const minuscula = document.getElementById('minuscula');
