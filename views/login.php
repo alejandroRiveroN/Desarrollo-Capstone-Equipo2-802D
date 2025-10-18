@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MCE - Iniciar Sesión</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Se enlaza la hoja de estilos externa para el login -->
+    <!-- Enlace a la hoja de estilos externa para el login -->
     <link rel="stylesheet" href="<?php echo Flight::get('base_url'); ?>/css/login.css">
 </head>
 <body>
