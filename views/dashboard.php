@@ -34,7 +34,7 @@
     <div class="collapse show" id="collapseFilters">
         <div class="card-body">
             <!-- Formulario para filtrar la lista de tickets -->
-            <form id="formFiltros" action="<?php echo Flight::get('base_url'); ?>/" method="GET">
+            <form id="formFiltros" action="<?php echo Flight::get('base_url'); ?>/dashboard" method="GET">
                 <div class="row g-3">
                     <!-- Campos de filtro -->
                     <div class="col-lg-4 col-md-6"><label for="termino" class="form-label">Buscar por Asunto/ID:</label><input type="text" id="termino" name="termino" class="form-control" value="<?php echo htmlspecialchars($filtro_termino); ?>"></div>
@@ -46,7 +46,7 @@
                     <div class="col-lg-2 col-md-6"><label for="fecha_fin" class="form-label">Fecha Fin:</label><input type="date" id="fecha_fin" name="fecha_fin" class="form-control" value="<?php echo htmlspecialchars($filtro_fecha_fin); ?>"></div>
                     <?php if ($_SESSION['id_rol'] == 1): /* Filtro de Facturación solo para Admins */ ?><div class="col-lg-2 col-md-6"><label for="facturacion" class="form-label">Estado Facturación:</label><select id="facturacion" name="facturacion" class="form-select"><option value="">Todos</option><option value="Pendiente" <?php if($filtro_facturacion == 'Pendiente') echo 'selected'; ?>>Pendiente</option><option value="Facturado" <?php if($filtro_facturacion == 'Facturado') echo 'selected'; ?>>Facturado</option><option value="Pagado" <?php if($filtro_facturacion == 'Pagado') echo 'selected'; ?>>Pagado</option><option value="Anulado" <?php if($filtro_facturacion == 'Anulado') echo 'selected'; ?>>Anulado</option></select></div><?php endif; ?>
                     <!-- Botones de acción del formulario -->
-                    <div class="col-lg-2 col-md-12 d-flex align-items-end"><button type="submit" class="btn btn-primary me-2">Filtrar</button><a href="<?php echo Flight::get('base_url'); ?>/" class="btn btn-secondary">Limpiar</a></div>
+                    <div class="col-lg-2 col-md-12 d-flex align-items-end"><button type="submit" class="btn btn-primary me-2">Filtrar</button><a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary">Limpiar</a></div>
                 </div>
             </form>
             <?php if ($_SESSION['id_rol'] == 1): /* Botones de exportación solo para Admins */ ?>
@@ -63,7 +63,7 @@
     <!-- Título dinámico: cambia si hay filtros aplicados -->
     <h2 class="mb-0"><?php echo (empty(array_filter([$filtro_termino, $filtro_cliente, $filtro_agente, $filtro_prioridad, $filtro_estado_tabla, $filtro_facturacion, $filtro_fecha_inicio, $filtro_fecha_fin]))) ? 'Mis Tickets' : 'Resultados de la Búsqueda'; ?></h2>
     <?php if ($_SESSION['id_rol'] == 1): /* Botón para crear ticket solo para Admins */ ?>
-    <a href="<?php echo Flight::get('base_url'); ?>/tickets/crear" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Crear Nuevo Ticket</a>
+    <a href="<?php echo Flight::get('base_url'); ?>/tickets/crear" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Crear Ticket</a>
     <?php endif; ?>
 </div>
 <!-- Muestra un mensaje de éxito si existe en la sesión -->

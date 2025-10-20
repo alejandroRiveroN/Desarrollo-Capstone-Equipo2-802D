@@ -6,8 +6,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restablecer Contraseña</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Enlace a la hoja de estilos externa -->
-    <link rel="stylesheet" href="<?php echo Flight::get('base_url'); ?>/css/reset_password.css">
+    <style>
+        body {
+            background-color: #f2f4f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: "Segoe UI", sans-serif;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .login-header {
+            background-color: #133C55;
+            color: #fff;
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .login-body {
+            padding: 2rem;
+        }
+
+        .login-body h4 {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-control {
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .btn-send {
+            background-color: #00b894;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 0.6rem;
+            font-weight: 600;
+            width: 100%;
+            transition: background 0.3s;
+        }
+
+        .btn-send:hover {
+            background-color: #019875;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .login-link a {
+            color: #555;
+            text-decoration: none;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
 <body>
     <div class="login-card">

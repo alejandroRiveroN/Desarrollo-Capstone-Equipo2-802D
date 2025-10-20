@@ -127,7 +127,7 @@ class TicketController extends BaseController {
         $ticket = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if (!$ticket) {
-            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/';
+            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/dashboard';
             \Flight::redirect($url); // O mostrar una página de error 404
             exit();
         }

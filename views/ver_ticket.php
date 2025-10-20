@@ -7,7 +7,7 @@ $is_ticket_finalizado = in_array($ticket['estado'], ['Resuelto', 'Cerrado', 'Anu
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3>Ticket #<?php echo htmlspecialchars($ticket['id_ticket']); ?>: <?php echo htmlspecialchars($ticket['asunto']); ?></h3>
-    <a href="<?php echo Flight::get('base_url'); ?>/" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+    <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
 </div>
 
 <?php
