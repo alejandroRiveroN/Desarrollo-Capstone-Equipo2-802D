@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/partials/header.php'; 
+
 $status_classes = ['Abierto' => 'primary', 'En Progreso' => 'info', 'En Espera' => 'warning', 'Resuelto' => 'success', 'Cerrado' => 'secondary', 'Anulado' => 'dark'];
 $priority_classes = ['Baja' => 'success', 'Media' => 'warning', 'Alta' => 'danger', 'Urgente' => 'danger fw-bold'];
 $estados_disponibles = ['Abierto', 'En Progreso', 'En Espera', 'Resuelto'];
@@ -183,3 +185,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<?php require_once __DIR__ . '/partials/footer.php'; ?><!-- Agrege el footer y el Header , esto estaba causando que la pagina perdiera los estilos. -->
