@@ -14,7 +14,7 @@ abstract class BaseController {
     protected static function checkAuth() {
         if (!isset($_SESSION['id_usuario'])) {
             
-            // --- INICIO DE LA CORRECCIÓN FINAL ---
+            
             // Forzar la construcción de una URL absoluta completa (http://host/path) para eliminar cualquier ambigüedad.
             // Esta es la solución más robusta para entornos como XAMPP.
             $login_url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/login';
@@ -29,8 +29,8 @@ abstract class BaseController {
     protected static function checkAdmin() {
         if (!isset($_SESSION['id_usuario']) || $_SESSION['id_rol'] != 1) {
             
-            // --- INICIO DE LA CORRECCIÓN FINAL ---
-            // Reutilizamos la misma lógica para asegurar consistencia.
+    
+            // Reutilizamos la misma lógica
             $login_url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/login';
             \Flight::redirect($login_url);
             exit();
