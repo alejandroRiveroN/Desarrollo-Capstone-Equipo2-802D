@@ -1,3 +1,4 @@
+
 <?php
 require_once __DIR__ . '/partials/header.php'; 
 
@@ -82,11 +83,27 @@ if (isset($_SESSION['mensaje_exito'])) {
             <div class="card-header fw-bold"><i class="bi bi-currency-dollar"></i> Gestión de Costos</div>
             <div class="card-body">
                 <?php if ($costos_bloqueados): ?>
-                    <div class="alert alert-success" role="alert"><i class="bi bi-check-circle-fill"></i> Este ticket ya ha sido pagado. No se permiten más cambios.</div>
+                    <div class="alert alert-success" role="alert">
+                        <i class="bi bi-check-circle-fill"></i> Este ticket ya ha sido pagado. No se permiten más cambios.
+                    </div>
                 <?php endif; ?>
+
                 <form action="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>/costo" method="POST">
-                    <div class="mb-3"><label for="costo" class="form-label">Costo</label><input type="text" class="form-control" id="costo" name="costo" value="<?php echo htmlspecialchars($ticket['costo'] ?? ''); ?>" <?php if ($costos_bloqueados) echo 'disabled'; ?>></div>
-                    <div class="mb-3"><label for="moneda" class="form-label">Moneda</label><input type="text" class="form-control" id="moneda" name="moneda" value="<?php echo htmlspecialchars($ticket['moneda'] ?? 'PEN'); ?>" <?php if ($costos_bloqueados) echo 'disabled'; ?>></div>
+                    <!-- Costo -->
+                    <div class="mb-3">
+                        <label for="costo" class="form-label">Costo</label>
+                        <input type="text" class="form-control" id="costo" name="costo"
+                            value="<?php echo isset($ticket['costo']) ? number_format($ticket['costo'], 0, ',', '.') : ''; ?>"
+                            <?php if ($costos_bloqueados) echo 'disabled'; ?>>
+                    </div>
+
+                    <!-- Moneda -->
+                    <div class="mb-3">
+                        <label for="moneda" class="form-label">Moneda</label>
+                        <input type="text" class="form-control" id="moneda" name="moneda" value="CLP" readonly>
+                    </div>
+
+                    <!-- Estado de Facturación -->
                     <div class="mb-3">
                         <label for="estado_facturacion" class="form-label">Estado de Facturación</label>
                         <select class="form-select" id="estado_facturacion" name="estado_facturacion" <?php if ($costos_bloqueados) echo 'disabled'; ?>>
@@ -96,11 +113,42 @@ if (isset($_SESSION['mensaje_exito'])) {
                             <option value="Anulado" <?php echo ($ticket['estado_facturacion'] == 'Anulado') ? 'selected' : ''; ?>>Anulado</option>
                         </select>
                     </div>
-                    <div class="mb-3" id="medio_pago_container"><label for="medio_pago" class="form-label">Medio de Pago</label><select class="form-select" id="medio_pago" name="medio_pago" <?php if ($costos_bloqueados) echo 'disabled'; ?>><option value="">Seleccione...</option><option value="Efectivo" <?php echo ($ticket['medio_pago'] == 'Efectivo') ? 'selected' : ''; ?>>Efectivo</option><option value="Tarjeta de Crédito/Débito" <?php echo ($ticket['medio_pago'] == 'Tarjeta de Crédito/Débito') ? 'selected' : ''; ?>>Tarjeta de Crédito/Débito</option><option value="Transferencia Bancaria" <?php echo ($ticket['medio_pago'] == 'Transferencia Bancaria') ? 'selected' : ''; ?>>Transferencia Bancaria</option><option value="Yape/Plin" <?php echo ($ticket['medio_pago'] == 'Yape/Plin') ? 'selected' : ''; ?>>Yape/Plin</option></select></div>
-                    <div class="d-grid"><button type="submit" name="guardar_costo" class="btn btn-success" <?php if ($costos_bloqueados) echo 'disabled'; ?>><i class="bi bi-save"></i> Guardar Costo</button></div>
+
+                    <!-- Medio de Pago -->
+                    <div class="mb-3" id="medio_pago_container">
+                        <label for="medio_pago" class="form-label">Medio de Pago</label>
+                        <select class="form-select" id="medio_pago" name="medio_pago" <?php if ($costos_bloqueados) echo 'disabled'; ?>>
+                            <option value="">Seleccione...</option>
+                            <option value="Efectivo" <?php echo ($ticket['medio_pago'] == 'Efectivo') ? 'selected' : ''; ?>>Efectivo</option>
+                            <option value="Tarjeta de Crédito/Débito" <?php echo ($ticket['medio_pago'] == 'Tarjeta de Crédito/Débito') ? 'selected' : ''; ?>>Tarjeta de Crédito/Débito</option>
+                            <option value="Transferencia Bancaria" <?php echo ($ticket['medio_pago'] == 'Transferencia Bancaria') ? 'selected' : ''; ?>>Transferencia Bancaria</option>
+                            <option value="Yape/Plin" <?php echo ($ticket['medio_pago'] == 'Yape/Plin') ? 'selected' : ''; ?>>Yape/Plin</option>
+                        </select>
+                    </div>
+
+                    <!-- Botón Guardar -->
+                    <div class="d-grid">
+                        <button type="submit" name="guardar_costo" class="btn btn-success" <?php if ($costos_bloqueados) echo 'disabled'; ?>>
+                            <i class="bi bi-save"></i> Guardar Costo
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const estadoFacturacionSelect = document.getElementById('estado_facturacion');
+            if (estadoFacturacionSelect) {
+                const medioPagoContainer = document.getElementById('medio_pago_container');
+                function toggleMedioPago() {
+                    medioPagoContainer.style.display = (estadoFacturacionSelect.value === 'Pagado') ? 'block' : 'none';
+                }
+                toggleMedioPago();
+                estadoFacturacionSelect.addEventListener('change', toggleMedioPago);
+            }
+        });
+        </script>
         <?php endif; ?>
     </div>
 
@@ -185,5 +233,3 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-
-<?php require_once __DIR__ . '/partials/footer.php'; ?><!-- Agrege el footer y el Header , esto estaba causando que la pagina perdiera los estilos. -->

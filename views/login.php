@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MCE - Iniciar Sesión</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Enlace a la hoja de estilos externa para el login -->
-    <link rel="stylesheet" href="<?php echo Flight::get('base_url'); ?>/css/login.css">
+
 </head>
 <body>
     <div class="login-card">
@@ -36,7 +35,7 @@
                     <button type="submit" class="btn-acceder">Acceder</button>
                 </div>
             </form>
-            <!-- Se agrega la ruta de contraseña olvidada -->
+
             <div class="forgot-password">
                 <a href="/contraseña_olvidada">¿Olvidaste tu contraseña?</a>
             </div>
