@@ -1,139 +1,6 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>Detalle del Ticket - MCE</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-<style>
-/* ==== ESTILO GENERAL ==== */
-body {
-  background-color: #f2f4f7;
-  font-family: "Segoe UI", sans-serif;
-  padding: 2rem;
-}
 
-/* ==== CABECERA ==== */
-.page-header {
-  background: #133C55;
-  color: #fff;
-  padding: 1.2rem 1.8rem;
-  border-radius: 10px;
-  margin-bottom: 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-.page-header h3 {
-  margin: 0;
-  font-weight: 600;
-}
-.page-header a.btn {
-  background-color: #00b894;
-  border: none;
-  font-weight: 600;
-}
-.page-header a.btn:hover {
-  background-color: #019875;
-}
-
-/* ==== TARJETAS ==== */
-.card {
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-}
-.card-header {
-  background-color: #133C55;
-  color: white;
-  font-weight: 600;
-  border-radius: 12px 12px 0 0 !important;
-}
-.card-body {
-  background-color: #fff;
-}
-
-/* ==== FORMULARIOS ==== */
-.form-label {
-  font-weight: 500;
-}
-.form-control, .form-select {
-  border-radius: 8px;
-}
-.btn {
-  border-radius: 8px;
-  font-weight: 600;
-}
-
-/* ==== ALERTAS ==== */
-.alert {
-  border-radius: 8px;
-}
-
-/* ==== COMENTARIOS ==== */
-.comment-box {
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background-color: #f9fafb;
-  border: 1px solid #e3e6ea;
-}
-.comment-box.bg-light {
-  background-color: #eef3f7 !important;
-}
-.comment-box strong {
-  color: #133C55;
-}
-.comment-box small {
-  color: #6c757d;
-}
-
-/* ==== BOTONES PERSONALIZADOS ==== */
-.btn-info {
-  background-color: #2d9cdb;
-  border: none;
-}
-.btn-info:hover {
-  background-color: #227bb0;
-}
-.btn-danger {
-  background-color: #e74c3c;
-  border: none;
-}
-.btn-danger:hover {
-  background-color: #c0392b;
-}
-.btn-success {
-  background-color: #00b894;
-  border: none;
-}
-.btn-success:hover {
-  background-color: #019875;
-}
-.btn-primary {
-  background-color: #133C55;
-  border: none;
-}
-.btn-primary:hover {
-  background-color: #0b2a3e;
-}
-
-/* ==== MODAL ==== */
-.modal-content {
-  border-radius: 10px;
-}
-
-/* ==== ADAPTATIVO ==== */
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-}
-</style>
 <?php
+require_once __DIR__ . '/partials/header.php'; 
 
 $status_classes = ['Abierto' => 'primary', 'En Progreso' => 'info', 'En Espera' => 'warning', 'Resuelto' => 'success', 'Cerrado' => 'secondary', 'Anulado' => 'dark'];
 $priority_classes = ['Baja' => 'success', 'Media' => 'warning', 'Alta' => 'danger', 'Urgente' => 'danger fw-bold'];
@@ -143,7 +10,7 @@ $is_ticket_finalizado = in_array($ticket['estado'], ['Resuelto', 'Cerrado', 'Anu
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3>Ticket #<?php echo htmlspecialchars($ticket['id_ticket']); ?>: <?php echo htmlspecialchars($ticket['asunto']); ?></h3>
-    <a href="<?php echo Flight::get('base_url'); ?>/" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+    <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
 </div>
 
 <?php
@@ -366,5 +233,3 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-

@@ -1,0 +1,73 @@
+/* --- Estilos para la página de login --- */
+body {
+    background-color: #f2f4f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-family: "Segoe UI", sans-serif;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 380px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+    background: #fff;
+}
+
+.login-header {
+    background-color: #133C55;
+    color: #fff;
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.login-header h2 {
+    font-weight: 700;
+    margin: 0;
+}
+
+.login-header p {
+    font-size: 0.9rem;
+    margin: 0;
+    opacity: 0.9;
+}
+
+.login-body {
+    padding: 2rem;
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+.btn-acceder {
+    background-color: #00b894;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.6rem;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+.btn-acceder:hover {
+    background-color: #019875;
+}
+
+.forgot-password {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.forgot-password a {
+    color: #555;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+}

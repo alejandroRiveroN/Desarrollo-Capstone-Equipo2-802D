@@ -40,9 +40,7 @@ class BackupController extends BaseController
         // Nombre del archivo de backup
         $filename = $backup_dir . '/backup-' . date('Y-m-d_H-i-s') . '.sql';
 
-        // --- INICIO DE LA CORRECCIÓN ---
-        // Ruta explícita a mysqldump para entornos Windows/XAMPP donde no está en el PATH.
-        // Las comillas dobles alrededor de la ruta son importantes si contiene espacios.
+        // Ruta al ejecutable mysqldump.
         $mysqldump_path = '"C:\xampp\mysql\bin\mysqldump.exe"';
 
         // Comando para mysqldump usando la ruta explícita.
@@ -56,7 +54,6 @@ class BackupController extends BaseController
             escapeshellarg($filename)
         );
 
-        // --- FIN DE LA CORRECCIÓN ---
         // Ejecutar el comando
         $return_var = null;
         $output = null;

@@ -21,23 +21,27 @@ Flight::set('base_url', $base_path);
 // --- RUTAS DE AUTENTICACIÓN ---
 Flight::route('GET /login', ['App\Controllers\AuthController', 'login']);
 
-// Cambiado de POST /dashboard a POST /login para mayor consistencia
+// La ruta POST para autenticar ahora llama directamente al método del controlador.
 Flight::route('POST /login', ['App\Controllers\AuthController', 'authenticate']);
 
 Flight::route('GET /logout', function () {
     session_unset();
     session_destroy();
     
-    // Construir una URL absoluta para la redirección al login.
-    // Esto previene errores como DNS_PROBE_FINISHED_NXDOMAIN.
-    $login_url = 'http://' . $_SERVER['HTTP_HOST'] . Flight::get('base_url') . '/login';
-    Flight::redirect($login_url);
+    // cambie la ruta de redirección al momento de deslogearse este te enviara a la página de inicio (landing page)
+    $landing_url = 'http://' . $_SERVER['HTTP_HOST'] . Flight::get('base_url') . '/';
+    Flight::redirect($landing_url);
 });
 
 
-// --- RUTA PRINCIPAL (DASHBOARD) ---
-Flight::route('GET /', ['App\Controllers\DashboardController', 'index']);
+// --- RUTAS PRINCIPALES ---
+// La ruta raíz ahora muestra la landing page.
+Flight::route('GET /', function(){
+    Flight::render('landingpage.php');
+});
 
+// La ruta del dashboard ahora es /dashboard.
+Flight::route('GET /dashboard', ['App\Controllers\DashboardController', 'index']);
 
 
 // --- RUTAS DE CLIENTES ---

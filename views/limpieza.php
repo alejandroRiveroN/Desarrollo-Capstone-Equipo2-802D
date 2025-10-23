@@ -1,6 +1,5 @@
 <?php
-// This is a view file. The logic is handled by the Flight routes.
-// The variables $mensaje and $error are passed from the route.
+// views/limpieza.php
 ?>
 <div class="container mt-4">
     <div id="mensaje-container">
@@ -8,14 +7,14 @@
             <div class="alert alert-success">
                 <h4>Proceso Finalizado</h4>
                 <p><?php echo $mensaje; ?></p>
-                <a href="<?php echo Flight::get('base_url'); ?>/" class="btn btn-primary">Volver al Dashboard</a>
+                <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-primary">Volver al Dashboard</a>
             </div>
         <?php endif; ?>
         <?php if (isset($error) && $error): ?>
             <div class="alert alert-danger">
                 <h4>Error</h4>
                 <p><?php echo $error; ?></p>
-                <a href="<?php echo Flight::get('base_url'); ?>/" class="btn btn-secondary">Volver al Dashboard</a>
+                <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary">Volver al Dashboard</a>
             </div>
         <?php endif; ?>
     </div>
@@ -60,7 +59,7 @@
                 <button type="submit" name="confirmar_limpieza" class="btn btn-danger btn-lg">
                     <i class="bi bi-trash-fill"></i> Sí, entiendo y quiero borrar TODO
                 </button>
-                <a href="<?php echo Flight::get('base_url'); ?>/" class="btn btn-secondary btn-lg">No, cancelar y volver</a>
+                <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary btn-lg">No, cancelar y volver</a>
             </form>
         </div>
     </div>
@@ -89,7 +88,7 @@
                 <button type="submit" name="confirmar_reseteo" class="btn btn-danger btn-lg">
                     <i class="bi bi-trash-fill"></i> Sí, entiendo las consecuencias y quiero resetear el sistema
                 </button>
-                <a href="<?php echo Flight::get('base_url'); ?>/" class="btn btn-secondary btn-lg">No, cancelar y volver</a>
+                <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary btn-lg">No, cancelar y volver</a>
             </form>
         </div>
     </div>

@@ -2,7 +2,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="bi bi-plus-circle-fill"></i> Crear Nuevo Ticket de Soporte</h2>
-    <a href="<?php echo Flight::get('base_url'); ?>/" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+    <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
 </div>
 
 <?php if (isset($mensaje_error) && $mensaje_error): ?>
