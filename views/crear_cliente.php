@@ -18,7 +18,7 @@
                     <input type="text" class="form-control" id="nombre" name="nombre" required>
                 </div>
                 <div class="col-12">
-                    <label for="correo_electronico" class="form-label">Correo Electrónico *</label>
+                    <label for="email" class="form-label">Correo Electrónico *</label>
                     <input type="email" class="form-control" id="correo_electronico" name="correo_electronico" required>
                 </div>
                 <div class="col-12">

@@ -34,7 +34,10 @@ if (isset($_SESSION['mensaje_exito'])) {
             </div>
         </div>
         
-        <?php if (!$is_ticket_finalizado): ?>
+        <?php if (
+            !$is_ticket_finalizado 
+            && in_array((int)$_SESSION['id_rol'], [1,2,3]) // solo admin, agente, supervisor
+        ): ?>
         <div class="card mb-4">
             <div class="card-header fw-bold">Acciones</div>
             <div class="card-body">
@@ -186,14 +189,28 @@ if (isset($_SESSION['mensaje_exito'])) {
                     <?php endforeach; ?>
                 <?php endif; ?>
                 
-                <?php if (!$is_ticket_finalizado): ?>
+                <?php if (!$is_ticket_finalizado && $_SESSION['id_rol'] == 4): ?>
                 <hr>
                 <h5 class="card-title mt-4">Añadir Comentario</h5>
                 <form action="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>/comentario" method="POST" enctype="multipart/form-data">
-                    <div class="mb-3"><textarea class="form-control" name="comentario" rows="3" placeholder="Escribe tu comentario aquí..."></textarea></div>
-                    <div class="mb-3"><label for="adjuntos" class="form-label">Adjuntar Archivos (Opcional)</label><input class="form-control" type="file" id="adjuntos" name="adjuntos[]" multiple></div>
-                    <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="es_privado" id="es_privado"><label class="form-check-label" for="es_privado">Marcar como comentario privado</label></div>
-                    <button type="submit" name="agregar_comentario" class="btn btn-primary"><i class="bi bi-send"></i> Enviar Comentario</button>
+                    <div class="mb-3">
+                        <textarea class="form-control" name="comentario" rows="3" placeholder="Escribe tu comentario aquí..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="adjuntos" class="form-label">Adjuntar Archivos (Opcional)</label>
+                        <input class="form-control" type="file" id="adjuntos" name="adjuntos[]" multiple>
+                    </div>
+
+                    <?php if (in_array((int)$_SESSION['id_rol'], [1,2,3])): ?>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="es_privado" id="es_privado">
+                            <label class="form-check-label" for="es_privado">Marcar como comentario privado</label>
+                        </div>
+                    <?php endif; ?>
+
+                    <button type="submit" name="agregar_comentario" class="btn btn-primary">
+                        <i class="bi bi-send"></i> Enviar Comentario
+                    </button>
                 </form>
                 <?php endif; ?>
             </div>

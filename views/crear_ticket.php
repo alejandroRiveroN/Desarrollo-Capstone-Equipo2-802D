@@ -11,9 +11,10 @@
 
 <div class="card">
     <div class="card-body p-4">
-        <form action="<?php echo Flight::get('base_url'); ?>/tickets" method="POST" enctype="multipart/form-data">
+        <form action="<?php echo Flight::get('base_url'); ?>/tickets" method="POST">
             <div class="row g-4">
-                
+                <?php if ($_SESSION['id_rol'] == 1): ?>
+                <!-- Solo admin puede seleccionar cliente -->
                 <div class="col-md-6">
                     <label for="id_cliente" class="form-label">Cliente *</label>
                     <select class="form-select" id="id_cliente" name="id_cliente" required>
@@ -23,6 +24,10 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <?php else: ?>
+                    <!-- Cliente autenticado, su ID se envía oculto -->
+                    <input type="hidden" name="id_cliente" value="<?php echo $_SESSION['id_cliente']; ?>">
+                <?php endif; ?>
 
                 <div class="col-md-6">
                     <label for="id_tipo_caso" class="form-label">Tipo de Caso *</label>
@@ -57,7 +62,7 @@
                 <div class="col-12">
                     <label for="adjuntos" class="form-label">Adjuntar Archivos (Opcional)</label>
                     <input class="form-control" type="file" id="adjuntos" name="adjuntos[]" multiple>
-                    <div class="form-text">Puedes seleccionar varios archivos a la vez.</div>
+                    <div class="form-text">Puedes seleccionar varios archivos a la vez. Tipos permitidos: JPEG, PNG, GIF, PDF, Word, Excel, TXT, ZIP. Máx 5MB cada uno.</div>
                 </div>
                 
                 <div class="col-12 mt-4">

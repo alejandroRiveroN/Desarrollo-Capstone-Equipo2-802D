@@ -46,7 +46,6 @@ if (isset($_SESSION['mensaje_error'])) {
                     <a href="/clientes" class="btn btn-secondary">Limpiar</a>
                 </div>
             </form>
-            
             <?php if ($_SESSION['id_rol'] == 1): ?>
             <hr>
             <p class="small text-muted mb-2">La exportación aplicará los filtros de búsqueda actuales.</p>
@@ -59,7 +58,6 @@ if (isset($_SESSION['mensaje_error'])) {
         </div>
     </div>
 </div>
-
 <div class="card">
     <div class="card-header fw-bold">
         Lista de Clientes (<?php echo count($clientes); ?> encontrados)
@@ -89,7 +87,7 @@ if (isset($_SESSION['mensaje_error'])) {
                                 <td><?php echo htmlspecialchars($cliente['id_cliente']); ?></td>
                                 <td><?php echo htmlspecialchars($cliente['nombre']); ?></td>
                                 <td><?php echo htmlspecialchars($cliente['empresa'] ?? 'N/A'); ?></td>
-                                <td><?php echo htmlspecialchars($cliente['correo_electronico'] ?? 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($cliente['email'] ?? 'N/A'); ?></td>
                                 <td><?php echo htmlspecialchars($cliente['telefono'] ?? 'N/A'); ?></td>
                                 <td><?php echo htmlspecialchars($cliente['pais'] ?? 'N/A'); ?></td>
                                 <td><?php echo htmlspecialchars($cliente['ciudad'] ?? 'N/A'); ?></td>

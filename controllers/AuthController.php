@@ -44,6 +44,7 @@ class AuthController {
             }
         }
 
+        // Renderizar login con mensaje de error (solo si falla validación vacía)
         \Flight::render('login.php', ['error_message' => $error_message]);
     }
 }
