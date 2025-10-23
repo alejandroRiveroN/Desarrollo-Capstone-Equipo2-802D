@@ -70,7 +70,6 @@ class ClientController extends BaseController {
     }
 
     public static function create() {
-        self::checkAuth();
         \Flight::render('crear_cliente.php', ['mensaje_error' => '']);
     }
 
@@ -92,29 +91,44 @@ class ClientController extends BaseController {
 
         if (empty($nombre) || empty($correo_electronico)) {
             \Flight::render('crear_cliente.php', ['mensaje_error' => "Los campos 'Nombre Completo' y 'Correo Electrónico' son obligatorios."]);
-        } else {
-            try {
-                $stmt = $pdo->prepare(
-                    "INSERT INTO Clientes (nombre, empresa, correo_electronico, telefono, pais, ciudad, whatsapp, telegram, activo) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-                );
-                $stmt->execute([$nombre, $empresa, $correo_electronico, $telefono, $pais, $ciudad, $whatsapp, $telegram, $activo]);
+            return;
+        }
 
-                // Guardar mensaje de éxito y forzar redirección absoluta
-                $_SESSION['mensaje_exito'] = '¡Cliente creado correctamente!';
-                $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes';
-                \Flight::redirect($url);
-                exit();
+        try {
+            $pdo->beginTransaction();
 
-            } catch (\Exception $e) {
-                // Verificar si el error es por una entrada duplicada (código de error 23000)
-                if ($e instanceof \PDOException && $e->getCode() == '23000') {
-                    $error_message = "El correo electrónico ya se encuentra registrado. Por favor, utiliza otro.";
-                } else {
-                    $error_message = "Error al crear el cliente: " . $e->getMessage();
-                }
-                \Flight::render('crear_cliente.php', ['mensaje_error' => $error_message]);
+            // 1️⃣ Insertar en Clientes
+            $stmt = $pdo->prepare(
+                "INSERT INTO Clientes (nombre, empresa, correo_electronico, telefono, pais, ciudad, whatsapp, telegram, activo) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            );
+            $stmt->execute([$nombre, $empresa, $correo_electronico, $telefono, $pais, $ciudad, $whatsapp, $telegram, $activo]);
+
+            // 2️⃣ Insertar en Usuarios (rol Cliente)
+            // Suponiendo que el rol Cliente tiene id_rol = 4
+            $password = bin2hex(random_bytes(4)); // contraseña temporal
+            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+
+            $stmtUser = $pdo->prepare("INSERT INTO usuarios (id_rol, nombre_completo, email, password_hash) VALUES (?, ?, ?, ?)");
+            $stmtUser->execute([4, $nombre, $correo_electronico, $password_hash]);
+
+            $pdo->commit();
+
+            // Al final de la creación
+            $_SESSION['mensaje_exito'] = '¡Registro completado con éxito! Ahora puedes iniciar sesión.';
+            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/';
+            \Flight::redirect($url);
+            exit();
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+
+            if ($e instanceof \PDOException && $e->getCode() == '23000') {
+                $error_message = "El correo electrónico ya se encuentra registrado. Por favor, utiliza otro.";
+            } else {
+                $error_message = "Error al crear el cliente: " . $e->getMessage();
             }
+
+            \Flight::render('crear_cliente.php', ['mensaje_error' => $error_message]);
         }
     }
 
@@ -203,6 +217,85 @@ class ClientController extends BaseController {
         $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes';
         \Flight::redirect($url);
         exit();
+    }
+
+    public static function publicRegister() {
+        $request = \Flight::request();
+        $data = $request->data;
+
+        $nombre = trim($data->nombre);
+        $correo_electronico = trim($data->correo_electronico);
+        $telefono = trim($data->telefono) ?: null;
+        $empresa = trim($data->empresa) ?: null;
+        $pais = trim($data->pais) ?: null;
+        $ciudad = trim($data->ciudad) ?: null;
+        $whatsapp = trim($data->whatsapp) ?: null;
+        $telegram = trim($data->telegram) ?: null;
+        $activo = 1;
+
+        if (empty($nombre) || empty($correo_electronico)) {
+            \Flight::render('registro_cliente.php', [
+                'mensaje_error' => "Los campos Nombre y Correo son obligatorios.",
+                'nombre' => $nombre,
+                'correo_electronico' => $correo_electronico,
+                'telefono' => $telefono,
+                'empresa' => $empresa,
+                'pais' => $pais,
+                'ciudad' => $ciudad,
+                'whatsapp' => $whatsapp,
+                'telegram' => $telegram
+            ]);
+            return;
+        }
+
+        try {
+            $pdo = \Flight::db();
+            $pdo->beginTransaction();
+
+            // Insertar en Clientes
+            $stmt = $pdo->prepare(
+                "INSERT INTO Clientes (nombre, empresa, correo_electronico, telefono, pais, ciudad, whatsapp, telegram, activo) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            );
+            $stmt->execute([$nombre, $empresa, $correo_electronico, $telefono, $pais, $ciudad, $whatsapp, $telegram, $activo]);
+
+            // Insertar en Usuarios (rol Cliente)
+            $password = bin2hex(random_bytes(4));
+            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+
+            $stmtUser = $pdo->prepare(
+                "INSERT INTO usuarios (id_rol, nombre_completo, email, password_hash) VALUES (?, ?, ?, ?)"
+            );
+            $stmtUser->execute([4, $nombre, $correo_electronico, $password_hash]);
+
+            $pdo->commit();
+
+            // Guardar mensaje de éxito en la sesión
+            $_SESSION['mensaje_exito'] = "¡Registro exitoso!";
+
+            // Redirigir a la landing page
+            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/';
+            \Flight::redirect($url);
+            exit();
+
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            $error_message = $e instanceof \PDOException && $e->getCode() == '23000'
+                ? "El correo ya está registrado."
+                : "Error al registrar: " . $e->getMessage();
+
+            \Flight::render('registro_cliente.php', [
+                'mensaje_error' => $error_message,
+                'nombre' => $nombre,
+                'correo_electronico' => $correo_electronico,
+                'telefono' => $telefono,
+                'empresa' => $empresa,
+                'pais' => $pais,
+                'ciudad' => $ciudad,
+                'whatsapp' => $whatsapp,
+                'telegram' => $telegram
+            ]);
+        }
     }
 
     public static function exportExcel() {

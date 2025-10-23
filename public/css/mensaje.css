@@ -1,0 +1,32 @@
+/* --- Alerta de éxito estilo tarjeta MCE --- */
+.alert-exito {
+    margin: 1px auto;
+    max-width: 500px;
+    background-color: rgb(26 46 68 / var(--tw-bg-opacity, 1));
+    color: #fff;
+    padding: 1.2rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    font-weight: 600;
+    font-family: "Segoe UI", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    animation: fadeSlide 4s forwards;
+}
+
+/* Botón cerrar */
+.alert-exito .close-alert {
+    margin-left: 1rem;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* Animación: aparece y desaparece suavemente */
+@keyframes fadeSlide {
+    0% { opacity: 0; transform: translateY(-20px); }
+    10% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-20px); }
+}
