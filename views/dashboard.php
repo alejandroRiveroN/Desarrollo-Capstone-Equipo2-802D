@@ -4,10 +4,14 @@
 <!-- Título del Dashboard -->
 <h2 class="mb-4">Dashboard General</h2>
 
-<!-- Sección exclusiva para Administradores (id_rol == 1) -->
-<?php if ($_SESSION['id_rol'] == 1): ?>
+<!-- Sección del Dashboard para Admins y Clientes -->
+<?php if ($_SESSION['id_rol'] == 1 || $_SESSION['id_rol'] == 4): ?>
+
 
 <!-- Fila de Tarjetas de Resumen (KPIs) -->
+<h3 class="mb-4">
+  <?php echo ($_SESSION['id_rol'] == 4) ? 'Resumen de Mis Tickets' : 'Estadísticas Generales'; ?>
+</h3>
 <div class="row g-4 mb-4">
     <!-- Tarjeta: Tickets Abiertos -->
     <div class="col-lg-3 col-md-6"><div class="card text-white bg-primary shadow h-100"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $total_abiertos; ?></h5><p class="card-text">Abiertos</p></div><i class="bi bi-envelope-open-fill fs-1 opacity-50"></i></div></div></div>
@@ -29,34 +33,124 @@
 <?php endif; ?>
 
 <!-- 3. Panel de Filtros y Reportes (colapsable) -->
+<?php if (in_array((int)$_SESSION['id_rol'], [1, 2, 3])): ?>
 <div class="card mb-4">
-    <div class="card-header fw-bold"><a class="text-decoration-none text-dark" data-bs-toggle="collapse" href="#collapseFilters" role="button" aria-expanded="true"><i class="bi bi-funnel-fill"></i> Filtros y Reportes</a></div>
+    <div class="card-header fw-bold">
+        <a class="text-decoration-none text-dark" data-bs-toggle="collapse" href="#collapseFilters" role="button" aria-expanded="true">
+            <i class="bi bi-funnel-fill"></i> Filtros y Reportes
+        </a>
+    </div>
+
     <div class="collapse show" id="collapseFilters">
         <div class="card-body">
             <!-- Formulario para filtrar la lista de tickets -->
             <form id="formFiltros" action="<?php echo Flight::get('base_url'); ?>/dashboard" method="GET">
                 <div class="row g-3">
                     <!-- Campos de filtro -->
-                    <div class="col-lg-4 col-md-6"><label for="termino" class="form-label">Buscar por Asunto/ID:</label><input type="text" id="termino" name="termino" class="form-control" value="<?php echo htmlspecialchars($filtro_termino); ?>"></div>
-                    <div class="col-lg-4 col-md-6"><label for="cliente" class="form-label">Cliente:</label><select id="cliente" name="cliente" class="form-select"><option value="">Todos</option><?php foreach($clientes_disponibles as $cliente_item): ?><option value="<?php echo $cliente_item['id_cliente']; ?>" <?php if($filtro_cliente == $cliente_item['id_cliente']) echo 'selected'; ?>><?php echo htmlspecialchars($cliente_item['nombre']); ?></option><?php endforeach; ?></select></div>
-                    <?php if ($_SESSION['id_rol'] == 1): /* Filtro de Agente solo para Admins */ ?><div class="col-lg-4 col-md-6"><label for="agente" class="form-label">Agente:</label><select id="agente" name="agente" class="form-select"><option value="">Todos</option><?php foreach($agentes_disponibles as $agente): ?><option value="<?php echo $agente['id_agente']; ?>" <?php if($filtro_agente == $agente['id_agente']) echo 'selected'; ?>><?php echo htmlspecialchars($agente['nombre_completo']); ?></option><?php endforeach; ?></select></div><?php endif; ?>
-                    <div class="col-lg-2 col-md-6"><label for="prioridad" class="form-label">Prioridad:</label><select id="prioridad" name="prioridad" class="form-select"><option value="">Todas</option><option value="Baja" <?php if($filtro_prioridad == 'Baja') echo 'selected'; ?>>Baja</option><option value="Media" <?php if($filtro_prioridad == 'Media') echo 'selected'; ?>>Media</option><option value="Alta" <?php if($filtro_prioridad == 'Alta') echo 'selected'; ?>>Alta</option><option value="Urgente" <?php if($filtro_prioridad == 'Urgente') echo 'selected'; ?>>Urgente</option></select></div>
-                    <div class="col-lg-2 col-md-6"><label for="estado_tabla" class="form-label">Estado Ticket:</label><select id="estado_tabla" name="estado_tabla" class="form-select"><option value="">Todos</option><option value="Abierto" <?php if($filtro_estado_tabla == 'Abierto') echo 'selected'; ?>>Abierto</option><option value="En Progreso" <?php if($filtro_estado_tabla == 'En Progreso') echo 'selected'; ?>>En Progreso</option><option value="En Espera" <?php if($filtro_estado_tabla == 'En Espera') echo 'selected'; ?>>En Espera</option><option value="Resuelto" <?php if($filtro_estado_tabla == 'Resuelto') echo 'selected'; ?>>Resuelto</option><option value="Cerrado" <?php if($filtro_estado_tabla == 'Cerrado') echo 'selected'; ?>>Cerrado</option><option value="Anulado" <?php if($filtro_estado_tabla == 'Anulado') echo 'selected'; ?>>Anulado</option></select></div>
-                    <div class="col-lg-2 col-md-6"><label for="fecha_inicio" class="form-label">Fecha Inicio:</label><input type="date" id="fecha_inicio" name="fecha_inicio" class="form-control" value="<?php echo htmlspecialchars($filtro_fecha_inicio); ?>"></div>
-                    <div class="col-lg-2 col-md-6"><label for="fecha_fin" class="form-label">Fecha Fin:</label><input type="date" id="fecha_fin" name="fecha_fin" class="form-control" value="<?php echo htmlspecialchars($filtro_fecha_fin); ?>"></div>
-                    <?php if ($_SESSION['id_rol'] == 1): /* Filtro de Facturación solo para Admins */ ?><div class="col-lg-2 col-md-6"><label for="facturacion" class="form-label">Estado Facturación:</label><select id="facturacion" name="facturacion" class="form-select"><option value="">Todos</option><option value="Pendiente" <?php if($filtro_facturacion == 'Pendiente') echo 'selected'; ?>>Pendiente</option><option value="Facturado" <?php if($filtro_facturacion == 'Facturado') echo 'selected'; ?>>Facturado</option><option value="Pagado" <?php if($filtro_facturacion == 'Pagado') echo 'selected'; ?>>Pagado</option><option value="Anulado" <?php if($filtro_facturacion == 'Anulado') echo 'selected'; ?>>Anulado</option></select></div><?php endif; ?>
-                    <!-- Botones de acción del formulario -->
-                    <div class="col-lg-2 col-md-12 d-flex align-items-end"><button type="submit" class="btn btn-primary me-2">Filtrar</button><a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary">Limpiar</a></div>
+                    <div class="col-lg-4 col-md-6">
+                        <label for="termino" class="form-label">Buscar por Asunto/ID:</label>
+                        <input type="text" id="termino" name="termino" class="form-control"
+                               value="<?php echo htmlspecialchars($filtro_termino); ?>">
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label for="cliente" class="form-label">Cliente:</label>
+                        <select id="cliente" name="cliente" class="form-select">
+                            <option value="">Todos</option>
+                            <?php foreach($clientes_disponibles as $cliente_item): ?>
+                                <option value="<?php echo $cliente_item['id_cliente']; ?>"
+                                    <?php if($filtro_cliente == $cliente_item['id_cliente']) echo 'selected'; ?>>
+                                    <?php echo htmlspecialchars($cliente_item['nombre']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <?php if ($_SESSION['id_rol'] == 1): ?>
+                    <div class="col-lg-4 col-md-6">
+                        <label for="agente" class="form-label">Agente:</label>
+                        <select id="agente" name="agente" class="form-select">
+                            <option value="">Todos</option>
+                            <?php foreach($agentes_disponibles as $agente): ?>
+                                <option value="<?php echo $agente['id_agente']; ?>"
+                                    <?php if($filtro_agente == $agente['id_agente']) echo 'selected'; ?>>
+                                    <?php echo htmlspecialchars($agente['nombre_completo']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label for="prioridad" class="form-label">Prioridad:</label>
+                        <select id="prioridad" name="prioridad" class="form-select">
+                            <option value="">Todas</option>
+                            <option value="Baja" <?php if($filtro_prioridad == 'Baja') echo 'selected'; ?>>Baja</option>
+                            <option value="Media" <?php if($filtro_prioridad == 'Media') echo 'selected'; ?>>Media</option>
+                            <option value="Alta" <?php if($filtro_prioridad == 'Alta') echo 'selected'; ?>>Alta</option>
+                            <option value="Urgente" <?php if($filtro_prioridad == 'Urgente') echo 'selected'; ?>>Urgente</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label for="estado_tabla" class="form-label">Estado Ticket:</label>
+                        <select id="estado_tabla" name="estado_tabla" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="Abierto" <?php if($filtro_estado_tabla == 'Abierto') echo 'selected'; ?>>Abierto</option>
+                            <option value="En Progreso" <?php if($filtro_estado_tabla == 'En Progreso') echo 'selected'; ?>>En Progreso</option>
+                            <option value="En Espera" <?php if($filtro_estado_tabla == 'En Espera') echo 'selected'; ?>>En Espera</option>
+                            <option value="Resuelto" <?php if($filtro_estado_tabla == 'Resuelto') echo 'selected'; ?>>Resuelto</option>
+                            <option value="Cerrado" <?php if($filtro_estado_tabla == 'Cerrado') echo 'selected'; ?>>Cerrado</option>
+                            <option value="Anulado" <?php if($filtro_estado_tabla == 'Anulado') echo 'selected'; ?>>Anulado</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label for="fecha_inicio" class="form-label">Fecha Inicio:</label>
+                        <input type="date" id="fecha_inicio" name="fecha_inicio" class="form-control"
+                               value="<?php echo htmlspecialchars($filtro_fecha_inicio); ?>">
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label for="fecha_fin" class="form-label">Fecha Fin:</label>
+                        <input type="date" id="fecha_fin" name="fecha_fin" class="form-control"
+                               value="<?php echo htmlspecialchars($filtro_fecha_fin); ?>">
+                    </div>
+
+                    <?php if ($_SESSION['id_rol'] == 1): ?>
+                    <div class="col-lg-2 col-md-6">
+                        <label for="facturacion" class="form-label">Estado Facturación:</label>
+                        <select id="facturacion" name="facturacion" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="Pendiente" <?php if($filtro_facturacion == 'Pendiente') echo 'selected'; ?>>Pendiente</option>
+                            <option value="Facturado" <?php if($filtro_facturacion == 'Facturado') echo 'selected'; ?>>Facturado</option>
+                            <option value="Pagado" <?php if($filtro_facturacion == 'Pagado') echo 'selected'; ?>>Pagado</option>
+                            <option value="Anulado" <?php if($filtro_facturacion == 'Anulado') echo 'selected'; ?>>Anulado</option>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+
+                    <div class="col-lg-2 col-md-12 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+                        <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary">Limpiar</a>
+                    </div>
                 </div>
             </form>
-            <?php if ($_SESSION['id_rol'] == 1): /* Botones de exportación solo para Admins */ ?>
-            <hr>
-            <p class="small text-muted mb-2">La exportación aplicará los filtros de búsqueda actuales (excepto la búsqueda por texto).</p>
-            <div><button type="button" onclick="exportar('excel')" class="btn btn-success"><i class="bi bi-file-earmark-excel-fill"></i> Excel</button> <button type="button" onclick="exportar('pdf')" class="btn btn-danger"><i class="bi bi-file-earmark-pdf-fill"></i> PDF</button> <button type="button" onclick="exportar('imprimir')" class="btn btn-info"><i class="bi bi-printer-fill"></i> Imprimir</button></div>
+
+            <?php if ($_SESSION['id_rol'] == 1): ?>
+                <hr>
+                <p class="small text-muted mb-2">La exportación aplicará los filtros de búsqueda actuales (excepto la búsqueda por texto).</p>
+                <div>
+                    <button type="button" onclick="exportar('excel')" class="btn btn-success"><i class="bi bi-file-earmark-excel-fill"></i> Excel</button>
+                    <button type="button" onclick="exportar('pdf')" class="btn btn-danger"><i class="bi bi-file-earmark-pdf-fill"></i> PDF</button>
+                    <button type="button" onclick="exportar('imprimir')" class="btn btn-info"><i class="bi bi-printer-fill"></i> Imprimir</button>
+                </div>
             <?php endif; ?>
         </div>
     </div>
 </div>
+<?php endif; ?>
+
 
 <!-- 4. Sección de la Lista de Tickets -->
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -139,7 +233,6 @@
         </div>
     </div>
 </div>
-
 <!-- 5. Scripts de JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>

@@ -1,11 +1,23 @@
 <?php
+// Mensaje flash vía URL, para nuevos clientes
+$status = $_GET['status'] ?? '';
 ?>
+<?php if(isset($_SESSION['mensaje_exito'])): ?>
+    <div class="alert-exito">
+        <?php 
+            echo $_SESSION['mensaje_exito']; 
+            unset($_SESSION['mensaje_exito']);
+        ?>
+        <span class="close-alert" onclick="this.parentElement.style.display='none'">&times;</span>
+    </div>
+<?php endif; ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MCE | Sistema de Soporte TI Especializado</title>
+    <link rel="stylesheet" href="<?php echo Flight::get('base_url'); ?>/css/mensaje.css?v=1.1">
     <!-- Carga de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Configuración personalizada de Tailwind -->
@@ -51,9 +63,20 @@
                     <a href="#services" class="text-white hover:text-mce-secondary px-3 py-2 rounded-md text-base font-medium transition duration-150 ease-in-out">Servicios</a>
                     <a href="#contact" class="text-white hover:text-mce-secondary px-3 py-2 rounded-md text-base font-medium transition duration-150 ease-in-out">Contacto</a>
                     <!-- Botón de Registrarse (sin funcionalidad de momento) -->
-                    <a href="#" title="Funcionalidad de registro no implementada" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    <a href="<?php echo Flight::get('base_url'); ?>/registro_cliente" 
+                        title="Registrar nuevo cliente" 
+                        class="bg-mce-secondary hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
                         Registrarse
                     </a>
+                    <?php if ($status === 'success'): ?>
+                        <div class="max-w-3xl mx-auto mt-4 px-6 py-3 bg-green-500 text-white font-semibold rounded-lg shadow-md text-center">
+                            ¡Registro exitoso! Ya puedes iniciar sesión.
+                        </div>
+                    <?php elseif ($status === 'error'): ?>
+                        <div class="max-w-3xl mx-auto mt-4 px-6 py-3 bg-red-500 text-white font-semibold rounded-lg shadow-md text-center">
+                            Ocurrió un error al registrarte. Intenta nuevamente.
+                        </div>
+                    <?php endif; ?>
                     <a href="<?php echo Flight::get('base_url'); ?>/login" class="bg-mce-secondary hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
                         Ingresar
                     </a>

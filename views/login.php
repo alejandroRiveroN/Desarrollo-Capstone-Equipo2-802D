@@ -31,13 +31,18 @@
                     <input type="password" id="password" name="password" class="form-control" required>
                 </div>
 
-                <div class="d-grid">
+                <div class="d-grid mb-2">
                     <button type="submit" class="btn-acceder">Acceder</button>
                 </div>
             </form>
 
-            <div class="forgot-password">
+            <div class="text-center mb-2">
                 <a href="/contraseña_olvidada">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <!-- Botón para volver a la página principal -->
+            <div class="text-center">
+                <a href="/" class="btn btn-secondary">Volver a la página principal</a>
             </div>
         </div>
     </div>

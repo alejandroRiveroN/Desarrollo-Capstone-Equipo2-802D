@@ -18,9 +18,9 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
         <a href="<?php echo Flight::get('base_url'); ?>/"><i class="bi bi-gear-fill"></i> Sistema de Soporte integral</a>
     </div>
     <nav class="nav flex-column">
-        <a class="nav-link" href="<?php echo Flight::get('base_url'); ?>/"><i class="bi bi-speedometer2"></i> Dashboard</a>
+        <a class="nav-link" href="<?php echo Flight::get('base_url'); ?>/dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a>
         
-        <?php if (isset($_SESSION['id_rol']) && in_array($_SESSION['id_rol'], [1, 3])): // 1=Admin, 3=Supervisor ?>
+        <?php if (isset($_SESSION['id_rol']) && in_array($_SESSION['id_rol'], [1, 3, 4])): // 1=Admin, 3=Supervisor ?>
             <a class="nav-link" href="<?php echo Flight::get('base_url'); ?>/tickets/crear"><i class="bi bi-plus-circle"></i> Crear Ticket</a>
         <?php endif; ?>
         
@@ -35,22 +35,39 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 </div>
 
 <nav class="navbar navbar-dark bg-dark d-lg-none">
-    <div class="container-fluid">
-        <button class="navbar-toggler" type="button" id="sidebarToggleBtn">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="dropdown">
-            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-person-circle fs-4 me-2"></i>
-                <strong><?php echo htmlspecialchars($_SESSION['nombre_completo']); ?></strong>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end text-small shadow">
-                <li><a class="dropdown-item" href="<?php echo Flight::get('base_url'); ?>/password/cambiar"><i class="bi bi-key-fill me-2"></i> Cambiar Contraseña</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="<?php echo Flight::get('base_url'); ?>/logout"><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
-            </ul>
-        </div>
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" id="sidebarToggleBtn">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="dropdown ms-auto">
+      <button
+        class="btn btn-dark d-flex align-items-center dropdown-toggle"
+        id="userMenuMobile"
+        type="button"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
+      >
+        <i class="bi bi-person-circle fs-4 me-2"></i>
+        <strong><?php echo htmlspecialchars($_SESSION['nombre_completo']); ?></strong>
+      </button>
+
+      <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end text-small shadow"
+          aria-labelledby="userMenuMobile">
+        <li>
+          <a class="dropdown-item" href="<?php echo Flight::get('base_url'); ?>/password/cambiar">
+            <i class="bi bi-key-fill me-2"></i> Cambiar Contraseña
+          </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <a class="dropdown-item" href="<?php echo Flight::get('base_url'); ?>/logout">
+            <i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión
+          </a>
+        </li>
+      </ul>
     </div>
+  </div>
 </nav>
 
 <div class="user-bar d-none d-lg-flex">
@@ -66,5 +83,7 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
         </ul>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<div class="main-content">
+</body>
+</html>

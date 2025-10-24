@@ -25,7 +25,7 @@ class ClientController extends BaseController {
         $params = [];
 
         if (!empty($filtro_termino)) {
-            $where_conditions[] = "(nombre LIKE :termino OR empresa LIKE :termino OR correo_electronico LIKE :termino)";
+            $where_conditions[] = "(nombre LIKE :termino OR empresa LIKE :termino OR email LIKE :termino)";
             $params[':termino'] = '%' . $filtro_termino . '%';
         }
         if (!empty($filtro_telefono)) {
@@ -49,7 +49,8 @@ class ClientController extends BaseController {
         $request = \Flight::request();
         $filtros = self::_getClientesConFiltros($request);
 
-        $sql = "SELECT id_cliente, nombre, empresa, correo_electronico, telefono, pais, ciudad, activo FROM Clientes";
+        $sql = "SELECT id_cliente, nombre, empresa, email, telefono, pais, ciudad, activo FROM Clientes";
+
         if (!empty($filtros['where_conditions'])) {
             $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
         }
@@ -70,7 +71,6 @@ class ClientController extends BaseController {
     }
 
     public static function create() {
-        self::checkAuth();
         \Flight::render('crear_cliente.php', ['mensaje_error' => '']);
     }
 
@@ -81,7 +81,7 @@ class ClientController extends BaseController {
         $data = $request->data;
 
         $nombre = trim($data->nombre);
-        $correo_electronico = trim($data->correo_electronico);
+        $email = trim($data->email);
         $telefono = trim($data->telefono) ?: null;
         $empresa = trim($data->empresa) ?: null;
         $pais = trim($data->pais) ?: null;
@@ -92,29 +92,44 @@ class ClientController extends BaseController {
 
         if (empty($nombre) || empty($correo_electronico)) {
             \Flight::render('crear_cliente.php', ['mensaje_error' => "Los campos 'Nombre Completo' y 'Correo Electrónico' son obligatorios."]);
-        } else {
-            try {
-                $stmt = $pdo->prepare(
-                    "INSERT INTO Clientes (nombre, empresa, correo_electronico, telefono, pais, ciudad, whatsapp, telegram, activo) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-                );
-                $stmt->execute([$nombre, $empresa, $correo_electronico, $telefono, $pais, $ciudad, $whatsapp, $telegram, $activo]);
+            return;
+        }
 
-                // Guardar mensaje de éxito y forzar redirección absoluta
-                $_SESSION['mensaje_exito'] = '¡Cliente creado correctamente!';
-                $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes';
-                \Flight::redirect($url);
-                exit();
+        try {
+            $pdo->beginTransaction();
 
-            } catch (\Exception $e) {
-                // Verificar si el error es por una entrada duplicada (código de error 23000)
-                if ($e instanceof \PDOException && $e->getCode() == '23000') {
-                    $error_message = "El correo electrónico ya se encuentra registrado. Por favor, utiliza otro.";
-                } else {
-                    $error_message = "Error al crear el cliente: " . $e->getMessage();
-                }
-                \Flight::render('crear_cliente.php', ['mensaje_error' => $error_message]);
+            // 1️⃣ Insertar en Clientes
+            $stmt = $pdo->prepare(
+                "INSERT INTO Clientes (nombre, empresa, correo_electronico, telefono, pais, ciudad, whatsapp, telegram, activo) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            );
+            $stmt->execute([$nombre, $empresa, $correo_electronico, $telefono, $pais, $ciudad, $whatsapp, $telegram, $activo]);
+
+            // 2️⃣ Insertar en Usuarios (rol Cliente)
+            // Suponiendo que el rol Cliente tiene id_rol = 4
+            $password = bin2hex(random_bytes(4)); // contraseña temporal
+            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+
+            $stmtUser = $pdo->prepare("INSERT INTO usuarios (id_rol, nombre_completo, email, password_hash) VALUES (?, ?, ?, ?)");
+            $stmtUser->execute([4, $nombre, $correo_electronico, $password_hash]);
+
+            $pdo->commit();
+
+            // Al final de la creación
+            $_SESSION['mensaje_exito'] = '¡Registro completado con éxito! Ahora puedes iniciar sesión.';
+            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/';
+            \Flight::redirect($url);
+            exit();
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+
+            if ($e instanceof \PDOException && $e->getCode() == '23000') {
+                $error_message = "El correo electrónico ya se encuentra registrado. Por favor, utiliza otro.";
+            } else {
+                $error_message = "Error al crear el cliente: " . $e->getMessage();
             }
+
+            \Flight::render('crear_cliente.php', ['mensaje_error' => $error_message]);
         }
     }
 
@@ -144,7 +159,7 @@ class ClientController extends BaseController {
         $data = $request->data;
 
         $nombre = trim($data->nombre);
-        $correo_electronico = trim($data->correo_electronico);
+        $email = trim($data->email);
         $telefono = trim($data->telefono) ?: null;
         $empresa = trim($data->empresa) ?: null;
         $pais = trim($data->pais) ?: null;
@@ -205,6 +220,102 @@ class ClientController extends BaseController {
         exit();
     }
 
+    public static function publicRegister() {
+        $request = \Flight::request();
+        $data = $request->data;
+
+        // Recoger y normalizar datos
+        $nombre = trim($data->nombre ?? '');
+        $email = strtolower(trim($data->email ?? ''));
+        $telefono = trim($data->telefono) ?: null;
+        $empresa = trim($data->empresa) ?: null;
+        $pais = trim($data->pais) ?: null;
+        $ciudad = trim($data->ciudad) ?: null;
+        $whatsapp = trim($data->whatsapp) ?: null;
+        $telegram = trim($data->telegram) ?: null;
+        $password = $data->password ?? '';
+        $confirm_password = $data->confirmar_password ?? '';
+        $activo = 1;
+
+        // Validación básica servidor-side
+        $errors = [];
+        if ($nombre === '') $errors[] = "El campo Nombre es obligatorio.";
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Introduce un email válido.";
+        if ($password === '' || $confirm_password === '') $errors[] = "Introduce y confirma la contraseña.";
+        if ($password !== $confirm_password) $errors[] = "Las contraseñas no coinciden.";
+
+        // Validación mínima de seguridad de la contraseña (refuerzo servidor-side)
+        if (strlen($password) < 8) $errors[] = "La contraseña debe tener al menos 8 caracteres.";
+        if (!preg_match('/[a-z]/', $password)) $errors[] = "La contraseña debe contener al menos una letra minúscula.";
+        if (!preg_match('/[A-Z]/', $password)) $errors[] = "La contraseña debe contener al menos una letra mayúscula.";
+        if (!preg_match('/[0-9]/', $password)) $errors[] = "La contraseña debe contener al menos un número.";
+        if (!preg_match('/[^A-Za-z0-9]/', $password)) $errors[] = "La contraseña debe contener al menos un carácter especial.";
+
+        if (!empty($errors)) {
+            \Flight::render('registro_cliente.php', [
+                'mensaje_error' => implode(' ', $errors),
+                'nombre' => $nombre,
+                'email' => $email,
+                'telefono' => $telefono,
+                'empresa' => $empresa,
+                'pais' => $pais,
+                'ciudad' => $ciudad,
+                'whatsapp' => $whatsapp,
+                'telegram' => $telegram
+            ]);
+            return;
+        }
+
+        try {
+            $pdo = \Flight::db();
+            $pdo->beginTransaction();
+
+            // Insertar en Clientes (usar columna email en la tabla Clientes)
+            $stmt = $pdo->prepare(
+                "INSERT INTO Clientes (nombre, empresa, email, telefono, pais, ciudad, whatsapp, telegram, activo) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            );
+            $stmt->execute([$nombre, $empresa, $email, $telefono, $pais, $ciudad, $whatsapp, $telegram, $activo]);
+
+            // Hash de la contraseña elegida por el usuario
+            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+
+            // Insertar en Usuarios (rol Cliente = 4)
+            $stmtUser = $pdo->prepare(
+                "INSERT INTO usuarios (id_rol, nombre_completo, email, password_hash, activo) VALUES (?, ?, ?, ?, ?)"
+            );
+            $stmtUser->execute([4, $nombre, $email, $password_hash, 1]);
+
+            $pdo->commit();
+
+            $_SESSION['mensaje_exito'] = "¡Registro exitoso! Ya puedes iniciar sesión.";
+            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/';
+            \Flight::redirect($url);
+            exit();
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            // Detectar email duplicado
+            if ($e instanceof \PDOException && $e->getCode() == '23000') {
+                $error_message = "El correo ya está registrado.";
+            } else {
+                $error_message = "Error al registrar: " . $e->getMessage();
+            }
+
+            \Flight::render('registro_cliente.php', [
+                'mensaje_error' => $error_message,
+                'nombre' => $nombre,
+                'email' => $email,
+                'telefono' => $telefono,
+                'empresa' => $empresa,
+                'pais' => $pais,
+                'ciudad' => $ciudad,
+                'whatsapp' => $whatsapp,
+                'telegram' => $telegram
+            ]);
+        }
+    }
+
+
     public static function exportExcel() {
         self::checkAuth();
         $pdo = \Flight::db();
@@ -263,13 +374,13 @@ class ClientController extends BaseController {
 
         // Añadir los encabezados
         $sheet->setCellValue('A1', 'ID')->setCellValue('B1', 'Nombre Completo')->setCellValue('C1', 'Email')->setCellValue('D1', 'Teléfono')->setCellValue('E1', 'Empresa')->setCellValue('F1', 'País')->setCellValue('G1', 'Ciudad')->setCellValue('H1', 'WhatsApp')->setCellValue('I1', 'Telegram')->setCellValue('J1', 'Estado');
-
+        
         // Rellenar los datos
         $row = 2;
         foreach ($clientes as $cliente) {
             $sheet->setCellValue('A' . $row, $cliente['id_cliente']);
             $sheet->setCellValue('B' . $row, $cliente['nombre']);
-            $sheet->setCellValue('C' . $row, $cliente['correo_electronico']);
+            $sheet->setCellValue('C' . $row, $cliente['email']);
             $sheet->setCellValue('D' . $row, $cliente['telefono']);
             $sheet->setCellValue('E' . $row, $cliente['empresa']);
             $sheet->setCellValue('F' . $row, $cliente['pais']);
@@ -310,7 +421,7 @@ class ClientController extends BaseController {
         $pdf->AddPage();
         $pdf->SetFont('Arial', 'B', 8);
         $pdf->Cell(35, 7, 'Nombre', 1);
-        $pdf->Cell(50, 7, 'Email', 1);
+        $pdf->Cell(50, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['email']), 1);
         $pdf->Cell(25, 7, 'Telefono', 1);
         $pdf->Cell(40, 7, 'Empresa', 1);
         $pdf->Cell(30, 7, 'Pais', 1);
@@ -322,7 +433,7 @@ class ClientController extends BaseController {
         $pdf->SetFont('Arial', '', 7);
         foreach ($clientes as $cliente) {
             $pdf->Cell(35, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['nombre']), 1);
-            $pdf->Cell(50, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['correo_electronico']), 1);
+            $pdf->Cell(50, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['email']), 1);
             $pdf->Cell(25, 7, $cliente['telefono'], 1);
             $pdf->Cell(40, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['empresa']), 1);
             $pdf->Cell(30, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['pais']), 1);

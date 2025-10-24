@@ -19,7 +19,7 @@
                 </div>
                 <div class="col-12">
                     <label for="correo_electronico" class="form-label">Correo Electrónico *</label>
-                    <input type="email" class="form-control" id="correo_electronico" name="correo_electronico" value="<?php echo htmlspecialchars($cliente['correo_electronico']); ?>" required>
+                    <input type="email" id="correo_electronico" name="email" class="form-control" required value="<?php echo $email ?? ''; ?>">
                 </div>
                 <div class="col-12">
                     <label for="telefono" class="form-label">Teléfono</label>
