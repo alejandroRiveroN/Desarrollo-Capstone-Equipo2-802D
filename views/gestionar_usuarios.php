@@ -1,5 +1,8 @@
 <?php require_once __DIR__ . '/partials/header.php'; ?>
 
+<!-- Contenedor principal con padding -->
+<div class="container-fluid p-4">
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">Gestionar Usuarios</h2>
     <a href="<?php echo Flight::get('base_url'); ?>/usuarios/crear" class="btn btn-success"><i class="bi bi-person-plus-fill"></i> Crear Nuevo Usuario</a>
@@ -17,7 +20,7 @@ if (isset($_SESSION['mensaje_error'])) {
 ?>
 
 <div class="card">
-    <div class="card-body">
+    <div class="card-body p-4">
         <div class="table-responsive">
             <table class="table table-striped table-hover align-middle">
                 <thead class="table-dark">
@@ -90,3 +93,5 @@ if (deleteUserModal) {
 </script>
 
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
+
+</div> <!-- Fin del contenedor principal -->

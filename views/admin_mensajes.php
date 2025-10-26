@@ -1,5 +1,8 @@
 <?php require_once __DIR__ . '/partials/header.php'; ?>
 
+<!-- Contenedor principal con padding -->
+<div class="container-fluid p-4">
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="bi bi-envelope-paper-fill"></i> Mensajes de Contacto</h2>
 </div>
@@ -19,7 +22,7 @@ if (isset($_SESSION['mensaje_error'])) {
     <div class="card-header fw-bold">
         Bandeja de Entrada (<?php echo count($mensajes); ?>)
     </div>
-    <div class="card-body">
+    <div class="card-body p-4">
         <div class="table-responsive">
             <table class="table table-striped table-hover align-middle">
                 <thead class="table-dark">
@@ -58,3 +61,5 @@ if (isset($_SESSION['mensaje_error'])) {
 </div>
 
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
+
+</div> <!-- Fin del contenedor principal -->

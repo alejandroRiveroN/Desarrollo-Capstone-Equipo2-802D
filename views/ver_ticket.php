@@ -8,6 +8,9 @@ $estados_disponibles = ['Abierto', 'En Progreso', 'En Espera', 'Resuelto'];
 $is_ticket_finalizado = in_array($ticket['estado'], ['Resuelto', 'Cerrado', 'Anulado']);
 ?>
 
+<!-- Contenedor principal con padding -->
+<div class="container-fluid p-4">
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3>Ticket #<?php echo htmlspecialchars($ticket['id_ticket']); ?>: <?php echo htmlspecialchars($ticket['asunto']); ?></h3>
     <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
@@ -171,7 +174,7 @@ if (isset($_SESSION['mensaje_exito'])) {
                             continue;
                         }
                         ?>
-                        <div class="mb-3 p-3 rounded <?php echo $comentario['es_privado'] ? 'border border-warning' : 'bg-light'; ?>">
+                        <div class="mb-3 p-3 rounded <?php echo $comentario['es_privado'] ? 'border border-warning bg-light-warning' : 'bg-light'; ?>">
                             <div class="d-flex justify-content-between">
                                 <strong><i class="bi <?php echo $comentario['tipo_autor'] == 'Agente' ? 'bi-person-gear' : 'bi-person-circle'; ?>"></i> <?php echo htmlspecialchars($comentario['nombre_autor']); ?></strong>
                                 <small class="text-muted"><?php echo date('d/m/Y H:i', strtotime($comentario['fecha_creacion'])); ?></small>
@@ -250,3 +253,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+</div> <!-- Fin del contenedor principal -->

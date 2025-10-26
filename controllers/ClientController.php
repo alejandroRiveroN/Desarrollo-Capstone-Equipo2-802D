@@ -86,8 +86,6 @@ class ClientController extends BaseController {
         $empresa = trim($data->empresa) ?: null;
         $pais = trim($data->pais) ?: null;
         $ciudad = trim($data->ciudad) ?: null;
-        $whatsapp = trim($data->whatsapp) ?: null;
-        $telegram = trim($data->telegram) ?: null;
         $activo = isset($data->activo) ? 1 : 0;
 
         if (empty($nombre) || empty($correo_electronico)) {
@@ -100,10 +98,10 @@ class ClientController extends BaseController {
 
             // 1️⃣ Insertar en Clientes
             $stmt = $pdo->prepare(
-                "INSERT INTO Clientes (nombre, empresa, correo_electronico, telefono, pais, ciudad, whatsapp, telegram, activo) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                "INSERT INTO Clientes (nombre, empresa, correo_electronico, telefono, pais, ciudad, activo) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)"
             );
-            $stmt->execute([$nombre, $empresa, $correo_electronico, $telefono, $pais, $ciudad, $whatsapp, $telegram, $activo]);
+            $stmt->execute([$nombre, $empresa, $correo_electronico, $telefono, $pais, $ciudad, $activo]);
 
             // 2️⃣ Insertar en Usuarios (rol Cliente)
             // Suponiendo que el rol Cliente tiene id_rol = 4
@@ -164,8 +162,6 @@ class ClientController extends BaseController {
         $empresa = trim($data->empresa) ?: null;
         $pais = trim($data->pais) ?: null;
         $ciudad = trim($data->ciudad) ?: null;
-        $whatsapp = trim($data->whatsapp) ?: null;
-        $telegram = trim($data->telegram) ?: null;
         $activo = isset($data->activo) ? 1 : 0;
 
         if (empty($nombre) || empty($correo_electronico)) {
@@ -179,9 +175,9 @@ class ClientController extends BaseController {
         } else {
             try {
                 $stmt = $pdo->prepare(
-                    "UPDATE Clientes SET nombre = ?, empresa = ?, correo_electronico = ?, telefono = ?, pais = ?, ciudad = ?, whatsapp = ?, telegram = ?, activo = ? WHERE id_cliente = ?"
+                    "UPDATE Clientes SET nombre = ?, empresa = ?, correo_electronico = ?, telefono = ?, pais = ?, ciudad = ?, activo = ? WHERE id_cliente = ?"
                 );
-                $stmt->execute([$nombre, $empresa, $correo_electronico, $telefono, $pais, $ciudad, $whatsapp, $telegram, $activo, $id]);
+                $stmt->execute([$nombre, $empresa, $correo_electronico, $telefono, $pais, $ciudad, $activo, $id]);
                 $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes?status=updated';
                 \Flight::redirect($url);
             } catch (\Exception $e) {
@@ -231,8 +227,6 @@ class ClientController extends BaseController {
         $empresa = trim($data->empresa) ?: null;
         $pais = trim($data->pais) ?: null;
         $ciudad = trim($data->ciudad) ?: null;
-        $whatsapp = trim($data->whatsapp) ?: null;
-        $telegram = trim($data->telegram) ?: null;
         $password = $data->password ?? '';
         $confirm_password = $data->confirmar_password ?? '';
         $activo = 1;
@@ -258,24 +252,22 @@ class ClientController extends BaseController {
                 'email' => $email,
                 'telefono' => $telefono,
                 'empresa' => $empresa,
-                'pais' => $pais,
-                'ciudad' => $ciudad,
-                'whatsapp' => $whatsapp,
-                'telegram' => $telegram
+                'pais' => $pais, 
+                'ciudad' => $ciudad
             ]);
             return;
         }
-
+        
         try {
             $pdo = \Flight::db();
             $pdo->beginTransaction();
 
             // Insertar en Clientes (usar columna email en la tabla Clientes)
             $stmt = $pdo->prepare(
-                "INSERT INTO Clientes (nombre, empresa, email, telefono, pais, ciudad, whatsapp, telegram, activo) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                "INSERT INTO Clientes (nombre, empresa, email, telefono, pais, ciudad, activo) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)"
             );
-            $stmt->execute([$nombre, $empresa, $email, $telefono, $pais, $ciudad, $whatsapp, $telegram, $activo]);
+            $stmt->execute([$nombre, $empresa, $email, $telefono, $pais, $ciudad, $activo]);
 
             // Hash de la contraseña elegida por el usuario
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
@@ -307,10 +299,8 @@ class ClientController extends BaseController {
                 'email' => $email,
                 'telefono' => $telefono,
                 'empresa' => $empresa,
-                'pais' => $pais,
-                'ciudad' => $ciudad,
-                'whatsapp' => $whatsapp,
-                'telegram' => $telegram
+                'pais' => $pais, 
+                'ciudad' => $ciudad
             ]);
         }
     }
@@ -348,32 +338,29 @@ class ClientController extends BaseController {
         ];
         $sheet->getStyle('A1:J1')->applyFromArray($headerStyle);
         $sheet->getRowDimension('1')->setRowHeight(20);
-
+        
         // 2. Ajustar ancho de columnas
         $sheet->getColumnDimension('A')->setAutoSize(true);
         $sheet->getColumnDimension('B')->setWidth(30);
         $sheet->getColumnDimension('C')->setWidth(30);
         $sheet->getColumnDimension('D')->setAutoSize(true);
         $sheet->getColumnDimension('E')->setWidth(20);
-        $sheet->getColumnDimension('F')->setAutoSize(true);
-        $sheet->getColumnDimension('G')->setAutoSize(true);
-        $sheet->getColumnDimension('H')->setAutoSize(true);
-        $sheet->getColumnDimension('I')->setAutoSize(true);
-        $sheet->getColumnDimension('J')->setAutoSize(true);
-
+        $sheet->getColumnDimension('F')->setAutoSize(true); 
+        $sheet->getColumnDimension('G')->setAutoSize(true); 
+        $sheet->getColumnDimension('H')->setAutoSize(true); 
+        
         // 3. Forzar formato de texto para teléfonos para evitar notación científica
         $sheet->getStyle('D')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
-        $sheet->getStyle('H')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
 
         // 4. Centrar verticalmente todas las celdas
-        $sheet->getStyle('A1:J' . (count($clientes) + 1))->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('A1:H' . (count($clientes) + 1))->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
 
         // --- FIN DE APLICACIÓN DE FORMATO ---
 
 
         // Añadir los encabezados
-        $sheet->setCellValue('A1', 'ID')->setCellValue('B1', 'Nombre Completo')->setCellValue('C1', 'Email')->setCellValue('D1', 'Teléfono')->setCellValue('E1', 'Empresa')->setCellValue('F1', 'País')->setCellValue('G1', 'Ciudad')->setCellValue('H1', 'WhatsApp')->setCellValue('I1', 'Telegram')->setCellValue('J1', 'Estado');
+        $sheet->setCellValue('A1', 'ID')->setCellValue('B1', 'Nombre Completo')->setCellValue('C1', 'Email')->setCellValue('D1', 'Teléfono')->setCellValue('E1', 'Empresa')->setCellValue('F1', 'País')->setCellValue('G1', 'Ciudad')->setCellValue('H1', 'Estado');
         
         // Rellenar los datos
         $row = 2;
@@ -385,9 +372,7 @@ class ClientController extends BaseController {
             $sheet->setCellValue('E' . $row, $cliente['empresa']);
             $sheet->setCellValue('F' . $row, $cliente['pais']);
             $sheet->setCellValue('G' . $row, $cliente['ciudad']);
-            $sheet->setCellValue('H' . $row, $cliente['whatsapp']);
-            $sheet->setCellValue('I' . $row, $cliente['telegram']);
-            $sheet->setCellValue('J' . $row, $cliente['activo'] ? 'Activo' : 'Inactivo');
+            $sheet->setCellValue('H' . $row, $cliente['activo'] ? 'Activo' : 'Inactivo');
             $row++;
         }
 
@@ -422,24 +407,22 @@ class ClientController extends BaseController {
         $pdf->SetFont('Arial', 'B', 8);
         $pdf->Cell(35, 7, 'Nombre', 1);
         $pdf->Cell(50, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['email']), 1);
-        $pdf->Cell(25, 7, 'Telefono', 1);
+        $pdf->Cell(30, 7, 'Telefono', 1);
         $pdf->Cell(40, 7, 'Empresa', 1);
         $pdf->Cell(30, 7, 'Pais', 1);
         $pdf->Cell(30, 7, 'Ciudad', 1);
-        $pdf->Cell(25, 7, 'WhatsApp', 1);
-        $pdf->Cell(20, 7, 'Estado', 1);
+        $pdf->Cell(30, 7, 'Estado', 1);
         $pdf->Ln();
 
         $pdf->SetFont('Arial', '', 7);
         foreach ($clientes as $cliente) {
             $pdf->Cell(35, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['nombre']), 1);
             $pdf->Cell(50, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['email']), 1);
-            $pdf->Cell(25, 7, $cliente['telefono'], 1);
+            $pdf->Cell(30, 7, $cliente['telefono'], 1);
             $pdf->Cell(40, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['empresa']), 1);
             $pdf->Cell(30, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['pais']), 1);
             $pdf->Cell(30, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['ciudad']), 1);
-            $pdf->Cell(25, 7, $cliente['whatsapp'], 1);
-            $pdf->Cell(20, 7, $cliente['activo'] ? 'Activo' : 'Inactivo', 1);
+            $pdf->Cell(30, 7, $cliente['activo'] ? 'Activo' : 'Inactivo', 1);
             $pdf->Ln();
         }
         $pdf->Output('D', 'reporte_clientes.pdf');

@@ -1,22 +1,41 @@
-/* --- Estilos para la página de login --- */
+/*1.**`body`**:
+*- Utiliza `display: flex` para centrar el contenido tanto horizontal (`justify-content: center`) como verticalmente (`align-items: center`).
+*/
 body {
     background-color: #f2f4f7;
     display: flex;
-    align-items: center;
+    align-items: center; /* Centra verticalmente por defecto */
     justify-content: center;
-    height: 100%;
+    min-height: 100vh;
     font-family: "Segoe UI", sans-serif;
 }
 
+/*2.**`body.page-registro`**:
+*- Sobrescribe `align-items` a `flex-start` para alinear el formulario en la parte superior. Esto es crucial porque el formulario de registro es más largo y así se evita que se corte en pantallas con poca altura.
+*/
+body.page-registro {
+    align-items: flex-start;
+}
+
+
+/*3.**`.login-card`**:
+*-contenedor principal para los formularios.
+*- Tiene un `max-width` para mantener una apariencia legible en escritorios y un `margin` vertical para dar espacio cuando se necesita hacer scroll.
+*/
 .login-card {
     width: 100%;
     max-width: 500px;
+    margin: 2rem 0; /* Añade el margen vertical para dar espacio cuando hay scroll */  /* Solucione el problema del margen y centrado del login . Atte Alejandro */
     border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     overflow: hidden;
     background: #fff;
 }
 
+
+/*4.**`.login-header` y `.login-body`**:
+*-Separo la cabecera (con el título) del cuerpo del formulario.
+*/
 .login-header {
     background-color: #133C55;
     color: #fff;
@@ -42,6 +61,12 @@ body {
 .form-label {
     font-weight: 500;
 }
+
+
+
+/*5.**`.btn-acceder`**:
+*- Estilo para los botones principales de acción.
+*/
 
 .btn-acceder {
     background-color: #00b894;
@@ -71,4 +96,3 @@ body {
 .forgot-password a:hover {
     text-decoration: underline;
 }
-

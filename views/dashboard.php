@@ -1,6 +1,9 @@
 <!-- 1. Inclusión del Header -->
 <?php require_once __DIR__ . '/partials/header.php'; ?>
 
+<!-- Contenedor principal con padding -->
+<div class="container-fluid p-4">
+
 <!-- Título del Dashboard -->
 <h2 class="mb-4">Dashboard General</h2>
 
@@ -265,3 +268,5 @@ document.addEventListener("DOMContentLoaded", function() {
 
 <!-- 6. Inclusión del pie de página -->
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
+
+</div> <!-- Fin del contenedor principal -->

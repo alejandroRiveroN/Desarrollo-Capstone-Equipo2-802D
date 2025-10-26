@@ -1,0 +1,13 @@
+/**
+ * =================================================================
+ * Hoja de Estilos para la Administración (`admin.css`)
+ * =================================================================
+ *
+ * Contiene estilos específicos para las secciones de administración
+ * del sistema, como la página de limpieza, reportes especiales, etc.
+ */
+
+/* Oculta por defecto el contenedor de resultados en la página de limpieza */
+.test-results-container {
+    display: none;
+}

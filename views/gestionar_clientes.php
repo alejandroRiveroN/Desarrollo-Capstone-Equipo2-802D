@@ -1,5 +1,8 @@
 <?php require_once __DIR__ . '/partials/header.php'; ?>
 
+<!-- Contenedor principal con padding -->
+<div class="container-fluid p-4">
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="bi bi-people-fill"></i> Gestión de Clientes</h2>
     <a href="<?php echo Flight::get('base_url'); ?>/clientes/crear" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Añadir Nuevo Cliente</a>
@@ -19,7 +22,7 @@ if (isset($_SESSION['mensaje_error'])) {
 <div class="card mb-4">
     <div class="card-header fw-bold"><a class="text-decoration-none text-dark" data-bs-toggle="collapse" href="#collapseFilters" role="button" aria-expanded="true"><i class="bi bi-funnel-fill"></i> Filtros y Reportes</a></div>
     <div class="collapse show" id="collapseFilters">
-        <div class="card-body">
+        <div class="card-body p-4">
             <form id="formFiltrosClientes" action="/clientes" method="GET" class="row g-3">
                 <div class="col-md-4">
                     <label for="termino" class="form-label">Buscar por Nombre o Empresa:</label>
@@ -62,7 +65,7 @@ if (isset($_SESSION['mensaje_error'])) {
     <div class="card-header fw-bold">
         Lista de Clientes (<?php echo count($clientes); ?> encontrados)
     </div>
-    <div class="card-body">
+    <div class="card-body p-4">
         <div class="table-responsive">
             <table class="table table-striped table-hover align-middle">
                 <thead class="table-dark">
@@ -161,3 +164,5 @@ if (deleteClientModal) {
 </script>
 
 <?php require_once 'partials/footer.php'; ?>
+
+</div> <!-- Fin del contenedor principal -->

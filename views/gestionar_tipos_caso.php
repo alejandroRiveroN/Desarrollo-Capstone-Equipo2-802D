@@ -1,5 +1,8 @@
 <?php require_once __DIR__ . '/partials/header.php'; ?>
 
+<!-- Contenedor principal con padding -->
+<div class="container-fluid p-4">
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">Gestionar Tipos de Caso</h2>
 </div>
@@ -21,7 +24,7 @@ if (isset($_SESSION['mensaje_error'])) {
             <div class="card-header fw-bold">
                 <?php echo empty($tipo_caso_actual['id_tipo_caso']) ? 'Añadir Nuevo Tipo de Caso' : 'Editando Tipo de Caso'; ?>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <form action="<?php echo Flight::get('base_url'); ?>/casos/tipos<?php echo empty($tipo_caso_actual['id_tipo_caso']) ? '' : '/editar/' . $tipo_caso_actual['id_tipo_caso']; ?>" method="POST">
                     <input type="hidden" name="id_tipo_caso" value="<?php echo htmlspecialchars($tipo_caso_actual['id_tipo_caso']); ?>">
                     
@@ -52,9 +55,9 @@ if (isset($_SESSION['mensaje_error'])) {
     <div class="col-md-8">
         <div class="card">
             <div class="card-header fw-bold">Lista de Tipos de Caso</div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-hover align-middle">
                         <thead class="table-dark">
                             <tr><th>Nombre</th><th>Descripción</th><th>Estado</th><th>Acciones</th></tr>
                         </thead>
@@ -128,3 +131,5 @@ if (deleteTipoCasoModal) {
 </script>
 
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
+
+</div> <!-- Fin del contenedor principal -->

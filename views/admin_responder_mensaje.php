@@ -1,5 +1,8 @@
 <?php require_once __DIR__ . '/partials/header.php'; ?>
 
+<!-- Contenedor principal con padding -->
+<div class="container-fluid p-4">
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="bi bi-chat-left-text-fill"></i> Ver Mensaje de Contacto</h2>
     <a href="<?php echo Flight::get('base_url'); ?>/admin/mensajes" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver a la Bandeja</a>
@@ -60,3 +63,5 @@ if (isset($_SESSION['mensaje_error'])) {
 </div>
 
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
+
+</div> <!-- Fin del contenedor principal -->

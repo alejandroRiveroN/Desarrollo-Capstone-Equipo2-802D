@@ -27,7 +27,7 @@
         <div class="card-body">
             <p>Esta herramienta busca tickets cerrados o resueltos hace más de un año y te permite borrarlos para mantener la base de datos limpia.</p>
             <button id="btn-test-limpieza" class="btn btn-info">Verificar Tickets a Borrar (Simulación)</button>
-            <div id="test-results-container" class="mt-3" style="display: none;">
+            <div id="test-results-container" class="mt-3 test-results-container">
                 <h4>Resultados de la Simulación</h4>
                 <p><strong id="test-results-count"></strong></p>
                 <ul id="test-results-list"></ul>
@@ -100,7 +100,7 @@ document.getElementById('btn-test-limpieza').addEventListener('click', function(
     const resultsCount = document.getElementById('test-results-count');
     const resultsList = document.getElementById('test-results-list');
 
-    resultsContainer.style.display = 'block';
+    resultsContainer.classList.remove('test-results-container'); // O resultsContainer.style.display = 'block';
     resultsCount.textContent = 'Cargando...';
     resultsList.innerHTML = '';
 

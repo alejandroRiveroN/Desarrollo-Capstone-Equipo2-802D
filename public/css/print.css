@@ -1,0 +1,33 @@
+/**
+ * =================================================================
+ * Hoja de Estilos para Impresión (`print.css`)
+ * =================================================================
+ *
+ * ### Descripción
+ *
+ * Este archivo contiene los estilos unificados para las páginas
+ * diseñadas para ser impresas, como reportes de clientes, tickets, etc.
+ *
+ */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 15mm; /* Márgenes para impresión */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    text-align: left;
+    font-size: 9pt; /* Tamaño de fuente legible para impresión */
+}
+
+th {
+    background-color: #f2f2f2;
+}

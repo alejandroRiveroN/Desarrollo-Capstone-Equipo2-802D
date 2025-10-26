@@ -6,15 +6,10 @@ $titulo_reporte = "Reporte de Tickets";
 <head>
     <meta charset="UTF-8">
     <title><?php echo htmlspecialchars($titulo_reporte); ?></title>
-    <style>
-        body { font-family: Arial, sans-serif; } table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 6px; text-align: left; font-size: 9px; }
-        th { background-color: #f2f2f2; } h1 { text-align: center; }
-        @media print { h1 { display: none; } }
-    </style>
+    <link rel="stylesheet" href="<?php echo Flight::get('base_url'); ?>/css/print.css">
 </head>
 <body onload="window.print()">
-    <h1><?php echo htmlspecialchars($titulo_reporte); ?></h1>
+    <h1 style="text-align: center;"><?php echo htmlspecialchars($titulo_reporte); ?></h1>
     <table>
         <thead>
             <tr>
