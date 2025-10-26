@@ -29,6 +29,10 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
             <a class="nav-link" href="<?php echo Flight::get('base_url'); ?>/clientes"><i class="bi bi-people-fill"></i> Clientes</a>
             <a class="nav-link" href="<?php echo Flight::get('base_url'); ?>/usuarios"><i class="bi bi-person-badge-fill"></i> Usuarios</a>
             <a class="nav-link" href="<?php echo Flight::get('base_url'); ?>/casos/tipos"><i class="bi bi-tags-fill"></i> Tipos de Caso</a>
+            <!-- Enlace a Mensajes de Contacto -->
+            <a class="nav-link" href="<?php echo Flight::get('base_url'); ?>/admin/mensajes">
+                <div class="sb-nav-link-icon"><i class="bi bi-envelope-paper-fill"></i></div> Mensajes de Contacto
+            </a>
             <a class="nav-link" href="<?php echo Flight::get('base_url'); ?>/backup"><i class="bi bi-database-down"></i> Copia de Seguridad</a>
         <?php endif; ?>
     </nav>

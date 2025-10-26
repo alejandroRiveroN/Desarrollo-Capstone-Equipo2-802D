@@ -1,6 +1,8 @@
 <?php
-
 namespace App\Controllers;
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 class AdminController extends BaseController {
 
@@ -77,5 +79,105 @@ class AdminController extends BaseController {
 
         \Flight::render('limpieza.php', ['mensaje' => $mensaje, 'error' => $error]);
     }
+    
+    /**
+     * Muestra la lista de mensajes de contacto.
+     */
+    public static function viewMessages()
+    {
+        self::checkAdmin();
+        $pdo = \Flight::db();
+        $stmt = $pdo->query("SELECT * FROM Formulario_contacto ORDER BY fecha_creacion DESC");
+        $mensajes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
+        \Flight::render('admin_mensajes.php', ['mensajes' => $mensajes]);
+    }
+
+    /**
+     * Muestra un mensaje específico y el formulario para responder.
+     */
+    public static function viewMessage($id)
+    {
+        self::checkAdmin();
+        $pdo = \Flight::db();
+        $stmt = $pdo->prepare("SELECT cm.*, u.nombre_completo as nombre_admin FROM Formulario_contacto cm LEFT JOIN usuarios u ON cm.id_admin_respuesta = u.id_usuario WHERE cm.id = ?");
+        $stmt->execute([$id]);
+        $mensaje = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$mensaje) {
+            \Flight::redirect('/admin/mensajes');
+            exit();
+        }
+
+        \Flight::render('admin_responder_mensaje.php', ['mensaje' => $mensaje]);
+    }
+
+    /**
+     * Procesa y envía la respuesta a un mensaje de contacto.
+     */
+    public static function replyToMessage($id)
+    {
+        self::checkAdmin();
+        // Construir la URL de retorno de forma anticipada para usarla en todos los casos.
+        $redirect_url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/admin/mensajes/ver/' . $id;
+
+        $request = \Flight::request();
+        $respuesta = trim($request->data->respuesta ?? '');
+
+        if (empty($respuesta)) {
+            $_SESSION['mensaje_error'] = 'La respuesta no puede estar vacía.';
+            \Flight::redirect($redirect_url);
+            exit();
+        }
+
+        $pdo = \Flight::db();
+        $stmt = $pdo->prepare("SELECT * FROM Formulario_contacto WHERE id = ?");
+        $stmt->execute([$id]);
+        $mensaje_original = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$mensaje_original) {
+            \Flight::redirect('http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/admin/mensajes');
+            exit();
+        }
+
+        // Enviar correo con PHPMailer
+        $mail = new PHPMailer(true);
+        try {
+            // Configuración del servidor SMTP
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'maixtebipulento@gmail.com'; // TU CORREO DE GMAIL
+            $mail->Password = 'fkoh kfqm kymf ojos';      // TU CONTRASEÑA DE APLICACIÓN DE GMAIL
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = 587;
+            $mail->CharSet = 'UTF-8';
+            $mail->setLanguage('es', '../vendor/phpmailer/phpmailer/language/');
+
+            // Contenido del correo
+            $mail->setFrom('soporte@mce-ti.com', 'Soporte MCE');
+            $mail->addAddress($mensaje_original['email'], $mensaje_original['nombre']);
+            $mail->addReplyTo('soporte@mce-ti.com', 'Soporte MCE');
+
+            $mail->isHTML(true);
+            $mail->Subject = 'Re: Tu consulta a MCE';
+            $mail->Body    = "Hola " . htmlspecialchars($mensaje_original['nombre']) . ",<br><br>" .
+                             "Gracias por contactarnos. Aquí está la respuesta a tu consulta:<br><br>" .
+                             "<div style='padding: 15px; border-left: 4px solid #ccc; background-color: #f9f9f9;'>" . nl2br(htmlspecialchars($respuesta)) . "</div><br>" .
+                             "Saludos,<br>El equipo de MCE.";
+
+            $mail->send();
+
+            // Actualizar la base de datos si el correo se envió correctamente
+            $stmt_update = $pdo->prepare("UPDATE Formulario_contacto SET respuesta = ?, id_admin_respuesta = ?, fecha_respuesta = NOW(), estado = 'Respondido' WHERE id = ?");
+            $stmt_update->execute([$respuesta, $_SESSION['id_usuario'], $id]);
+
+            $_SESSION['mensaje_exito'] = 'Respuesta enviada y registrada correctamente.';
+            \Flight::redirect($redirect_url);
+
+        } catch (Exception $e) {
+            $_SESSION['mensaje_error'] = "La respuesta no pudo ser enviada. Error de PHPMailer: {$mail->ErrorInfo}";
+            \Flight::redirect($redirect_url);
+        }
+    }
 }

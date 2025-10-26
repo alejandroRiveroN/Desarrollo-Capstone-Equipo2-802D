@@ -33,6 +33,7 @@ Flight::route('GET /logout', function () {
 Flight::route('GET /', function () {
     Flight::render('landingpage.php'); // Renderiza PHP nativo, no display()
 });
+Flight::route('POST /contact', ['App\Controllers\ContactController', 'send']);
 Flight::route('GET /dashboard', ['App\Controllers\DashboardController', 'index']);
 
 // --- RUTAS DE CLIENTES ---
@@ -86,6 +87,9 @@ Flight::route('GET /admin/limpieza', ['App\Controllers\AdminController', 'limpie
 Flight::route('POST /admin/limpieza/test', ['App\Controllers\AdminController', 'limpiezaTest']);
 Flight::route('POST /admin/limpieza/total', ['App\Controllers\AdminController', 'limpiezaTotal']);
 Flight::route('POST /admin/limpieza/reset', ['App\Controllers\AdminController', 'limpiezaReset']);
+Flight::route('GET /admin/mensajes', ['App\Controllers\AdminController', 'viewMessages']);
+Flight::route('GET /admin/mensajes/ver/@id', ['App\Controllers\AdminController', 'viewMessage']);
+Flight::route('POST /admin/mensajes/responder/@id', ['App\Controllers\AdminController', 'replyToMessage']);
 
 // --- RUTAS DE TICKETS ---
 Flight::route('GET /tickets/crear', ['App\Controllers\TicketController', 'create']);

@@ -11,6 +11,15 @@ $status = $_GET['status'] ?? '';
         <span class="close-alert" onclick="this.parentElement.style.display='none'">&times;</span>
     </div>
 <?php endif; ?>
+<?php if(isset($_SESSION['mensaje_error'])): ?>
+    <div class="alert-error">
+        <?php 
+            echo $_SESSION['mensaje_error']; 
+            unset($_SESSION['mensaje_error']);
+        ?>
+        <span class="close-alert" onclick="this.parentElement.style.display='none'">&times;</span>
+    </div>
+<?php endif; ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -158,10 +167,42 @@ $status = $_GET['status'] ?? '';
                 </div>
             </div>
         </section>
+
+        <!-- Formulario de Contacto -->
+        <section id="contact" class="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-4xl font-extrabold text-mce-primary text-center mb-4">Ponte en Contacto</h2>
+                <p class="text-xl text-gray-600 text-center mb-12">¿Tienes alguna pregunta? Envíanos un mensaje y te responderemos a la brevedad.</p>
+                
+                <form action="<?php echo Flight::get('base_url'); ?>/contact" method="POST" class="space-y-6">
+                    <div>
+                        <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre y Apellidos</label>
+                        <div class="mt-1">
+                            <input type="text" name="nombre" id="nombre" required class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-mce-secondary focus:border-mce-secondary transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+                        <div class="mt-1">
+                            <input type="email" name="email" id="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-mce-secondary focus:border-mce-secondary transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="mensaje" class="block text-sm font-medium text-gray-700">Mensaje</label>
+                        <div class="mt-1">
+                            <textarea id="mensaje" name="mensaje" rows="4" required class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-mce-secondary focus:border-mce-secondary transition"></textarea>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="bg-mce-secondary hover:bg-teal-600 text-white font-bold py-3 px-10 rounded-lg text-lg shadow-xl transition duration-300 transform hover:scale-105">Enviar Mensaje</button>
+                    </div>
+                </form>
+            </div>
+        </section>
     </main>
 
     <!-- Footer -->
-    <footer id="contact" class="bg-mce-primary text-white py-10 mt-12">
+    <footer class="bg-mce-primary text-white py-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
@@ -248,6 +289,25 @@ $status = $_GET['status'] ?? '';
         container.addEventListener('mouseenter', () => clearInterval(interval));
 
         updateCarousel(currentIndex);
+
+        // --- Script para auto-ocultar alertas ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert-exito, .alert-error');
+            
+            alerts.forEach(function(alert) {
+                // Esperar 5 segundos antes de empezar a desvanecer
+                setTimeout(function() {
+                    // Aplicar una transición suave
+                    alert.style.transition = 'opacity 0.5s ease-out';
+                    alert.style.opacity = '0';
+                    
+                    // Después de que termine la transición, ocultar completamente el elemento
+                    setTimeout(function() {
+                        alert.style.display = 'none';
+                    }, 500); // 500ms = 0.5s (duración de la transición)
+                }, 5000); // 5000ms = 5 segundos
+            });
+        });
     </script>
 </body>
 </html>
