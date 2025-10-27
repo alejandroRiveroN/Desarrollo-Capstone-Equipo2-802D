@@ -55,17 +55,9 @@
 
             <hr>
             <div class="row">
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                     <label for="telefono" class="form-label">Teléfono</label>
                     <input type="text" class="form-control" id="telefono" name="telefono">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="whatsapp" class="form-label">WhatsApp</label>
-                    <input type="text" class="form-control" id="whatsapp" name="whatsapp">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="telegram" class="form-label">Telegram</label>
-                    <input type="text" class="form-control" id="telegram" name="telegram" placeholder="@usuario">
                 </div>
             </div>
 

@@ -12,7 +12,7 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
     <link rel="stylesheet" href="<?php echo Flight::get('base_url'); ?>/css/sidebar.css?v=1.1">
     <link rel="stylesheet" href="<?php echo Flight::get('base_url'); ?>/css/admin.css?v=1.0">
 </head>
-<body>
+<body data-base-url="<?php echo Flight::get('base_url'); ?>">
 
 <div class="sidebar">
     <div class="sidebar-header">
@@ -88,7 +88,3 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
         </ul>
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-</body>
-</html>

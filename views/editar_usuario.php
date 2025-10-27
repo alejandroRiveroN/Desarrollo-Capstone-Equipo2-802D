@@ -1,5 +1,8 @@
 <?php require_once __DIR__ . '/partials/header.php'; ?>
 
+<!-- Contenedor principal con padding -->
+<div class="container-fluid p-4">
+
 <h2 class="mb-4">Editar Usuario</h2>
 
 <?php
@@ -18,9 +21,7 @@ if (isset($_SESSION['mensaje_error'])) {
             </div>
             <hr>
             <div class="row">
-                <div class="col-md-4 mb-3"><label for="telefono" class="form-label">Teléfono</label><input type="text" class="form-control" id="telefono" name="telefono" value="<?php echo htmlspecialchars($usuario['telefono']); ?>"></div>
-                <div class="col-md-4 mb-3"><label for="whatsapp" class="form-label">WhatsApp</label><input type="text" class="form-control" id="whatsapp" name="whatsapp" value="<?php echo htmlspecialchars($usuario['whatsapp']); ?>"></div>
-                <div class="col-md-4 mb-3"><label for="telegram" class="form-label">Telegram</label><input type="text" class="form-control" id="telegram" name="telegram" value="<?php echo htmlspecialchars($usuario['telegram']); ?>"></div>
+                <div class="col-md-6 mb-3"><label for="telefono" class="form-label">Teléfono</label><input type="text" class="form-control" id="telefono" name="telefono" value="<?php echo htmlspecialchars($usuario['telefono'] ?? ''); ?>"></div>
             </div>
              <div class="mb-3">
                 <label class="form-label">Foto Actual</label><br>
@@ -54,3 +55,5 @@ if (isset($_SESSION['mensaje_error'])) {
     </div>
 </div>
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
+
+</div> <!-- Fin del contenedor principal -->

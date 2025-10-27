@@ -67,16 +67,14 @@ class UserController extends BaseController {
         $id_rol = (int)$data->id_rol;
         $puesto = $data->puesto;
         $telefono = $data->telefono;
-        $whatsapp = $data->whatsapp;
-        $telegram = $data->telegram;
 
         $password_hash = password_hash($password, PASSWORD_DEFAULT);
         $pdo->beginTransaction();
         try {
             $ruta_foto = self::_handleAvatarUpload();
 
-            $stmt = $pdo->prepare("INSERT INTO Usuarios (id_rol, nombre_completo, email, password_hash, telefono, whatsapp, telegram, ruta_foto) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$id_rol, $nombre_completo, $email, $password_hash, $telefono, $whatsapp, $telegram, $ruta_foto]);
+            $stmt = $pdo->prepare("INSERT INTO Usuarios (id_rol, nombre_completo, email, password_hash, telefono, ruta_foto) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$id_rol, $nombre_completo, $email, $password_hash, $telefono, $ruta_foto]);
             $id_usuario = $pdo->lastInsertId();
 
             $stmt = $pdo->prepare("INSERT INTO Agentes (id_usuario, puesto, fecha_contratacion) VALUES (?, ?, CURDATE())");
@@ -135,18 +133,15 @@ class UserController extends BaseController {
         $id_rol = $data->id_rol;
         $activo = isset($data->activo) ? 1 : 0;
         $telefono = $data->telefono;
-        $whatsapp = $data->whatsapp;
-        $telegram = $data->telegram;
 
         try {
             $stmt = $pdo->prepare("SELECT ruta_foto FROM Usuarios WHERE id_usuario = ?");
             $stmt->execute([$id]);
             $ruta_foto_actual = $stmt->fetchColumn();
 
-            $ruta_foto_nueva = self::_handleAvatarUpload($ruta_foto_actual);
-
-            $stmt = $pdo->prepare("UPDATE Usuarios SET nombre_completo = ?, email = ?, id_rol = ?, activo = ?, telefono = ?, whatsapp = ?, telegram = ?, ruta_foto = ? WHERE id_usuario = ?");
-            $stmt->execute([$nombre_completo, $email, $id_rol, $activo, $telefono, $whatsapp, $telegram, $ruta_foto_nueva, $id]);
+            $ruta_foto_nueva = self::_handleAvatarUpload($ruta_foto_actual); 
+            $stmt = $pdo->prepare("UPDATE Usuarios SET nombre_completo = ?, email = ?, id_rol = ?, activo = ?, telefono = ?, ruta_foto = ? WHERE id_usuario = ?");
+            $stmt->execute([$nombre_completo, $email, $id_rol, $activo, $telefono, $ruta_foto_nueva, $id]);
 
             // --- SOLUCIÓN DEFINITIVA ---
             // Usar el método de redirección de Flight para consistencia.

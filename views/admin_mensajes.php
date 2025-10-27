@@ -40,7 +40,7 @@ if (isset($_SESSION['mensaje_error'])) {
                         <tr><td colspan="6" class="text-center">No hay mensajes en la bandeja de entrada.</td></tr>
                     <?php else: ?>
                         <?php foreach ($mensajes as $mensaje): ?>
-                            <tr class="<?php echo $mensaje['estado'] == 'Nuevo' ? 'fw-bold' : ''; ?>">
+                            <tr>
                                 <td><span class="badge bg-<?php echo $mensaje['estado'] == 'Nuevo' ? 'primary' : 'secondary'; ?>"><?php echo htmlspecialchars($mensaje['estado']); ?></span></td>
                                 <td><?php echo date('d/m/Y H:i', strtotime($mensaje['fecha_creacion'])); ?></td>
                                 <td><?php echo htmlspecialchars($mensaje['nombre']); ?></td>

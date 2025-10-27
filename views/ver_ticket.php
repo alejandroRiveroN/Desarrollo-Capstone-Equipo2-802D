@@ -179,7 +179,9 @@ if (isset($_SESSION['mensaje_exito'])) {
                     <?php endforeach; ?>
                 <?php endif; ?>
                 
-                <?php if (!$is_ticket_finalizado && $_SESSION['id_rol'] == 4): ?>
+                <?php // El formulario de comentarios se muestra si el ticket no está finalizado y el usuario es cliente (4) o un agente/admin/supervisor
+                if (!$is_ticket_finalizado && (in_array((int)$_SESSION['id_rol'], [1,2,3]) || $_SESSION['id_rol'] == 4)): 
+                ?>
                 <hr>
                 <h5 class="card-title mt-4">Añadir Comentario</h5>
                 <form action="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>/comentario" method="POST" enctype="multipart/form-data">
@@ -226,3 +228,5 @@ if (isset($_SESSION['mensaje_exito'])) {
 <script src="<?php echo Flight::get('base_url'); ?>/js/ver_ticket.js"></script>
 
 </div> <!-- Fin del contenedor principal -->
+
+<?php require_once __DIR__ . '/partials/footer.php'; ?>

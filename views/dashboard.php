@@ -237,36 +237,29 @@
     </div>
 </div>
 <!-- 5. Scripts de JavaScript -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Función para construir la URL de exportación con los filtros actuales y redirigir.
-function exportar(formato) {
-    const form = document.getElementById('formFiltros');
-    const params = new URLSearchParams(new FormData(form)).toString();
-    const baseUrl = '<?php echo Flight::get('base_url'); ?>';
-    let url = '';
-    if (formato === 'excel') { url = `${baseUrl}/tickets/exportar/excel?${params}`; } 
-    else if (formato === 'pdf') { url = `${baseUrl}/tickets/exportar/pdf?${params}`; } 
-    else if (formato === 'imprimir') { url = `${baseUrl}/tickets/imprimir?${params}`; }
-    if (url) { formato === 'imprimir' ? window.open(url, '_blank') : window.location.href = url; }
-}
-
-// Se ejecuta cuando el DOM está completamente cargado.
-document.addEventListener("DOMContentLoaded", function() {
-    // Inicializa el gráfico de dona si el elemento canvas existe (solo para admins).
-    if (document.getElementById('ticketsChartDonut')) {
-        const ctxDonut = document.getElementById('ticketsChartDonut').getContext('2d');
-        new Chart(ctxDonut, { type: 'doughnut', data: { labels: <?php echo $chart_labels_donut_json; ?>, datasets: [{ label: 'Tickets', data: <?php echo $chart_values_donut_json; ?>, backgroundColor: ['#0d6efd', '#ffc107', '#198754', '#6c757d', '#0dcaf0', '#fd7e14'], hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' }}}});
-    }
-    // Inicializa el gráfico de barras si el elemento canvas existe (solo para admins).
-    if (document.getElementById('ticketsChartBar')) {
-        const ctxBar = document.getElementById('ticketsChartBar').getContext('2d');
-        new Chart(ctxBar, { type: 'bar', data: { labels: <?php echo $chart_labels_bar_json; ?>, datasets: [{ label: 'Tickets Creados', data: <?php echo $chart_values_bar_json; ?>, backgroundColor: 'rgba(54, 162, 235, 0.6)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }}}, plugins: { legend: { display: false }}}});
-    }
-});
+    // Pasamos los datos de PHP a variables globales de JavaScript para que el script externo pueda usarlos.
+    var chartDataDonut = {
+        labels: <?php echo $chart_labels_donut_json; ?>,
+        datasets: [{
+            label: 'Tickets',
+            data: <?php echo $chart_values_donut_json; ?>,
+            backgroundColor: ['#0d6efd', '#ffc107', '#198754', '#6c757d', '#0dcaf0', '#fd7e14'],
+            hoverOffset: 4
+        }]
+    };
+    var chartDataBar = {
+        labels: <?php echo $chart_labels_bar_json; ?>,
+        datasets: [{
+            label: 'Tickets Creados',
+            data: <?php echo $chart_values_bar_json; ?>,
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    };
 </script>
+<script src="<?php echo Flight::get('base_url'); ?>/js/dashboard.js"></script>
 
 <!-- 6. Inclusión del pie de página -->
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
-
-</div> <!-- Fin del contenedor principal -->

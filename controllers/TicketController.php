@@ -259,20 +259,39 @@ class TicketController extends BaseController {
         $request = \Flight::request();
 
         try {
-            $stmt_agente = $pdo->prepare("SELECT id_agente FROM Agentes WHERE id_usuario = ?");
-            $stmt_agente->execute([$_SESSION['id_usuario']]);
-            $id_agente_autor = $stmt_agente->fetchColumn();
-
             $comentario_texto = trim($request->data->comentario);
             $archivos_subidos = isset($_FILES['adjuntos']) && !empty(array_filter($_FILES['adjuntos']['name']));
 
             if (!empty($comentario_texto) || $archivos_subidos) {
                 $pdo->beginTransaction();
-                $es_privado = isset($request->data->es_privado) ? 1 : 0;
+
+                // Determinar el autor y tipo de autor basado en el rol
+                $id_autor = null;
+                $tipo_autor = 'Sistema'; // Por defecto
+                $es_privado = 0;
+
+                if (in_array((int)$_SESSION['id_rol'], [1, 2, 3])) { // Admin, Agente, Supervisor
+                    $stmt_agente = $pdo->prepare("SELECT id_agente FROM Agentes WHERE id_usuario = ?");
+                    $stmt_agente->execute([$_SESSION['id_usuario']]);
+                    $id_autor = $stmt_agente->fetchColumn();
+                    if (!$id_autor) $id_autor = $_SESSION['id_usuario']; // Fallback al id_usuario si no es agente
+                    $tipo_autor = 'Agente';
+                    $es_privado = isset($request->data->es_privado) ? 1 : 0;
+                } elseif ((int)$_SESSION['id_rol'] === 4) { // Cliente
+                    $id_autor = $_SESSION['id_cliente'] ?? null;
+                    $tipo_autor = 'Cliente';
+                }
+
+                if (!$id_autor) {
+                    throw new \Exception("No se pudo determinar el autor del comentario.");
+                }
+
                 if (empty($comentario_texto) && $archivos_subidos) { $comentario_texto = "Se adjuntaron archivos."; }
 
-                $stmt_comentario = $pdo->prepare("INSERT INTO Comentarios (id_ticket, id_autor, tipo_autor, comentario, es_privado) VALUES (?, ?, 'Agente', ?, ?)");
-                $stmt_comentario->execute([$id_ticket, $id_agente_autor, $comentario_texto, $es_privado]);
+                $stmt_comentario = $pdo->prepare(
+                    "INSERT INTO Comentarios (id_ticket, id_autor, tipo_autor, comentario, es_privado) VALUES (?, ?, ?, ?, ?)"
+                );
+                $stmt_comentario->execute([$id_ticket, $id_autor, $tipo_autor, $comentario_texto, $es_privado]);
                 $id_comentario_nuevo = $pdo->lastInsertId();
 
                 self::_handleAttachmentsUpload($pdo, $id_ticket, $id_comentario_nuevo);
@@ -280,7 +299,8 @@ class TicketController extends BaseController {
                 $pdo->commit();
             }
         } catch (\Exception $e) {
-            if ($pdo->inTransaction()) { $pdo->rollBack(); } // Manejo de errores, quizás con un mensaje flash
+            if ($pdo->inTransaction()) { $pdo->rollBack(); }
+            // Considera añadir un mensaje de error a la sesión para notificar al usuario.
         }
         $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/tickets/ver/' . $id_ticket;
         \Flight::redirect($url);
@@ -342,39 +362,46 @@ class TicketController extends BaseController {
         try {
             $pdo->beginTransaction();
 
-            // Obtener id_agente del autor (admin que reasigna)
-            $stmt_agente = $pdo->prepare("SELECT id_agente FROM Agentes WHERE id_usuario = ?");
-            $stmt_agente->execute([$_SESSION['id_usuario']]);
-            $id_agente_autor = $stmt_agente->fetchColumn();
+            $id_autor_accion = $_SESSION['id_usuario'];
             $nombre_agente_autor = $_SESSION['nombre_completo'] ?? 'Sistema';
 
-            // Obtener nombre del agente anterior
+            // Obtener nombre del agente anterior (si existe)
             $stmt_agente_anterior = $pdo->prepare("
-                SELECT a.id_agente
+                SELECT u.nombre_completo
                 FROM Tickets t
                 LEFT JOIN Agentes a ON t.id_agente_asignado = a.id_agente
+                LEFT JOIN Usuarios u ON a.id_usuario = u.id_usuario
                 WHERE t.id_ticket = ?
             ");
             $stmt_agente_anterior->execute([$id_ticket]);
-            $id_agente_anterior = $stmt_agente_anterior->fetchColumn();
-            $nombre_agente_anterior = $id_agente_anterior 
-                ? $_SESSION['nombre_completo'] // O busca el nombre si quieres dinámico
-                : 'Nadie';
+            $nombre_agente_anterior = $stmt_agente_anterior->fetchColumn() ?? 'Nadie';
 
             // Actualizar agente asignado
             $stmt_update = $pdo->prepare("UPDATE Tickets SET id_agente_asignado = ? WHERE id_ticket = ?");
             $stmt_update->execute([$id_nuevo_agente, $id_ticket]);
 
-            // Obtener nombre del nuevo agente (puede ser de la sesión o fetch simple)
-            $nombre_agente_nuevo = $_SESSION['nombre_completo'] ?? 'Agente';
+            // Obtener nombre del nuevo agente
+            $stmt_nuevo_agente = $pdo->prepare("
+                SELECT u.nombre_completo
+                FROM Agentes a
+                JOIN Usuarios u ON a.id_usuario = u.id_usuario
+                WHERE a.id_agente = ?
+            ");
+            $stmt_nuevo_agente->execute([$id_nuevo_agente]);
+            $nombre_agente_nuevo = $stmt_nuevo_agente->fetchColumn() ?? 'Agente Desconocido';
 
             // Insertar comentario
-            $comentario_log = "Ticket reasignado de '{$nombre_agente_anterior}' a '{$nombre_agente_nuevo}' por {$nombre_agente_autor}.";
+            $comentario_log = sprintf(
+                "Ticket reasignado de '%s' a '%s' por %s.",
+                htmlspecialchars($nombre_agente_anterior),
+                htmlspecialchars($nombre_agente_nuevo),
+                htmlspecialchars($nombre_agente_autor)
+            );
             $stmt_comentario = $pdo->prepare("
                 INSERT INTO Comentarios (id_ticket, id_autor, tipo_autor, comentario, es_privado)
                 VALUES (?, ?, 'Agente', ?, 1)
             ");
-            $stmt_comentario->execute([$id_ticket, $id_agente_autor, $comentario_log]);
+            $stmt_comentario->execute([$id_ticket, $id_autor_accion, $comentario_log]);
 
             $pdo->commit();
         } catch (\Exception $e) {
@@ -469,15 +496,14 @@ class TicketController extends BaseController {
         if (!empty($motivo)) {
             try {
                 $pdo->beginTransaction();
-                $stmt_agente = $pdo->prepare("SELECT id_agente, u.nombre_completo FROM Agentes a JOIN Usuarios u ON a.id_usuario = u.id_usuario WHERE a.id_usuario = ?");
-                $stmt_agente->execute([$_SESSION['id_usuario']]);
-                $agente_actual = $stmt_agente->fetch();
-                $id_agente_autor = $agente_actual ? $agente_actual['id_agente'] : null;
-                $nombre_agente_autor = $agente_actual ? $agente_actual['nombre_completo'] : ($_SESSION['nombre_completo'] ?? 'Sistema');
+                
+                $id_autor_accion = $_SESSION['id_usuario'];
+                $nombre_autor_accion = $_SESSION['nombre_completo'] ?? 'Sistema';
 
                 $pdo->prepare("UPDATE Tickets SET estado = 'Anulado' WHERE id_ticket = ?")->execute([$id_ticket]);
-                $comentario_log = "Ticket anulado por {$nombre_agente_autor}.\nMotivo: " . $motivo;
-                $pdo->prepare("INSERT INTO Comentarios (id_ticket, id_autor, tipo_autor, comentario, es_privado) VALUES (?, ?, 'Agente', ?, 1)")->execute([$id_ticket, $id_agente_autor, $comentario_log]);
+                
+                $comentario_log = "Ticket anulado por {$nombre_autor_accion}.\nMotivo: " . $motivo;
+                $pdo->prepare("INSERT INTO Comentarios (id_ticket, id_autor, tipo_autor, comentario, es_privado) VALUES (?, ?, 'Agente', ?, 1)")->execute([$id_ticket, $id_autor_accion, $comentario_log]);
                 $pdo->commit();
             } catch (\Exception $e) {
                 if ($pdo->inTransaction()) { $pdo->rollBack(); }

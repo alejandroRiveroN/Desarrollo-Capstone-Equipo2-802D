@@ -1,4 +1,8 @@
-</div> <div class="sidebar-overlay"></div>
+</div> <!-- Cierre del .main-content -->
+
+</div> <!-- Cierre del contenedor que envuelve sidebar y main-content -->
+
+<div class="sidebar-overlay"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
