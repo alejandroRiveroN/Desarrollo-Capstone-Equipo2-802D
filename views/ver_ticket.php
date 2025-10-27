@@ -142,19 +142,6 @@ if (isset($_SESSION['mensaje_exito'])) {
             </div>
         </div>
 
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const estadoFacturacionSelect = document.getElementById('estado_facturacion');
-            if (estadoFacturacionSelect) {
-                const medioPagoContainer = document.getElementById('medio_pago_container');
-                function toggleMedioPago() {
-                    medioPagoContainer.style.display = (estadoFacturacionSelect.value === 'Pagado') ? 'block' : 'none';
-                }
-                toggleMedioPago();
-                estadoFacturacionSelect.addEventListener('change', toggleMedioPago);
-            }
-        });
-        </script>
         <?php endif; ?>
     </div>
 
@@ -236,22 +223,6 @@ if (isset($_SESSION['mensaje_exito'])) {
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const estadoFacturacionSelect = document.getElementById('estado_facturacion');
-    if (estadoFacturacionSelect) {
-        const medioPagoContainer = document.getElementById('medio_pago_container');
-        function toggleMedioPago() {
-            if (estadoFacturacionSelect.value === 'Pagado') {
-                medioPagoContainer.style.display = 'block';
-            } else {
-                medioPagoContainer.style.display = 'none';
-            }
-        }
-        toggleMedioPago();
-        estadoFacturacionSelect.addEventListener('change', toggleMedioPago);
-    }
-});
-</script>
+<script src="<?php echo Flight::get('base_url'); ?>/js/ver_ticket.js"></script>
 
 </div> <!-- Fin del contenedor principal -->

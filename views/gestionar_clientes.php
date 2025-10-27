@@ -132,36 +132,7 @@ if (isset($_SESSION['mensaje_error'])) {
   </div>
 </div>
 
-<script>
-function exportarClientes(formato) {
-    const form = document.getElementById('formFiltrosClientes');
-    const params = new URLSearchParams(new FormData(form)).toString();
-    let url = '';
-    
-    if (formato === 'excel') { url = `/clientes/exportar/excel?${params}`; } 
-    else if (formato === 'pdf') { url = `/clientes/exportar/pdf?${params}`; } 
-    else if (formato === 'imprimir') { url = `/clientes/exportar/imprimir?${params}`; }
-    
-    if (url) {
-        formato === 'imprimir' ? window.open(url, '_blank') : window.location.href = url;
-    }
-}
-
-const deleteClientModal = document.getElementById('deleteClientModal');
-if (deleteClientModal) {
-    deleteClientModal.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const clientId = button.getAttribute('data-client-id');
-        const clientName = button.getAttribute('data-client-name');
-        
-        const clientNameSpan = deleteClientModal.querySelector('#clientNameToDelete');
-        const deleteForm = deleteClientModal.querySelector('#deleteClientForm');
-        
-        clientNameSpan.textContent = clientName;
-        deleteForm.action = `<?php echo Flight::get('base_url'); ?>/clientes/eliminar/${clientId}`;
-    });
-}
-</script>
+<script src="<?php echo Flight::get('base_url'); ?>/js/gestionar_clientes.js"></script>
 
 <?php require_once 'partials/footer.php'; ?>
 

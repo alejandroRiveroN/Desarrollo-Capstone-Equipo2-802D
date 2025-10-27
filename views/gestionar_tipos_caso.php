@@ -113,22 +113,7 @@ if (isset($_SESSION['mensaje_error'])) {
   </div>
 </div>
 
-<script>
-const deleteTipoCasoModal = document.getElementById('deleteTipoCasoModal');
-if (deleteTipoCasoModal) {
-    deleteTipoCasoModal.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const tipoCasoId = button.getAttribute('data-tipocaso-id');
-        const tipoCasoName = button.getAttribute('data-tipocaso-name');
-        
-        const tipoCasoNameSpan = deleteTipoCasoModal.querySelector('#tipoCasoNameToDelete');
-        const deleteForm = deleteTipoCasoModal.querySelector('#deleteTipoCasoForm');
-        
-        tipoCasoNameSpan.textContent = tipoCasoName;
-        deleteForm.action = `<?php echo Flight::get('base_url'); ?>/casos/tipos/eliminar/${tipoCasoId}`;
-    });
-}
-</script>
+<script src="<?php echo Flight::get('base_url'); ?>/js/gestionar_tipos_caso.js"></script>
 
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
 

@@ -75,22 +75,7 @@ if (isset($_SESSION['mensaje_error'])) {
   </div>
 </div>
 
-<script>
-const deleteUserModal = document.getElementById('deleteUserModal');
-if (deleteUserModal) {
-    deleteUserModal.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const userId = button.getAttribute('data-user-id');
-        const userName = button.getAttribute('data-user-name');
-        
-        const userNameSpan = deleteUserModal.querySelector('#userNameToDelete');
-        const deleteForm = deleteUserModal.querySelector('#deleteUserForm');
-        
-        userNameSpan.textContent = userName;
-        deleteForm.action = `<?php echo Flight::get('base_url'); ?>/usuarios/eliminar/${userId}`;
-    });
-}
-</script>
+<script src="<?php echo Flight::get('base_url'); ?>/js/gestionar_usuarios.js"></script>
 
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
 

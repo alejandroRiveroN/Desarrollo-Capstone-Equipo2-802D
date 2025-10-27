@@ -27,7 +27,7 @@
         <div class="card-body">
             <p>Esta herramienta busca tickets cerrados o resueltos hace más de un año y te permite borrarlos para mantener la base de datos limpia.</p>
             <button id="btn-test-limpieza" class="btn btn-info">Verificar Tickets a Borrar (Simulación)</button>
-            <div id="test-results-container" class="mt-3 test-results-container">
+            <div id="test-results-container" class="mt-3" style="display:none;">
                 <h4>Resultados de la Simulación</h4>
                 <p><strong id="test-results-count"></strong></p>
                 <ul id="test-results-list"></ul>
@@ -94,39 +94,4 @@
     </div>
 </div>
 
-<script>
-document.getElementById('btn-test-limpieza').addEventListener('click', function() {
-    const resultsContainer = document.getElementById('test-results-container');
-    const resultsCount = document.getElementById('test-results-count');
-    const resultsList = document.getElementById('test-results-list');
-
-    resultsContainer.classList.remove('test-results-container'); // O resultsContainer.style.display = 'block';
-    resultsCount.textContent = 'Cargando...';
-    resultsList.innerHTML = '';
-
-    fetch('<?php echo Flight::get('base_url'); ?>/admin/limpieza/test', {
-        method: 'POST',
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            resultsCount.textContent = 'Error: ' + data.error;
-            return;
-        }
-
-        resultsCount.textContent = 'Se encontraron ' + data.length + ' tickets que serían eliminados:';
-        if (data.length === 0) {
-            resultsList.innerHTML = '<li>No se encontraron tickets para limpiar.</li>';
-        } else {
-            data.forEach(ticket => {
-                const li = document.createElement('li');
-                li.textContent = 'Ticket #' + ticket.id_ticket + ': ' + ticket.asunto + ' (Creado: ' + ticket.fecha_creacion + ')';
-                resultsList.appendChild(li);
-            });
-        }
-    })
-    .catch(error => {
-        resultsCount.textContent = 'Error en la solicitud: ' + error;
-    });
-});
-</script>
+<script src="<?php echo Flight::get('base_url'); ?>/js/limpieza.js"></script>

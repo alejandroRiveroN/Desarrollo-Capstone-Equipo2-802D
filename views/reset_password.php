@@ -118,29 +118,7 @@
         </div>
     </div>
 
-<script>
-const passwordInput = document.querySelector('input[name="nueva_password"]');
-const confirmInput = document.querySelector('input[name="confirmar_password"]');
+<script src="<?php echo Flight::get('base_url'); ?>/js/reset_password.js"></script>
 
-if(passwordInput){
-    passwordInput.addEventListener('input', () => {
-        const pwd = passwordInput.value;
-
-        document.querySelector('#lowercase span').textContent = /[a-z]/.test(pwd) ? '✔' : '❌';
-        document.querySelector('#uppercase span').textContent = /[A-Z]/.test(pwd) ? '✔' : '❌';
-        document.querySelector('#number span').textContent = /[0-9]/.test(pwd) ? '✔' : '❌';
-        document.querySelector('#special span').textContent = /[^A-Za-z0-9]/.test(pwd) ? '✔' : '❌';
-        document.querySelector('#length span').textContent = pwd.length >= 8 ? '✔' : '❌';
-    });
-
-    confirmInput.addEventListener('input', () => {
-        if (confirmInput.value !== passwordInput.value) {
-            confirmInput.setCustomValidity("Las contraseñas no coinciden");
-        } else {
-            confirmInput.setCustomValidity("");
-        }
-    });
-}
-</script>
 </body>
 </html>
