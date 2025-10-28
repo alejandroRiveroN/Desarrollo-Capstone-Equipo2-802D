@@ -91,6 +91,17 @@ Flight::route('GET /admin/mensajes', ['App\Controllers\AdminController', 'viewMe
 Flight::route('GET /admin/mensajes/ver/@id', ['App\Controllers\AdminController', 'viewMessage']);
 Flight::route('POST /admin/mensajes/responder/@id', ['App\Controllers\AdminController', 'replyToMessage']);
 
+// COTIZACIONES CLIENTE 
+\Flight::route('GET /cotizaciones',        ['App\Controllers\CotizacionController', 'myIndex']);   
+\Flight::route('GET /cotizaciones/crear',  ['App\Controllers\CotizacionController', 'createForm']); 
+\Flight::route('POST /cotizaciones',       ['App\Controllers\CotizacionController', 'store']);       
+\Flight::route('GET /cotizaciones/ver/@id',['App\Controllers\CotizacionController', 'showClient']);  
+
+// COTIZACIONES ADMIN / SUPERVISOR 
+\Flight::route('GET /admin/cotizaciones',          ['App\Controllers\CotizacionController', 'indexAdmin']);
+\Flight::route('GET /admin/cotizaciones/ver/@id',  ['App\Controllers\CotizacionController', 'showAdmin']);
+\Flight::route('POST /admin/cotizaciones/responder/@id', ['App\Controllers\CotizacionController', 'respond']);
+
 // --- RUTAS DE TICKETS ---
 Flight::route('GET /tickets/crear', ['App\Controllers\TicketController', 'create']);
 Flight::route('POST /tickets', ['App\Controllers\TicketController', 'store']);
