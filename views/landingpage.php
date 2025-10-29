@@ -72,23 +72,38 @@ $status = $_GET['status'] ?? '';
                     <a href="#services" class="text-white hover:text-mce-secondary px-3 py-2 rounded-md text-base font-medium transition duration-150 ease-in-out">Servicios</a>
                     <a href="#contact" class="text-white hover:text-mce-secondary px-3 py-2 rounded-md text-base font-medium transition duration-150 ease-in-out">Contacto</a>
                     <!-- Botón de Registrarse (sin funcionalidad de momento) -->
-                    <a href="<?php echo Flight::get('base_url'); ?>/registro_cliente" 
-                        title="Registrar nuevo cliente" 
-                        class="bg-mce-secondary hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                        Registrarse
-                    </a>
-                    <?php if ($status === 'success'): ?>
-                        <div class="max-w-3xl mx-auto mt-4 px-6 py-3 bg-green-500 text-white font-semibold rounded-lg shadow-md text-center">
-                            ¡Registro exitoso! Ya puedes iniciar sesión.
-                        </div>
-                    <?php elseif ($status === 'error'): ?>
-                        <div class="max-w-3xl mx-auto mt-4 px-6 py-3 bg-red-500 text-white font-semibold rounded-lg shadow-md text-center">
-                            Ocurrió un error al registrarte. Intenta nuevamente.
-                        </div>
+                    <?php if (session_status() === PHP_SESSION_NONE) session_start(); ?>
+
+                    <?php if (!isset($_SESSION['id_usuario'])): ?>
+                        <!-- Si NO está logueado -->
+                        <a href="<?php echo Flight::get('base_url'); ?>/registro_cliente" 
+                            title="Registrar nuevo cliente" 
+                            class="bg-mce-secondary hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            Registrarse
+                        </a>
+
+                        <?php if ($status === 'success'): ?>
+                            <div class="max-w-3xl mx-auto mt-4 px-6 py-3 bg-green-500 text-white font-semibold rounded-lg shadow-md text-center">
+                                ¡Registro exitoso! Ya puedes iniciar sesión.
+                            </div>
+                        <?php elseif ($status === 'error'): ?>
+                            <div class="max-w-3xl mx-auto mt-4 px-6 py-3 bg-red-500 text-white font-semibold rounded-lg shadow-md text-center">
+                                Ocurrió un error al registrarte. Intenta nuevamente.
+                            </div>
+                        <?php endif; ?>
+
+                        <a href="<?php echo Flight::get('base_url'); ?>/login" 
+                            class="bg-mce-secondary hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            Ingresar
+                        </a>
+
+                    <?php else: ?>
+                        <!-- Si ya está logueado -->
+                        <a href="<?php echo Flight::get('base_url'); ?>/dashboard"
+                            class="bg-mce-secondary hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            Ir al Panel
+                        </a>
                     <?php endif; ?>
-                    <a href="<?php echo Flight::get('base_url'); ?>/login" class="bg-mce-secondary hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                        Ingresar
-                    </a>
                 </div>
             </div>
         </div>
