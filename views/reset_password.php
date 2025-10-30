@@ -5,71 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restablecer Contraseña</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f2f4f7;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-family: "Segoe UI", sans-serif;
-        }
-        .login-card {
-            width: 100%;
-            max-width: 400px;
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        .login-header {
-            background-color: #133C55;
-            color: #fff;
-            text-align: center;
-            padding: 1.5rem;
-        }
-        .login-body {
-            padding: 2rem;
-        }
-        .login-body h4 {
-            margin-bottom: 1.5rem;
-        }
-        .form-control {
-            border-radius: 6px;
-            margin-bottom: 1rem;
-            height: 45px;
-            padding: 0.5rem 0.75rem;
-        }
-        .btn-send {
-            background-color: #00b894;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            padding: 0.6rem;
-            font-weight: 600;
-            width: 100%;
-            transition: background 0.3s;
-        }
-        .btn-send:hover {
-            background-color: #019875;
-        }
-        .login-link {
-            text-align: center;
-            margin-top: 1rem;
-        }
-        .login-link a {
-            color: #555;
-            text-decoration: none;
-        }
-        .login-link a:hover {
-            text-decoration: underline;
-        }
-        .alert {
-            margin-bottom: 1rem;
-        }
-        .form-checklist ul { list-style:none; padding-left:0; margin-top:0.5rem; }
-        .form-checklist li { margin-bottom: 0.25rem; }
-    </style>
+    <!-- Enlace a las hojas de estilo centralizadas -->
+    <link rel="stylesheet" href="<?= Flight::get('base_url') ?>/css/variables.css">
+    <link rel="stylesheet" href="<?= Flight::get('base_url') ?>/css/login.css">
+    <link rel="stylesheet" href="<?= Flight::get('base_url') ?>/css/reset_password.css">
 </head>
 <body>
     <div class="login-card">
@@ -90,13 +29,13 @@
                 <!-- Formulario para pedir enlace de recuperación -->
                 <form action="<?= Flight::get('base_url') ?>/contraseña_olvidada" method="POST">
                     <input type="email" name="email" class="form-control" placeholder="Correo electrónico" required>
-                    <button type="submit" class="btn-send">Enviar enlace</button>
+                    <button type="submit" class="btn btn-acceder w-100">Enviar enlace</button>
                 </form>
             <?php else: ?>
                 <!-- Formulario para restablecer contraseña -->
                 <form action="<?= Flight::get('base_url') ?>/reset_contraseña" method="POST">
                     <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
-                    <input type="password" name="nueva_password" class="form-control" placeholder="Nueva contraseña" required>
+                    <input type="password" name="nueva_password" class="form-control mb-2" placeholder="Nueva contraseña" required>
                     <div class="form-checklist">
                         <p>Tu contraseña debe tener:</p>
                         <ul>
@@ -107,12 +46,12 @@
                             <li id="length"><span style="color:red">❌</span> Al menos 8 caracteres</li>
                         </ul>
                     </div>
-                    <input type="password" name="confirmar_password" class="form-control" placeholder="Confirmar contraseña" required>
-                    <button type="submit" class="btn-send">Restablecer Contraseña</button>
+                    <input type="password" name="confirmar_password" class="form-control mt-3" placeholder="Confirmar contraseña" required>
+                    <button type="submit" class="btn btn-acceder w-100">Restablecer Contraseña</button>
                 </form>
             <?php endif; ?>
 
-            <div class="login-link">
+            <div class="forgot-password">
                 <a href="<?= Flight::get('base_url') ?>/login">Volver al inicio de sesión</a>
             </div>
         </div>

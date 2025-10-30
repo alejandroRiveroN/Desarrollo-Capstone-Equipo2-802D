@@ -15,6 +15,7 @@
 <div class="card">
     <div class="card-body p-4">
         <form action="<?php echo Flight::get('base_url'); ?>/clientes" method="POST">
+            <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
             <div class="row g-4">
                 <div class="col-md-6">
                     <label for="nombre" class="form-label">Nombre Completo *</label>

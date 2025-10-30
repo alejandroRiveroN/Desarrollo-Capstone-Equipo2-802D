@@ -157,11 +157,8 @@ class TicketController extends BaseController {
 
             self::_handleAttachmentsUpload($pdo, $id_ticket_nuevo, $id_comentario_inicial);
 
-            $pdo->commit();
-
-            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/tickets/ver/' . $id_ticket_nuevo . '?status=created';
-            \Flight::redirect($url);
-            exit;
+            $pdo->commit();            
+            self::redirect_to('/tickets/ver/' . $id_ticket_nuevo . '?status=created');
 
         } catch (\Exception $e) {
             $pdo->rollBack();
@@ -302,8 +299,7 @@ class TicketController extends BaseController {
             if ($pdo->inTransaction()) { $pdo->rollBack(); }
             // Considera añadir un mensaje de error a la sesión para notificar al usuario.
         }
-        $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/tickets/ver/' . $id_ticket;
-        \Flight::redirect($url);
+        self::redirect_to('/tickets/ver/' . $id_ticket);
     }
 
     public static function updateStatus($id_ticket) {
@@ -349,8 +345,7 @@ class TicketController extends BaseController {
             exit;
         }
 
-        $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/tickets/ver/' . $id_ticket;
-        \Flight::redirect($url);
+        self::redirect_to('/tickets/ver/' . $id_ticket);
     }
 
     public static function assignAgent($id_ticket) { 
@@ -410,8 +405,7 @@ class TicketController extends BaseController {
             exit;
         }
 
-        $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/tickets/ver/' . $id_ticket;
-        \Flight::redirect($url);
+        self::redirect_to('/tickets/ver/' . $id_ticket);
     }
 
     public static function updateCost($id_ticket) {
@@ -483,8 +477,7 @@ class TicketController extends BaseController {
             exit;
         }
 
-        $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/tickets/ver/' . $id_ticket;
-        \Flight::redirect($url);
+        self::redirect_to('/tickets/ver/' . $id_ticket);
     }
 
     public static function cancel($id_ticket) {
@@ -509,8 +502,7 @@ class TicketController extends BaseController {
                 if ($pdo->inTransaction()) { $pdo->rollBack(); }
             }
         }
-        $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/tickets/ver/' . $id_ticket;
-        \Flight::redirect($url);
+        self::redirect_to('/tickets/ver/' . $id_ticket);
     }
 
     public static function print() {

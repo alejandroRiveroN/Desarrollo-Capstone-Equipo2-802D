@@ -45,6 +45,7 @@ class AdminController extends BaseController {
     }
     public static function limpiezaTotal() {
         self::checkAdmin();
+        self::validateCsrfToken(); // Validar el token CSRF
         $pdo = \Flight::db();
         $mensaje = '';
         $error = '';
@@ -63,6 +64,7 @@ class AdminController extends BaseController {
     }    public static function limpiezaReset() {
         self::checkAdmin();
         $pdo = \Flight::db();
+        self::validateCsrfToken(); // Validar el token CSRF
 
         $mensaje = '';
         $error = '';
@@ -105,8 +107,7 @@ class AdminController extends BaseController {
         $mensaje = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if (!$mensaje) {
-            \Flight::redirect('/admin/mensajes');
-            exit();
+            self::redirect_to('/admin/mensajes');
         }
 
         \Flight::render('admin_responder_mensaje.php', ['mensaje' => $mensaje]);
@@ -118,16 +119,14 @@ class AdminController extends BaseController {
     public static function replyToMessage($id)
     {
         self::checkAdmin();
-        // Construir la URL de retorno de forma anticipada para usarla en todos los casos.
-        $redirect_url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/admin/mensajes/ver/' . $id;
+        self::validateCsrfToken(); // Validar el token CSRF
 
         $request = \Flight::request();
         $respuesta = trim($request->data->respuesta ?? '');
 
         if (empty($respuesta)) {
             $_SESSION['mensaje_error'] = 'La respuesta no puede estar vacía.';
-            \Flight::redirect($redirect_url);
-            exit();
+            self::redirect_to('/admin/mensajes/ver/' . $id);
         }
 
         $pdo = \Flight::db();
@@ -135,27 +134,26 @@ class AdminController extends BaseController {
         $stmt->execute([$id]);
         $mensaje_original = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        if (!$mensaje_original) {
-            \Flight::redirect('http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/admin/mensajes');
-            exit();
-        }
+        if (!$mensaje_original) self::redirect_to('/admin/mensajes');
 
         // Enviar correo con PHPMailer
         $mail = new PHPMailer(true);
+        $config = \Flight::get('mail_config');
+
         try {
             // Configuración del servidor SMTP
             $mail->isSMTP();
-            $mail->Host = 'smtp.gmail.com';
+            $mail->Host = $config['host'];
             $mail->SMTPAuth = true;
-            $mail->Username = 'maixtebipulento@gmail.com'; // TU CORREO DE GMAIL
-            $mail->Password = 'fkoh kfqm kymf ojos';      // TU CONTRASEÑA DE APLICACIÓN DE GMAIL
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port = 587;
+            $mail->Username = $config['username'];
+            $mail->Password = $config['password'];
+            $mail->SMTPSecure = $config['encryption'];
+            $mail->Port = $config['port'];
             $mail->CharSet = 'UTF-8';
             $mail->setLanguage('es', '../vendor/phpmailer/phpmailer/language/');
 
             // Contenido del correo
-            $mail->setFrom('soporte@mce-ti.com', 'Soporte MCE');
+            $mail->setFrom($config['from_address'], $config['from_name']);
             $mail->addAddress($mensaje_original['email'], $mensaje_original['nombre']);
             $mail->addReplyTo('soporte@mce-ti.com', 'Soporte MCE');
 
@@ -173,11 +171,11 @@ class AdminController extends BaseController {
             $stmt_update->execute([$respuesta, $_SESSION['id_usuario'], $id]);
 
             $_SESSION['mensaje_exito'] = 'Respuesta enviada y registrada correctamente.';
-            \Flight::redirect($redirect_url);
+            self::redirect_to('/admin/mensajes/ver/' . $id);
 
         } catch (Exception $e) {
             $_SESSION['mensaje_error'] = "La respuesta no pudo ser enviada. Error de PHPMailer: {$mail->ErrorInfo}";
-            \Flight::redirect($redirect_url);
+            self::redirect_to('/admin/mensajes/ver/' . $id);
         }
     }
 }

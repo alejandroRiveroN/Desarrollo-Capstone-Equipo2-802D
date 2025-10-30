@@ -1,0 +1,74 @@
+/**
+ * =================================================================
+ * Hoja de Estilos para la Landing Page (`landing.css`)
+ * =================================================================
+ */
+
+/*
+ * Clase base para los elementos que se animarán al hacer scroll.
+ * Inicialmente están ocultos y desplazados hacia abajo.
+ */
+.fade-in-section {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+/*
+ * Clase que se añade con JavaScript cuando el elemento es visible.
+ * Hace que el elemento aparezca y vuelva a su posición original.
+ */
+.fade-in-section.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/*
+ * =================================================================
+ * Micro-interacciones para botones y enlaces
+ * =================================================================
+ */
+
+/* Efecto de subrayado animado para enlaces del menú */
+.nav-link-animated {
+    position: relative;
+    padding-bottom: 5px;
+}
+
+.nav-link-animated::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    left: 50%;
+    background-color: #38B2AC; /* Color 'mce-secondary' de Tailwind */
+    transition: all 0.3s ease-out;
+    transform: translateX(-50%);
+}
+
+.nav-link-animated:hover::after {
+    width: 100%;
+}
+
+
+/*=================================================================
+Animación para el contenido del Héroe (Carrusel)
+=================================================================*/
+@keyframes fadeInUpHero {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Clase base para los elementos de texto del slide */
+.hero-title, .hero-subtitle { opacity: 0; }
+
+/* Clase que se añade con JS para activar la animación */
+.hero-title.animate-in { animation: fadeInUpHero 0.8s ease-out 0.3s forwards; }
+.hero-subtitle.animate-in { animation: fadeInUpHero 0.8s ease-out 0.5s forwards; }

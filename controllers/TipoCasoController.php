@@ -37,6 +37,7 @@ class TipoCasoController extends BaseController
     public static function store()
     {
         self::checkAdmin();
+        self::validateCsrfToken();
         $pdo = Flight::db();
         $request = Flight::request();
         $data = $request->data;
@@ -53,9 +54,7 @@ class TipoCasoController extends BaseController
             $_SESSION['mensaje_error'] = 'Error al crear el tipo de caso: ' . $e->getMessage();
         }
 
-        $url = 'http://' . $_SERVER['HTTP_HOST'] . Flight::get('base_url') . '/casos/tipos';
-        Flight::redirect($url);
-        exit();
+        self::redirect_to('/casos/tipos');
     }
 
     /**
@@ -70,11 +69,7 @@ class TipoCasoController extends BaseController
         $stmt->execute([$id]);
         $tipo_caso_actual = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        if (!$tipo_caso_actual) {
-            $url = 'http://' . $_SERVER['HTTP_HOST'] . Flight::get('base_url') . '/casos/tipos';
-            Flight::redirect($url);
-            exit();
-        }
+        if (!$tipo_caso_actual) self::redirect_to('/casos/tipos');
 
         $stmt_all = $pdo->query("SELECT * FROM TiposDeCaso ORDER BY nombre_tipo ASC");
         $tipos_de_caso = $stmt_all->fetchAll(\PDO::FETCH_ASSOC);
@@ -91,6 +86,7 @@ class TipoCasoController extends BaseController
     public static function update($id)
     {
         self::checkAdmin();
+        self::validateCsrfToken();
         $pdo = Flight::db();
         $request = Flight::request();
         $data = $request->data;
@@ -107,9 +103,7 @@ class TipoCasoController extends BaseController
             $_SESSION['mensaje_error'] = 'Error al actualizar el tipo de caso: ' . $e->getMessage();
         }
 
-        $url = 'http://' . $_SERVER['HTTP_HOST'] . Flight::get('base_url') . '/casos/tipos';
-        Flight::redirect($url);
-        exit();
+        self::redirect_to('/casos/tipos');
     }
 
     /**
@@ -118,6 +112,7 @@ class TipoCasoController extends BaseController
     public static function delete($id)
     {
         self::checkAdmin();
+        self::validateCsrfToken();
         $pdo = Flight::db();
 
         try {
@@ -128,8 +123,6 @@ class TipoCasoController extends BaseController
             $_SESSION['mensaje_error'] = 'No se pudo eliminar el tipo de caso. Es posible que esté en uso por uno o más tickets.';
         }
 
-        $url = 'http://' . $_SERVER['HTTP_HOST'] . Flight::get('base_url') . '/casos/tipos';
-        Flight::redirect($url);
-        exit();
+        self::redirect_to('/casos/tipos');
     }
 }

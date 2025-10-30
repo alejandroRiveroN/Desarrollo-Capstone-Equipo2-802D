@@ -39,16 +39,18 @@ class ForgotPasswordController {
 
         // Enviar correo
         $mail = new PHPMailer(true);
+        $config = \Flight::get('mail_config');
+
         try {
             $mail->isSMTP();
-            $mail->Host = 'smtp.gmail.com';
+            $mail->Host = $config['host'];
             $mail->SMTPAuth = true;
-            $mail->Username = 'maixtebipulento@gmail.com';
-            $mail->Password = 'fkoh kfqm kymf ojos';
-            $mail->SMTPSecure = 'tls';
-            $mail->Port = 587;
+            $mail->Username = $config['username'];
+            $mail->Password = $config['password'];
+            $mail->SMTPSecure = $config['encryption'];
+            $mail->Port = $config['port'];
 
-            $mail->setFrom('maixtebipulento@gmail.com', 'Soporte MCE');
+            $mail->setFrom($config['from_address'], $config['from_name']);
             $mail->addAddress($email);
 
             $resetLink = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/reset_contraseña?token=' . $token;

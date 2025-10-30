@@ -5,16 +5,16 @@
     <div id="mensaje-container">
         <?php if (isset($mensaje) && $mensaje): ?>
             <div class="alert alert-success">
-                <h4>Proceso Finalizado</h4>
+                <h4 class="no-print">Proceso Finalizado</h4>
                 <p><?php echo $mensaje; ?></p>
-                <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-primary">Volver al Dashboard</a>
+                <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-primary no-print">Volver al Dashboard</a>
             </div>
         <?php endif; ?>
         <?php if (isset($error) && $error): ?>
             <div class="alert alert-danger">
                 <h4>Error</h4>
                 <p><?php echo $error; ?></p>
-                <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary">Volver al Dashboard</a>
+                <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary no-print">Volver al Dashboard</a>
             </div>
         <?php endif; ?>
     </div>
@@ -26,12 +26,12 @@
         </div>
         <div class="card-body">
             <p>Esta herramienta busca tickets cerrados o resueltos hace más de un año y te permite borrarlos para mantener la base de datos limpia.</p>
-            <button id="btn-test-limpieza" class="btn btn-info">Verificar Tickets a Borrar (Simulación)</button>
+            <button id="btn-test-limpieza" class="btn btn-info no-print">Verificar Tickets a Borrar (Simulación)</button>
             <div id="test-results-container" class="mt-3" style="display:none;">
                 <h4>Resultados de la Simulación</h4>
                 <p><strong id="test-results-count"></strong></p>
                 <ul id="test-results-list"></ul>
-                <hr>
+                <hr class="no-print">
                 <p>Para borrarlos permanentemente, usa la opción de "Limpieza Total" o "Resetear Sistema".</p>
             </div>
         </div>
@@ -55,11 +55,12 @@
             <hr>
             <p><strong>¿Estás absolutamente seguro de que quieres continuar?</strong></p>
             
-            <form action="<?php echo Flight::get('base_url'); ?>/admin/limpieza/total" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres borrar TODA la información? Esta acción no se puede deshacer.');">
+            <form class="no-print" action="<?php echo Flight::get('base_url'); ?>/admin/limpieza/total" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres borrar TODA la información? Esta acción no se puede deshacer.');">
+                <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
                 <button type="submit" name="confirmar_limpieza" class="btn btn-danger btn-lg">
                     <i class="bi bi-trash-fill"></i> Sí, entiendo y quiero borrar TODO
                 </button>
-                <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary btn-lg">No, cancelar y volver</a>
+                <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary btn-lg ">No, cancelar y volver</a>
             </form>
         </div>
     </div>
@@ -84,11 +85,12 @@
             <hr>
             <p><strong>Esta acción no se puede deshacer. ¿Estás absolutamente seguro de que quieres resetear el sistema?</strong></p>
             
-            <form action="<?php echo Flight::get('base_url'); ?>/admin/limpieza/reset" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres resetear el sistema? Los usuarios no se verán afectados, pero todo lo demás será borrado.');">
+            <form class="no-print" action="<?php echo Flight::get('base_url'); ?>/admin/limpieza/reset" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres resetear el sistema? Los usuarios no se verán afectados, pero todo lo demás será borrado.');">
+                <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
                 <button type="submit" name="confirmar_reseteo" class="btn btn-danger btn-lg">
                     <i class="bi bi-trash-fill"></i> Sí, entiendo las consecuencias y quiero resetear el sistema
                 </button>
-                <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary btn-lg">No, cancelar y volver</a>
+                <a href="<?php echo Flight::get('base_url'); ?>/dashboard" class="btn btn-secondary btn-lg ">No, cancelar y volver</a>
             </form>
         </div>
     </div>

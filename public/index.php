@@ -5,11 +5,25 @@ require '../vendor/autoload.php';
 session_start();
 
 // Incluir la configuración de la base de datos y registrar la conexión con Flight
-require_once '../config/database.php';
-Flight::map('db', function () {
-    global $pdo; // Usar la variable $pdo global del archivo database.php
-    return $pdo;
+$db_config = require_once '../config/database.php';
+Flight::set('db_config', $db_config);
+
+Flight::map('db', function () use ($db_config) {
+    static $pdo = null;
+    if ($pdo === null) {
+        $dsn = "mysql:host={$db_config['host']};dbname={$db_config['dbname']};charset={$db_config['charset']}";
+        try {
+            $pdo = new PDO($dsn, $db_config['username'], $db_config['password'], $db_config['options']);
+        } catch (PDOException $e) {
+            throw new PDOException($e->getMessage(), (int)$e->getCode());
+        }
+    }
+    return $pdo; 
 });
+
+// Cargar la configuración de correo y registrarla con Flight
+$mail_config = require_once '../config/mail.php';
+Flight::set('mail_config', $mail_config);
 
 // Configurar la ruta de las vistas
 Flight::set('flight.views.path', '../views');
@@ -114,6 +128,11 @@ Flight::route('POST /tickets/ver/@id_ticket/anular', ['App\Controllers\TicketCon
 Flight::route('GET /tickets/imprimir', ['App\Controllers\TicketController', 'print']);
 Flight::route('GET /tickets/exportar/excel', ['App\Controllers\TicketController', 'exportExcel']);
 Flight::route('GET /tickets/exportar/pdf', ['App\Controllers\TicketController', 'exportPdf']);
+
+// --- RUTAS DE API (PARA AJAX) ---
+Flight::route('POST /api/tickets/@id_ticket/comentario', ['App\Controllers\TicketController', 'addCommentAjax']);
+Flight::route('GET /api/clientes', ['App\Controllers\ClientController', 'apiGetClientes']);
+Flight::route('GET /api/usuarios', ['App\Controllers\UserController', 'apiGetUsuarios']);
 
 // --- INICIAR FLIGHT ---
 Flight::start();

@@ -116,25 +116,25 @@ $status = $_GET['status'] ?? '';
             <div id="carousel-container" class="relative w-full h-full">
                 <div class="carousel-slide absolute inset-0 opacity-100" data-index="0" style="background-image: url('https://placehold.co/1200x450/1A2E44/ffffff?text=Servicio+de+Soporte+TI'); background-size: cover; background-position: center;">
                     <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                        <div class="text-center p-6 rounded-xl bg-black bg-opacity-20">
-                            <h2 class="text-4xl md:text-6xl font-bold text-white mb-2 text-shadow-strong">Soporte TI Especializado</h2>
-                            <p class="text-xl md:text-2xl text-gray-200 text-shadow-strong">Máxima eficiencia y seguridad para tu infraestructura.</p>
+                        <div class="text-center p-6">
+                            <h2 class="text-4xl md:text-6xl font-bold text-white mb-2 text-shadow-strong hero-title">Soporte TI Especializado</h2>
+                            <p class="text-xl md:text-2xl text-gray-200 text-shadow-strong hero-subtitle">Máxima eficiencia y seguridad para tu infraestructura.</p>
                         </div>
                     </div>
                 </div>
                 <div class="carousel-slide absolute inset-0 opacity-0" data-index="1" style="background-image: url('https://placehold.co/1200x450/38B2AC/ffffff?text=Mantenimiento+Preventivo'); background-size: cover; background-position: center;">
                     <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                        <div class="text-center p-6 rounded-xl bg-black bg-opacity-20">
-                            <h2 class="text-4xl md:text-6xl font-bold text-white mb-2 text-shadow-strong">Mantenimiento Preventivo</h2>
-                            <p class="text-xl md:text-2xl text-gray-200 text-shadow-strong">Evita problemas antes de que ocurran.</p>
+                        <div class="text-center p-6">
+                            <h2 class="text-4xl md:text-6xl font-bold text-white mb-2 text-shadow-strong hero-title">Mantenimiento Preventivo</h2>
+                            <p class="text-xl md:text-2xl text-gray-200 text-shadow-strong hero-subtitle">Evita problemas antes de que ocurran.</p>
                         </div>
                     </div>
                 </div>
                 <div class="carousel-slide absolute inset-0 opacity-0" data-index="2" style="background-image: url('https://placehold.co/1200x450/4B5563/ffffff?text=Asistencia+Inmediata'); background-size: cover; background-position: center;">
                     <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                        <div class="text-center p-6 rounded-xl bg-black bg-opacity-20">
-                            <h2 class="text-4xl md:text-6xl font-bold text-white mb-2 text-shadow-strong">Tu Socio Tecnológico de Confianza</h2>
-                            <p class="text-xl md:text-2xl text-gray-200 text-shadow-strong">Asistencia rápida y personalizada.</p>
+                        <div class="text-center p-6">
+                            <h2 class="text-4xl md:text-6xl font-bold text-white mb-2 text-shadow-strong hero-title">Tu Socio Tecnológico de Confianza</h2>
+                            <p class="text-xl md:text-2xl text-gray-200 text-shadow-strong hero-subtitle">Asistencia rápida y personalizada.</p>
                         </div>
                     </div>
                 </div>
@@ -227,7 +227,7 @@ $status = $_GET['status'] ?? '';
                 <div>
                     <h4 class="text-lg font-semibold text-mce-secondary mb-4">Datos de Contacto</h4>
                     <ul class="space-y-2 text-gray-400 text-sm">
-                        <li><span class="font-bold">Dirección:</span> Calle Ficticia #123, Ciudad Digital</li>
+                        <li><span class="font-bold">Dirección:</span> Torre Bioceanica #123, San Antonio.</li>
                         <li><span class="font-bold">Teléfono:</span> +56 9 1234 5678 (Soporte 24/7)</li>
                         <li><span class="font-bold">Email:</span> contacto@mce-ti.com</li>
                     </ul>

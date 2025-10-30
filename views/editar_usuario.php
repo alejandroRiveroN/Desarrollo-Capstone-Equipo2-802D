@@ -15,6 +15,7 @@ if (isset($_SESSION['mensaje_error'])) {
 <div class="card">
     <div class="card-body">
         <form action="<?php echo Flight::get('base_url'); ?>/usuarios/editar/<?php echo $usuario['id_usuario']; ?>" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
             <div class="row">
                  <div class="col-md-6 mb-3"><label for="nombre_completo" class="form-label">Nombre Completo <span class="text-danger">*</span></label><input type="text" class="form-control" id="nombre_completo" name="nombre_completo" value="<?php echo htmlspecialchars($usuario['nombre_completo']); ?>" required></div>
                 <div class="col-md-6 mb-3"><label for="email" class="form-label">Email <span class="text-danger">*</span></label><input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($usuario['email']); ?>" required></div>

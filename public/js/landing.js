@@ -1,5 +1,5 @@
-document.addEventListener('DOMContentLoaded', function() {
-    
+document.addEventListener("DOMContentLoaded", function() {
+
     // --- Carousel Logic ---
     const slides = document.querySelectorAll('.carousel-slide');
     const container = document.getElementById('carousel-container');
@@ -14,6 +14,20 @@ document.addEventListener('DOMContentLoaded', function() {
         function updateCarousel(index) {
             slides.forEach((slide, i) => {
                 slide.style.opacity = (i === index) ? '1' : '0';
+
+                // Animación del texto del slide
+                const title = slide.querySelector('.hero-title');
+                const subtitle = slide.querySelector('.hero-subtitle');
+
+                if (i === index) {
+                    // Si es el slide activo, añade las clases para animar
+                    title?.classList.add('animate-in');
+                    subtitle?.classList.add('animate-in');
+                } else {
+                    // Si no, quítalas para que se pueda animar de nuevo la próxima vez
+                    title?.classList.remove('animate-in');
+                    subtitle?.classList.remove('animate-in');
+                }
             });
             updateIndicators(index);
         }
@@ -113,5 +127,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Validar al cargar por si el navegador autocompleta los campos
         validateContactForm();
+    }
+
+    const sectionsToAnimate = document.querySelectorAll('.fade-in-section');
+
+    if (sectionsToAnimate.length > 0) {
+        const options = {
+            root: null, // Observa en relación al viewport
+            rootMargin: '0px',
+            threshold: 0.1 // Se activa cuando al menos el 10% del elemento es visible
+        };
+
+        const observer = new IntersectionObserver(function(entries, observer) {
+            entries.forEach(entry => {
+                // Si el elemento está intersectando (visible en la pantalla)
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    // Dejamos de observar el elemento una vez que ha sido animado para mejorar el rendimiento
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, options);
+
+        // Por cada sección, le decimos al observador que la vigile
+        sectionsToAnimate.forEach(section => { observer.observe(section); });
     }
 });

@@ -1,8 +1,19 @@
+/* Definición de variables globales para la paleta de colores y estilos */
+:root {
+    --color-primario: #133C55;
+    --color-acento: #00b894;
+    --color-acento-hover: #019875;
+    --color-fondo: #f2f4f7;
+    --color-texto-claro: #fff;
+    --color-texto-oscuro: #555;
+    --radio-borde: 12px;
+}
+
 /*1.**`body`**:
 *- Utiliza `display: flex` para centrar el contenido tanto horizontal (`justify-content: center`) como verticalmente (`align-items: center`).
 */
 body {
-    background-color: #f2f4f7;
+    background-color: var(--color-fondo);
     display: flex;
     align-items: center; /* Centra verticalmente por defecto */
     justify-content: center;
@@ -26,10 +37,10 @@ body.page-registro {
     width: 100%;
     max-width: 500px;
     margin: 2rem 0; /* Añade el margen vertical para dar espacio cuando hay scroll */  /* Solucione el problema del margen y centrado del login . Atte Alejandro */
-    border-radius: 12px;
+    border-radius: var(--radio-borde);
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     overflow: hidden;
-    background: #fff;
+    background: var(--color-texto-claro);
 }
 
 
@@ -37,8 +48,8 @@ body.page-registro {
 *-Separo la cabecera (con el título) del cuerpo del formulario.
 */
 .login-header {
-    background-color: #133C55;
-    color: #fff;
+    background-color: var(--color-primario);
+    color: var(--color-texto-claro);
     text-align: center;
     padding: 1.5rem;
 }
@@ -69,17 +80,17 @@ body.page-registro {
 */
 
 .btn-acceder {
-    background-color: #00b894;
-    color: white;
+    background-color: var(--color-acento);
+    color: var(--color-texto-claro);
     border: none;
     border-radius: 6px;
     padding: 0.6rem;
     font-weight: 600;
-    transition: background 0.3s;
+    transition: background-color 0.3s;
 }
 
 .btn-acceder:hover {
-    background-color: #019875;
+    background-color: var(--color-acento-hover);
 }
 
 .forgot-password {
@@ -88,7 +99,7 @@ body.page-registro {
 }
 
 .forgot-password a {
-    color: #555;
+    color: var(--color-texto-oscuro);
     font-size: 0.9rem;
     text-decoration: none;
 }

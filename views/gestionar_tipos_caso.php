@@ -7,16 +7,7 @@
     <h2 class="mb-0">Gestionar Tipos de Caso</h2>
 </div>
 
-<?php
-if (isset($_SESSION['mensaje_exito'])) {
-    echo '<div class="alert alert-success">' . htmlspecialchars($_SESSION['mensaje_exito']) . '</div>';
-    unset($_SESSION['mensaje_exito']);
-}
-if (isset($_SESSION['mensaje_error'])) {
-    echo '<div class="alert alert-danger">' . htmlspecialchars($_SESSION['mensaje_error']) . '</div>';
-    unset($_SESSION['mensaje_error']);
-}
-?>
+<?php require_once __DIR__ . '/partials/flash_messages.php'; ?>
 
 <div class="row g-4">
     <div class="col-md-4">
@@ -77,7 +68,13 @@ if (isset($_SESSION['mensaje_error'])) {
                                     <a href="<?php echo Flight::get('base_url'); ?>/casos/tipos/editar/<?php echo $tipo['id_tipo_caso']; ?>" class="btn btn-sm btn-primary">
                                         <i class="bi bi-pencil-square"></i> Editar
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteTipoCasoModal" data-tipocaso-id="<?php echo $tipo['id_tipo_caso']; ?>" data-tipocaso-name="<?php echo htmlspecialchars($tipo['nombre_tipo']); ?>">
+                                    <button type="button" class="btn btn-sm btn-danger" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#confirmDeleteModal"
+                                        data-item-id="<?php echo $tipo['id_tipo_caso']; ?>"
+                                        data-item-name="<?php echo htmlspecialchars($tipo['nombre_tipo']); ?>"
+                                        data-item-type-text="el tipo de caso"
+                                        data-delete-url="<?php echo Flight::get('base_url'); ?>/casos/tipos/eliminar/<?php echo $tipo['id_tipo_caso']; ?>">
                                         <i class="bi bi-trash-fill"></i> Eliminar
                                     </button>
                                 </td>
@@ -90,30 +87,6 @@ if (isset($_SESSION['mensaje_error'])) {
         </div>
     </div>
 </div>
-
-<!-- Modal de Confirmación de Eliminación -->
-<div class="modal fade" id="deleteTipoCasoModal" tabindex="-1" aria-labelledby="deleteTipoCasoModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="deleteTipoCasoModalLabel">Confirmar Eliminación</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>¿Estás seguro de que deseas eliminar el tipo de caso <strong id="tipoCasoNameToDelete"></strong>?</p>
-        <p class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Esta acción no se puede deshacer y podría afectar a los tickets existentes.</p>
-      </div>
-      <div class="modal-footer">
-        <form id="deleteTipoCasoForm" method="POST">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-danger">Confirmar Eliminación</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script src="<?php echo Flight::get('base_url'); ?>/js/gestionar_tipos_caso.js"></script>
 
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
 

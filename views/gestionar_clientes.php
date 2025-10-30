@@ -8,22 +8,13 @@
     <a href="<?php echo Flight::get('base_url'); ?>/clientes/crear" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Añadir Nuevo Cliente</a>
 </div>
 
-<?php
-if (isset($_SESSION['mensaje_exito'])) {
-    echo '<div class="alert alert-success">' . htmlspecialchars($_SESSION['mensaje_exito']) . '</div>';
-    unset($_SESSION['mensaje_exito']);
-}
-if (isset($_SESSION['mensaje_error'])) {
-    echo '<div class="alert alert-danger">' . htmlspecialchars($_SESSION['mensaje_error']) . '</div>';
-    unset($_SESSION['mensaje_error']);
-}
-?>
+<?php require_once __DIR__ . '/partials/flash_messages.php'; ?>
 
 <div class="card mb-4">
     <div class="card-header fw-bold"><a class="text-decoration-none text-dark" data-bs-toggle="collapse" href="#collapseFilters" role="button" aria-expanded="true"><i class="bi bi-funnel-fill"></i> Filtros y Reportes</a></div>
     <div class="collapse show" id="collapseFilters">
         <div class="card-body p-4">
-            <form id="formFiltrosClientes" action="/clientes" method="GET" class="row g-3">
+            <form id="formFiltrosClientes" class="row g-3">
                 <div class="col-md-4">
                     <label for="termino" class="form-label">Buscar por Nombre o Empresa:</label>
                     <input type="text" id="termino" name="termino" class="form-control" value="<?php echo htmlspecialchars($filtro_termino); ?>">
@@ -45,8 +36,8 @@ if (isset($_SESSION['mensaje_error'])) {
                     </select>
                 </div>
                 <div class="col-12 d-flex justify-content-end">
-                    <button type="submit" class="btn btn-primary me-2">Filtrar</button>
-                    <a href="/clientes" class="btn btn-secondary">Limpiar</a>
+                    <button type="submit" class="btn btn-primary me-2"><i class="bi bi-search"></i> Filtrar</button>
+                    <button type="reset" id="btnLimpiarFiltros" class="btn btn-secondary">Limpiar</button>
                 </div>
             </form>
             <?php if ($_SESSION['id_rol'] == 1): ?>
@@ -63,11 +54,11 @@ if (isset($_SESSION['mensaje_error'])) {
 </div>
 <div class="card">
     <div class="card-header fw-bold">
-        Lista de Clientes (<?php echo count($clientes); ?> encontrados)
+        Lista de Clientes (<span id="contador-clientes"><?php echo count($clientes); ?></span> encontrados)
     </div>
     <div class="card-body p-4">
         <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
+            <table class="table table-striped table-hover align-middle" id="tabla-clientes">
                 <thead class="table-dark">
                     <tr>
                         <th>ID</th>
@@ -81,7 +72,7 @@ if (isset($_SESSION['mensaje_error'])) {
                         <th>Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tbody-clientes">
                     <?php if (empty($clientes)): ?>
                         <tr><td colspan="9" class="text-center">No se encontraron clientes con los filtros aplicados.</td></tr>
                     <?php else: ?>
@@ -97,7 +88,13 @@ if (isset($_SESSION['mensaje_error'])) {
                                 <td><span class="badge bg-<?php echo $cliente['activo'] ? 'success' : 'secondary'; ?>"><?php echo $cliente['activo'] ? 'Activo' : 'Inactivo'; ?></span></td>
                                 <td>
                                     <a href="<?php echo Flight::get('base_url'); ?>/clientes/editar/<?php echo $cliente['id_cliente']; ?>" class="btn btn-sm btn-warning"><i class="bi bi-pencil-fill"></i> Editar</a>
-                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteClientModal" data-client-id="<?php echo $cliente['id_cliente']; ?>" data-client-name="<?php echo htmlspecialchars($cliente['nombre']); ?>">
+                                    <button type="button" class="btn btn-sm btn-danger" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#confirmDeleteModal"
+                                        data-item-id="<?php echo $cliente['id_cliente']; ?>"
+                                        data-item-name="<?php echo htmlspecialchars($cliente['nombre']); ?>"
+                                        data-item-type-text="al cliente"
+                                        data-delete-url="<?php echo Flight::get('base_url'); ?>/clientes/eliminar/<?php echo $cliente['id_cliente']; ?>">
                                         <i class="bi bi-trash-fill"></i> Eliminar
                                     </button>
                                 </td>
@@ -108,28 +105,6 @@ if (isset($_SESSION['mensaje_error'])) {
             </table>
         </div>
     </div>
-</div>
-
-<!-- Modal de Confirmación de Eliminación -->
-<div class="modal fade" id="deleteClientModal" tabindex="-1" aria-labelledby="deleteClientModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="deleteClientModalLabel">Confirmar Eliminación</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>¿Estás seguro de que deseas eliminar al cliente <strong id="clientNameToDelete"></strong>?</p>
-        <p class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Esta acción no se puede deshacer y podría afectar a los tickets asociados.</p>
-      </div>
-      <div class="modal-footer">
-        <form id="deleteClientForm" method="POST">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-danger">Confirmar Eliminación</button>
-        </form>
-      </div>
-    </div>
-  </div>
 </div>
 
 <script src="<?php echo Flight::get('base_url'); ?>/js/gestionar_clientes.js"></script>

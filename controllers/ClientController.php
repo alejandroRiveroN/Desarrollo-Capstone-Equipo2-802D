@@ -2,6 +2,11 @@
 
 namespace App\Controllers;
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
 class PDF extends \FPDF {
     function Header() { $this->SetFont('Arial', 'B', 12); $this->Cell(0, 10, 'Reporte de Clientes', 0, 1, 'C'); $this->Ln(5); }
     function Footer() { $this->SetY(-15); $this->SetFont('Arial', 'I', 8); $this->Cell(0, 10, 'Pagina ' . $this->PageNo(), 0, 0, 'C'); }
@@ -76,6 +81,7 @@ class ClientController extends BaseController {
 
     public static function store() {
         self::checkAuth();
+        self::validateCsrfToken();
         $pdo = \Flight::db();
         $request = \Flight::request();
         $data = $request->data;
@@ -95,16 +101,12 @@ class ClientController extends BaseController {
 
         try {
             $pdo->beginTransaction();
-
-            // 1️⃣ Insertar en Clientes
             $stmt = $pdo->prepare(
                 "INSERT INTO Clientes (nombre, empresa, correo_electronico, telefono, pais, ciudad, activo) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)"
             );
             $stmt->execute([$nombre, $empresa, $correo_electronico, $telefono, $pais, $ciudad, $activo]);
 
-            // 2️⃣ Insertar en Usuarios (rol Cliente)
-            // Suponiendo que el rol Cliente tiene id_rol = 4
             $password = bin2hex(random_bytes(4)); // contraseña temporal
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
@@ -115,9 +117,7 @@ class ClientController extends BaseController {
 
             // Al final de la creación
             $_SESSION['mensaje_exito'] = '¡Registro completado con éxito! Ahora puedes iniciar sesión.';
-            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/';
-            \Flight::redirect($url);
-            exit();
+            self::redirect_to('/');
         } catch (\Exception $e) {
             $pdo->rollBack();
 
@@ -138,11 +138,7 @@ class ClientController extends BaseController {
         $stmt->execute([$id]);
         $cliente = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        if (!$cliente) {
-            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes';
-            \Flight::redirect($url);
-            exit();
-        }
+        if (!$cliente) self::redirect_to('/clientes');
 
         \Flight::render('editar_cliente.php', [
             'cliente' => $cliente,
@@ -152,6 +148,7 @@ class ClientController extends BaseController {
 
     public static function update($id) {
         self::checkAuth();
+        self::validateCsrfToken();
         $pdo = \Flight::db();
         $request = \Flight::request();
         $data = $request->data;
@@ -177,9 +174,8 @@ class ClientController extends BaseController {
                 $stmt = $pdo->prepare(
                     "UPDATE Clientes SET nombre = ?, empresa = ?, correo_electronico = ?, telefono = ?, pais = ?, ciudad = ?, activo = ? WHERE id_cliente = ?"
                 );
-                $stmt->execute([$nombre, $empresa, $correo_electronico, $telefono, $pais, $ciudad, $activo, $id]);
-                $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes?status=updated';
-                \Flight::redirect($url);
+                $stmt->execute([$nombre, $empresa, $email, $telefono, $pais, $ciudad, $activo, $id]);
+                self::redirect_to('/clientes?status=updated');
             } catch (\Exception $e) {
                 $stmt = $pdo->prepare("SELECT * FROM Clientes WHERE id_cliente = ?");
                 $stmt->execute([$id]);
@@ -194,12 +190,10 @@ class ClientController extends BaseController {
 
     public static function delete($id) {
         self::checkAdmin(); // Solo los administradores pueden eliminar
+        self::validateCsrfToken();
         $pdo = \Flight::db();
 
         try {
-            // Opcional: Considerar qué hacer con los tickets del cliente.
-            // Por ahora, la restricción de la base de datos podría impedirlo si hay tickets asociados.
-            // Para una eliminación forzada, primero tendrías que reasignar o eliminar los tickets.
             $stmt = $pdo->prepare("DELETE FROM Clientes WHERE id_cliente = ?");
             $stmt->execute([$id]);
 
@@ -211,9 +205,7 @@ class ClientController extends BaseController {
         }
 
         // Usar el método de redirección de Flight.
-        $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes';
-        \Flight::redirect($url);
-        exit();
+        self::redirect_to('/clientes');
     }
 
     public static function publicRegister() {
@@ -280,10 +272,11 @@ class ClientController extends BaseController {
 
             $pdo->commit();
 
+            //Notificación por email al nuevo cliente ---
+            self::sendWelcomeEmailToClient($nombre, $email);
+
             $_SESSION['mensaje_exito'] = "¡Registro exitoso! Ya puedes iniciar sesión.";
-            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/';
-            \Flight::redirect($url);
-            exit();
+            self::redirect_to('/');
         } catch (\Exception $e) {
             $pdo->rollBack();
             // Detectar email duplicado
@@ -305,6 +298,45 @@ class ClientController extends BaseController {
         }
     }
 
+    /**
+     * Envía un correo de bienvenida a un nuevo cliente.
+     *
+     * @param string $nombre El nombre del nuevo cliente.
+     * @param string $email El email del nuevo cliente.
+     */
+    private static function sendWelcomeEmailToClient($nombre, $email) {
+        $mail = new PHPMailer(true);
+        $config = \Flight::get('mail_config');
+
+        try {
+            // Configuración del servidor SMTP
+            $mail->isSMTP();
+            $mail->Host       = $config['host'];
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $config['username'];
+            $mail->Password   = $config['password'];
+            $mail->SMTPSecure = $config['encryption'];
+            $mail->Port       = $config['port'];
+            $mail->CharSet    = 'UTF-8';
+
+            // Remitente y Destinatario
+            $mail->setFrom($config['from_address'], $config['from_name']);
+            $mail->addAddress($email, $nombre);
+
+            // Contenido del correo
+            $mail->isHTML(true);
+            $mail->Subject = '¡Bienvenido/a a nuestro Sistema de Soporte!';
+            $mail->Body    = "Hola " . htmlspecialchars($nombre) . ",<br><br>" .
+                             "¡Gracias por registrarte en nuestro sistema de soporte! Ahora puedes iniciar sesión y comenzar a crear tus tickets de soporte.<br><br>" .
+                             "Si tienes alguna pregunta, no dudes en contactarnos.<br><br>" .
+                             "Saludos cordiales,<br>" .
+                             "El equipo de Soporte";
+            $mail->AltBody = "Hola " . htmlspecialchars($nombre) . ",\n\n¡Gracias por registrarte en nuestro sistema de soporte! Ahora puedes iniciar sesión y comenzar a crear tus tickets de soporte.\n\nSaludos,\nEl equipo de Soporte";
+
+            $mail->send();
+        } catch (Exception $e) {
+        }
+    }
 
     public static function exportExcel() {
         self::checkAuth();
@@ -405,13 +437,13 @@ class ClientController extends BaseController {
         $pdf = new PDF('L', 'mm', 'A4');
         $pdf->AddPage();
         $pdf->SetFont('Arial', 'B', 8);
-        $pdf->Cell(35, 7, 'Nombre', 1);
-        $pdf->Cell(50, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['email']), 1);
-        $pdf->Cell(30, 7, 'Telefono', 1);
-        $pdf->Cell(40, 7, 'Empresa', 1);
-        $pdf->Cell(30, 7, 'Pais', 1);
-        $pdf->Cell(30, 7, 'Ciudad', 1);
-        $pdf->Cell(30, 7, 'Estado', 1);
+        $pdf->Cell(45, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Nombre'), 1, 0, 'C');
+        $pdf->Cell(55, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Correo Electrónico'), 1, 0, 'C');
+        $pdf->Cell(30, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Teléfono'), 1, 0, 'C');
+        $pdf->Cell(40, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Empresa'), 1, 0, 'C');
+        $pdf->Cell(30, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'País'), 1, 0, 'C');
+        $pdf->Cell(30, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Ciudad'), 1, 0, 'C');
+        $pdf->Cell(20, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Estado'), 1, 0, 'C');
         $pdf->Ln();
 
         $pdf->SetFont('Arial', '', 7);
@@ -419,10 +451,10 @@ class ClientController extends BaseController {
             $pdf->Cell(35, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['nombre']), 1);
             $pdf->Cell(50, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['email']), 1);
             $pdf->Cell(30, 7, $cliente['telefono'], 1);
-            $pdf->Cell(40, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['empresa']), 1);
-            $pdf->Cell(30, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['pais']), 1);
-            $pdf->Cell(30, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['ciudad']), 1);
-            $pdf->Cell(30, 7, $cliente['activo'] ? 'Activo' : 'Inactivo', 1);
+            $pdf->Cell(40, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['empresa'] ?? 'N/A'), 1);
+            $pdf->Cell(30, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['pais'] ?? 'N/A'), 1);
+            $pdf->Cell(30, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['ciudad'] ?? 'N/A'), 1);
+            $pdf->Cell(20, 7, $cliente['activo'] ? 'Activo' : 'Inactivo', 1);
             $pdf->Ln();
         }
         $pdf->Output('D', 'reporte_clientes.pdf');
@@ -446,5 +478,35 @@ class ClientController extends BaseController {
         $clientes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         \Flight::render('imprimir_clientes.php', ['clientes' => $clientes]);
+    }
+
+    /**
+     * Endpoint de API para obtener clientes con filtros en formato JSON.
+     * Usado para la búsqueda con AJAX.
+     */
+    public static function apiGetClientes() {
+        self::checkAuth(); // Asegurar que el usuario esté autenticado
+        $request = \Flight::request();
+        
+        // Reutilizar la lógica de filtrado existente
+        $filtros = self::_getClientesConFiltros($request);
+
+        $sql = "SELECT id_cliente, nombre, empresa, email, telefono, pais, ciudad, activo FROM Clientes";
+
+        if (!empty($filtros['where_conditions'])) {
+            $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
+        }
+        $sql .= " ORDER BY nombre ASC";
+
+        $pdo = \Flight::db();
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($filtros['params']);
+        $clientes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // Devolver los resultados como JSON
+        \Flight::json([
+            'success' => true,
+            'clientes' => $clientes
+        ]);
     }
 }
