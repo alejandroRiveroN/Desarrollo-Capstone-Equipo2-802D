@@ -1,0 +1,132 @@
+/**
+ * =================================================================
+ * Hoja de Estilos Principal (`main.css`)
+ * =================================================================
+ * Este archivo combina los estilos de landing.css y login.css
+ * para reducir las peticiones HTTP.
+ */
+
+/*
+ * =================================================================
+ * Estilos Globales y Variables (de login.css)
+ * =================================================================
+ */
+:root {
+    --color-primario: #133C55;
+    --color-acento: #00b894;
+    --color-acento-hover: #019875;
+    --color-fondo: #f2f4f7;
+    --color-texto-claro: #fff;
+    --color-texto-oscuro: #555;
+    --radio-borde: 12px;
+}
+
+/*
+ * =================================================================
+ * Estilos para el Login (de login.css)
+ * =================================================================
+ */
+
+body.page-login, body.page-registro {
+    background-color: var(--color-fondo);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: "Segoe UI", sans-serif;
+    align-items: center;
+}
+
+body.page-registro {
+    align-items: flex-start;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 500px;
+    margin: 2rem 0;
+    border-radius: var(--radio-borde);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+    background: var(--color-texto-claro);
+}
+
+.login-header {
+    background-color: var(--color-primario);
+    color: var(--color-texto-claro);
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.login-header h2 {
+    font-weight: 700;
+    margin: 0;
+}
+
+.login-header p {
+    font-size: 0.9rem;
+    margin: 0;
+    opacity: 0.9;
+}
+
+.login-body {
+    padding: 1rem;
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+.btn-acceder {
+    background-color: var(--color-acento);
+    color: var(--color-texto-claro);
+    border: none;
+    border-radius: 6px;
+    padding: 0.6rem;
+    font-weight: 600;
+    transition: background-color 0.3s;
+}
+
+.btn-acceder:hover {
+    background-color: var(--color-acento-hover);
+}
+
+.forgot-password {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.forgot-password a {
+    color: var(--color-texto-oscuro);
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+}
+
+/*
+ * =================================================================
+ * Estilos y Animaciones de la Landing Page (de landing.css)
+ * =================================================================
+ */
+
+.fade-in-section {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.fade-in-section.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@keyframes fadeInUpHero {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.hero-title, .hero-subtitle { opacity: 0; }
+.hero-title.animate-in { animation: fadeInUpHero 0.8s ease-out 0.3s forwards; }
+.hero-subtitle.animate-in { animation: fadeInUpHero 0.8s ease-out 0.5s forwards; }

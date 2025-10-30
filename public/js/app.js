@@ -24,6 +24,17 @@ document.addEventListener('DOMContentLoaded', function () {
             deleteForm.action = deleteUrl;
         });
     }
+
+    // --- Script para auto-ocultar alertas de éxito/error (movido desde landing.js) ---
+    // Se aplica a cualquier alerta con las clases .alert-exito o .alert-error
+    const alertsToHide = document.querySelectorAll('.alert-exito, .alert-error, .alert-success, .alert-danger');
+    alertsToHide.forEach(function(alert) {
+        setTimeout(function() {
+            alert.style.transition = 'opacity 0.5s ease-out';
+            alert.style.opacity = '0';
+            setTimeout(() => { alert.style.display = 'none'; }, 500);
+        }, 5000); // Ocultar después de 5 segundos
+    });
 });
 //--Centralizamos los scritps de JavaScript(JS) el cual contendrá la lógica para configurar y mostrar los modales de información. 
 // reemplazando el codigo repetitivo y así mantener el codigo principal mas limpio 

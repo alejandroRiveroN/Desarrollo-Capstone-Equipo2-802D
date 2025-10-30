@@ -67,16 +67,6 @@ document.addEventListener("DOMContentLoaded", function() {
         updateCarousel(currentIndex);
     }
 
-    // --- Script para auto-ocultar alertas ---
-    const alerts = document.querySelectorAll('.alert-exito, .alert-error');
-    alerts.forEach(function(alert) {
-        setTimeout(function() {
-            alert.style.transition = 'opacity 0.5s ease-out';
-            alert.style.opacity = '0';
-            setTimeout(() => { alert.style.display = 'none'; }, 500);
-        }, 5000);
-    });
-
     // --- Script para validación en tiempo real del formulario de contacto ---
     const contactForm = {
         nombre: document.getElementById('nombre'),
