@@ -45,7 +45,6 @@ class AdminController extends BaseController {
     }
     public static function limpiezaTotal() {
         self::checkAdmin();
-        self::validateCsrfToken(); // Validar el token CSRF
         $pdo = \Flight::db();
         $mensaje = '';
         $error = '';
@@ -64,7 +63,6 @@ class AdminController extends BaseController {
     }    public static function limpiezaReset() {
         self::checkAdmin();
         $pdo = \Flight::db();
-        self::validateCsrfToken(); // Validar el token CSRF
 
         $mensaje = '';
         $error = '';
@@ -107,7 +105,8 @@ class AdminController extends BaseController {
         $mensaje = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if (!$mensaje) {
-            self::redirect_to('/admin/mensajes');
+            \Flight::redirect('/admin/mensajes');
+            exit();
         }
 
         \Flight::render('admin_responder_mensaje.php', ['mensaje' => $mensaje]);
@@ -119,14 +118,16 @@ class AdminController extends BaseController {
     public static function replyToMessage($id)
     {
         self::checkAdmin();
-        self::validateCsrfToken(); // Validar el token CSRF
+        // Construir la URL de retorno de forma anticipada para usarla en todos los casos.
+        $redirect_url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/admin/mensajes/ver/' . $id;
 
         $request = \Flight::request();
         $respuesta = trim($request->data->respuesta ?? '');
 
         if (empty($respuesta)) {
             $_SESSION['mensaje_error'] = 'La respuesta no puede estar vacía.';
-            self::redirect_to('/admin/mensajes/ver/' . $id);
+            \Flight::redirect($redirect_url);
+            exit();
         }
 
         $pdo = \Flight::db();
@@ -134,26 +135,27 @@ class AdminController extends BaseController {
         $stmt->execute([$id]);
         $mensaje_original = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        if (!$mensaje_original) self::redirect_to('/admin/mensajes');
+        if (!$mensaje_original) {
+            \Flight::redirect('http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/admin/mensajes');
+            exit();
+        }
 
         // Enviar correo con PHPMailer
         $mail = new PHPMailer(true);
-        $config = \Flight::get('mail_config');
-
         try {
             // Configuración del servidor SMTP
             $mail->isSMTP();
-            $mail->Host = $config['host'];
+            $mail->Host = 'smtp.gmail.com';
             $mail->SMTPAuth = true;
-            $mail->Username = $config['username'];
-            $mail->Password = $config['password'];
-            $mail->SMTPSecure = $config['encryption'];
-            $mail->Port = $config['port'];
+            $mail->Username = 'maixtebipulento@gmail.com'; // TU CORREO DE GMAIL
+            $mail->Password = 'fkoh kfqm kymf ojos';      // TU CONTRASEÑA DE APLICACIÓN DE GMAIL
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = 587;
             $mail->CharSet = 'UTF-8';
             $mail->setLanguage('es', '../vendor/phpmailer/phpmailer/language/');
 
             // Contenido del correo
-            $mail->setFrom($config['from_address'], $config['from_name']);
+            $mail->setFrom('soporte@mce-ti.com', 'Soporte MCE');
             $mail->addAddress($mensaje_original['email'], $mensaje_original['nombre']);
             $mail->addReplyTo('soporte@mce-ti.com', 'Soporte MCE');
 
@@ -166,16 +168,20 @@ class AdminController extends BaseController {
 
             $mail->send();
 
-            // Actualizar la base de datos si el correo se envió correctamente
-            $stmt_update = $pdo->prepare("UPDATE Formulario_contacto SET respuesta = ?, id_admin_respuesta = ?, fecha_respuesta = NOW(), estado = 'Respondido' WHERE id = ?");
+            // Actualizar la base de datos si el correo se envió correctamente.
+            // Se registra la respuesta, el admin que respondió, la fecha y se cambia el estado.
+            $stmt_update = $pdo->prepare(
+                "UPDATE Formulario_contacto SET respuesta = ?, id_admin_respuesta = ?, fecha_respuesta = NOW(), estado = 'Respondido' WHERE id = ?"
+            );
             $stmt_update->execute([$respuesta, $_SESSION['id_usuario'], $id]);
 
             $_SESSION['mensaje_exito'] = 'Respuesta enviada y registrada correctamente.';
-            self::redirect_to('/admin/mensajes/ver/' . $id);
+            // Redirección a la lista general de mensajes para ver el estado actualizado.
+            \Flight::redirect('http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/admin/mensajes');
 
         } catch (Exception $e) {
             $_SESSION['mensaje_error'] = "La respuesta no pudo ser enviada. Error de PHPMailer: {$mail->ErrorInfo}";
-            self::redirect_to('/admin/mensajes/ver/' . $id);
+            \Flight::redirect($redirect_url);
         }
     }
 }

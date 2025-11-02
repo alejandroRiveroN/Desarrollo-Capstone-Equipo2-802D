@@ -1,9 +1,6 @@
 <?php require_once __DIR__ . '/partials/header.php'; ?>
 
-<!-- Contenedor principal con padding -->
-<div class="container-fluid p-4">
-
-<h2 class="mb-4"><i class="bi bi-key-fill"></i> Cambiar Contraseña</h2>
+<h2 class="mb-4">Cambiar Contraseña</h2>
 
 <div class="row">
     <div class="col-md-6">
@@ -49,5 +46,3 @@
 <script src="<?php echo Flight::get('base_url'); ?>/js/cambiar_password.js"></script>
 
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
-
-</div> <!-- Fin del contenedor principal -->

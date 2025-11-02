@@ -31,8 +31,3 @@ th, td {
 th {
     background-color: #f2f2f2;
 }
-
-/* Clase de utilidad para ocultar elementos en la impresión */
-.no-print {
-    display: none !important;
-}

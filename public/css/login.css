@@ -1,19 +1,8 @@
-/* Definición de variables globales para la paleta de colores y estilos */
-:root {
-    --color-primario: #133C55;
-    --color-acento: #00b894;
-    --color-acento-hover: #019875;
-    --color-fondo: #f2f4f7;
-    --color-texto-claro: #fff;
-    --color-texto-oscuro: #555;
-    --radio-borde: 12px;
-}
-
 /*1.**`body`**:
 *- Utiliza `display: flex` para centrar el contenido tanto horizontal (`justify-content: center`) como verticalmente (`align-items: center`).
 */
 body {
-    background-color: var(--color-fondo);
+    background-color: #f2f4f7;
     display: flex;
     align-items: center; /* Centra verticalmente por defecto */
     justify-content: center;
@@ -37,10 +26,10 @@ body.page-registro {
     width: 100%;
     max-width: 500px;
     margin: 2rem 0; /* Añade el margen vertical para dar espacio cuando hay scroll */  /* Solucione el problema del margen y centrado del login . Atte Alejandro */
-    border-radius: var(--radio-borde);
+    border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     overflow: hidden;
-    background: var(--color-texto-claro);
+    background: #fff;
 }
 
 
@@ -48,8 +37,8 @@ body.page-registro {
 *-Separo la cabecera (con el título) del cuerpo del formulario.
 */
 .login-header {
-    background-color: var(--color-primario);
-    color: var(--color-texto-claro);
+    background-color: #133C55;
+    color: #fff;
     text-align: center;
     padding: 1.5rem;
 }
@@ -80,17 +69,17 @@ body.page-registro {
 */
 
 .btn-acceder {
-    background-color: var(--color-acento);
-    color: var(--color-texto-claro);
+    background-color: #00b894;
+    color: white;
     border: none;
     border-radius: 6px;
     padding: 0.6rem;
     font-weight: 600;
-    transition: background-color 0.3s;
+    transition: background 0.3s;
 }
 
 .btn-acceder:hover {
-    background-color: var(--color-acento-hover);
+    background-color: #019875;
 }
 
 .forgot-password {
@@ -99,7 +88,7 @@ body.page-registro {
 }
 
 .forgot-password a {
-    color: var(--color-texto-oscuro);
+    color: #555;
     font-size: 0.9rem;
     text-decoration: none;
 }

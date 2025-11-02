@@ -3,6 +3,30 @@ namespace App\Controllers;
 
 class CotizacionController extends BaseController
 {
+    /* ==========================
+     * Helpers SOLO para URLs
+     * ========================== */
+    private static function basePath(): string {
+        $raw  = \Flight::get('base_url') ?? '';
+        $path = '/' . ltrim($raw, '/');
+        $path = rtrim($path, '/');
+        if ($path === '//') $path = '/';
+        if ($path === '')   $path = '/';
+        return $path;
+    }
+    private static function abs(string $path = '/'): string {
+        $https  = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        $scheme = $https ? 'https' : 'http';
+        $host   = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $base   = self::basePath();
+        $path   = '/' . ltrim($path, '/');
+        return $scheme . '://' . $host . ($base === '/' ? '' : $base) . $path;
+    }
+    private static function redirect(string $path): void {
+        \Flight::redirect(self::abs($path));
+        exit();
+    }
+
     /** ==========================
      *  CLIENTE (rol 4)
      *  ========================== */
@@ -11,7 +35,7 @@ class CotizacionController extends BaseController
     public static function createForm()
     {
         if (!isset($_SESSION['id_rol']) || $_SESSION['id_rol'] != 4) {
-            self::redirect_to('/');
+            self::redirect('/');
         }
 
         $pdo = \Flight::db();
@@ -33,7 +57,7 @@ class CotizacionController extends BaseController
     public static function store()
     {
         if (!isset($_SESSION['id_rol']) || $_SESSION['id_rol'] != 4) {
-            self::redirect_to('/');
+            self::redirect('/');
         }
 
         $req       = \Flight::request()->data;
@@ -44,7 +68,7 @@ class CotizacionController extends BaseController
         $validPrioridades = ['Baja','Media','Alta','Urgente'];
         if ($idTipo <= 0 || !in_array($prioridad, $validPrioridades) || mb_strlen($desc) < 10) {
             $_SESSION['mensaje_error'] = 'Completa todos los campos: tipo válido, prioridad y descripción (mín. 10).';
-            self::redirect_to('/cotizaciones/crear');
+            self::redirect('/cotizaciones/crear');
         }
 
         $pdo = \Flight::db();
@@ -55,7 +79,7 @@ class CotizacionController extends BaseController
         $tipo = $stmtT->fetch(\PDO::FETCH_ASSOC);
         if (!$tipo) {
             $_SESSION['mensaje_error'] = 'El tipo de caso seleccionado no es válido.';
-            self::redirect_to('/cotizaciones/crear');
+            self::redirect('/cotizaciones/crear');
         }
 
         // Guarda NOMBRE del tipo en cotizaciones.tipo_caso (VARCHAR)
@@ -66,14 +90,14 @@ class CotizacionController extends BaseController
         $stmt->execute([$_SESSION['id_usuario'], $tipo['nombre_tipo'], $prioridad, $desc]);
 
         $_SESSION['mensaje_exito'] = '¡Solicitud enviada! Revisa tu historial cuando sea respondida.';
-        self::redirect_to('/cotizaciones');
+        self::redirect('/cotizaciones');
     }
 
     /** Página B: Historial (en curso y respondidas) */
     public static function myIndex()
     {
         if (!isset($_SESSION['id_rol']) || $_SESSION['id_rol'] != 4) {
-            self::redirect_to('/');
+            self::redirect('/');
         }
 
         $pdo = \Flight::db();
@@ -104,7 +128,7 @@ class CotizacionController extends BaseController
     public static function showClient($id)
     {
         if (!isset($_SESSION['id_rol']) || $_SESSION['id_rol'] != 4) {
-            self::redirect_to('/');
+            self::redirect('/');
         }
 
         $pdo = \Flight::db();
@@ -117,7 +141,7 @@ class CotizacionController extends BaseController
         $stmt->execute([$id, $_SESSION['id_usuario']]);
         $detalle = $stmt->fetch(\PDO::FETCH_ASSOC);
         if (!$detalle) {
-            self::redirect_to('/cotizaciones');
+            self::redirect('/cotizaciones');
         }
 
         // recargar listas para la misma vista
@@ -152,7 +176,7 @@ class CotizacionController extends BaseController
     public static function indexAdmin()
     {
         if (!isset($_SESSION['id_rol']) || !in_array($_SESSION['id_rol'], [1,3])) {
-            self::redirect_to('/');
+            self::redirect('/');
         }
 
         $pdo = \Flight::db();
@@ -171,7 +195,7 @@ class CotizacionController extends BaseController
     public static function showAdmin($id)
     {
         if (!isset($_SESSION['id_rol']) || !in_array($_SESSION['id_rol'], [1,3])) {
-            self::redirect_to('/');
+            self::redirect('/');
         }
 
         $pdo = \Flight::db();
@@ -186,7 +210,7 @@ class CotizacionController extends BaseController
         $stmt->execute([$id]);
         $c = $stmt->fetch(\PDO::FETCH_ASSOC);
         if (!$c) {
-            self::redirect_to('/admin/cotizaciones');
+            self::redirect('/admin/cotizaciones');
         }
 
         \Flight::render('admin_cotizaciones_responder.php', ['c' => $c]);
@@ -196,7 +220,7 @@ class CotizacionController extends BaseController
     public static function respond($id)
     {
         if (!isset($_SESSION['id_rol']) || !in_array($_SESSION['id_rol'], [1,3])) {
-            self::redirect_to('/');
+            self::redirect('/');
         }
 
         $req    = \Flight::request()->data;
@@ -205,7 +229,7 @@ class CotizacionController extends BaseController
 
         if (!is_numeric($precio) || (float)$precio <= 0 || mb_strlen($resp) < 5) {
             $_SESSION['mensaje_error'] = 'Precio inválido o respuesta muy corta.';
-            self::redirect_to("/admin/cotizaciones/ver/{$id}");
+            self::redirect("/admin/cotizaciones/ver/{$id}");
         }
 
         $pdo = \Flight::db();
@@ -213,11 +237,11 @@ class CotizacionController extends BaseController
         $chk->execute([$id]);
         $row = $chk->fetch(\PDO::FETCH_ASSOC);
         if (!$row) {
-            self::redirect_to('/admin/cotizaciones');
+            self::redirect('/admin/cotizaciones');
         }
         if ($row['estado'] === 'Respondida') {
             $_SESSION['mensaje_error'] = 'Esta cotización ya fue respondida y está cerrada.';
-            self::redirect_to("/admin/cotizaciones/ver/{$id}");
+            self::redirect("/admin/cotizaciones/ver/{$id}");
         }
 
         $stmt = $pdo->prepare("
@@ -228,6 +252,6 @@ class CotizacionController extends BaseController
         $stmt->execute([number_format((float)$precio, 2, '.', ''), $resp, $_SESSION['id_usuario'], $id]);
 
         $_SESSION['mensaje_exito'] = 'Respuesta enviada. La cotización quedó cerrada.';
-        self::redirect_to('/admin/cotizaciones');
+        self::redirect('/admin/cotizaciones');
     }
 }

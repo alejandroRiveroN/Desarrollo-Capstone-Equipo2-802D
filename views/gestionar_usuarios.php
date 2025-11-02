@@ -8,52 +8,25 @@
     <a href="<?php echo Flight::get('base_url'); ?>/usuarios/crear" class="btn btn-success"><i class="bi bi-person-plus-fill"></i> Crear Nuevo Usuario</a>
 </div>
 
-<?php require_once __DIR__ . '/partials/flash_messages.php'; ?>
-
-<div class="card mb-4">
-    <div class="card-header fw-bold"><a class="text-decoration-none text-dark" data-bs-toggle="collapse" href="#collapseFilters" role="button" aria-expanded="true"><i class="bi bi-funnel-fill"></i> Filtros</a></div>
-    <div class="collapse show" id="collapseFilters">
-        <div class="card-body p-4">
-            <form id="formFiltrosUsuarios" class="row g-3">
-                <div class="col-md-5">
-                    <label for="termino" class="form-label">Buscar por Nombre o Email:</label>
-                    <input type="text" id="termino" name="termino" class="form-control" value="<?php echo htmlspecialchars($termino ?? ''); ?>">
-                </div>
-                <div class="col-md-3">
-                    <label for="rol" class="form-label">Rol:</label>
-                    <select id="rol" name="rol" class="form-select">
-                        <option value="">Todos</option>
-                        <?php foreach ($roles as $rol_item): ?>
-                            <option value="<?php echo $rol_item['id_rol']; ?>" <?php if (($rol ?? '') == $rol_item['id_rol']) echo 'selected'; ?>><?php echo htmlspecialchars($rol_item['nombre_rol']); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label for="estado" class="form-label">Estado:</label>
-                    <select id="estado" name="estado" class="form-select">
-                        <option value="">Todos</option>
-                        <option value="1" <?php if (($estado ?? '') === '1') echo 'selected'; ?>>Activo</option>
-                        <option value="0" <?php if (($estado ?? '') === '0') echo 'selected'; ?>>Inactivo</option>
-                    </select>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary me-2">Filtrar</button>
-                    <button type="reset" id="btnLimpiarFiltros" class="btn btn-secondary">Limpiar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<?php
+if (isset($_SESSION['mensaje_exito'])) {
+    echo '<div class="alert alert-success">' . htmlspecialchars($_SESSION['mensaje_exito']) . '</div>';
+    unset($_SESSION['mensaje_exito']);
+}
+if (isset($_SESSION['mensaje_error'])) {
+    echo '<div class="alert alert-danger">' . htmlspecialchars($_SESSION['mensaje_error']) . '</div>';
+    unset($_SESSION['mensaje_error']);
+}
+?>
 
 <div class="card">
-    <div class="card-header fw-bold">Lista de Usuarios (<span id="contador-usuarios"><?php echo count($usuarios); ?></span> encontrados)</div>
     <div class="card-body p-4">
         <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle" id="tabla-usuarios">
+            <table class="table table-striped table-hover align-middle">
                 <thead class="table-dark">
                     <tr><th>Foto</th><th>Nombre Completo</th><th>Email</th><th>Teléfono</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr>
                 </thead>
-                <tbody id="tbody-usuarios">
+                <tbody>
                     <?php foreach ($usuarios as $usuario): ?>
                     <tr>
                         <td>
@@ -66,15 +39,8 @@
                         <td><?php if ($usuario['activo']): ?><span class="badge bg-success">Activo</span><?php else: ?><span class="badge bg-danger">Inactivo</span><?php endif; ?></td>
                         <td>
                             <a href="<?php echo Flight::get('base_url'); ?>/usuarios/editar/<?php echo $usuario['id_usuario']; ?>" class="btn btn-sm btn-primary"><i class="bi bi-pencil-square"></i> Editar</a>
-                            <?php if ($_SESSION['id_usuario'] != $usuario['id_usuario']): ?>
-                                <button type="button" class="btn btn-sm btn-danger" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#confirmDeleteModal"
-                                    data-item-id="<?php echo $usuario['id_usuario']; ?>"
-                                    data-item-name="<?php echo htmlspecialchars($usuario['nombre_completo']); ?>"
-                                    data-item-type-text="al usuario"
-                                    data-delete-url="<?php echo Flight::get('base_url'); ?>/usuarios/eliminar/<?php echo $usuario['id_usuario']; ?>"
-                                    data-warning-text="Esta acción no se puede deshacer. El usuario no podrá acceder al sistema.">
+                            <?php if ($_SESSION['id_usuario'] != $usuario['id_usuario']): // No permitir que un usuario se elimine a sí mismo ?>
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal" data-user-id="<?php echo $usuario['id_usuario']; ?>" data-user-name="<?php echo htmlspecialchars($usuario['nombre_completo']); ?>">
                                     <i class="bi bi-trash-fill"></i> Eliminar
                                 </button>
                             <?php endif; ?>
@@ -85,6 +51,28 @@
             </table>
         </div>
     </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación de Usuario -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteUserModalLabel">Confirmar Eliminación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>¿Estás seguro de que deseas eliminar al usuario <strong id="userNameToDelete"></strong>?</p>
+        <p class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Esta acción no se puede deshacer. El usuario no podrá acceder al sistema y sus tickets podrían quedar sin agente asignado.</p>
+      </div>
+      <div class="modal-footer">
+        <form id="deleteUserForm" method="POST">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-danger">Confirmar Eliminación</button>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="<?php echo Flight::get('base_url'); ?>/js/gestionar_usuarios.js"></script>

@@ -15,15 +15,14 @@
 <div class="card">
     <div class="card-body p-4">
         <form action="<?php echo Flight::get('base_url'); ?>/clientes" method="POST">
-            <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
             <div class="row g-4">
                 <div class="col-md-6">
                     <label for="nombre" class="form-label">Nombre Completo *</label>
                     <input type="text" class="form-control" id="nombre" name="nombre" required>
                 </div>
                 <div class="col-md-6">
-                    <label for="email" class="form-label">Correo Electrónico *</label>
-                    <input type="email" class="form-control" id="correo_electronico" name="correo_electronico" required>
+                    <label for="correo_electronico" class="form-label">Correo Electrónico *</label>
+                    <input type="email" class="form-control" id="correo_electronico" name="email" required>
                 </div>
                 <div class="col-md-6">
                     <label for="telefono" class="form-label">Teléfono</label>

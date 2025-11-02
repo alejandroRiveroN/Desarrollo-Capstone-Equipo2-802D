@@ -23,13 +23,13 @@ class BackupController extends BaseController
     {
         self::checkAdmin();
 
-        // Obtener la configuración de la base de datos desde Flight
-        $db_config = Flight::get('db_config');
+        // Incluir las credenciales de la base de datos de forma segura
+        require_once __DIR__ . '/../config/credentials.php';
 
-        $host = $db_config['host'];
-        $user = $db_config['username'];
-        $pass = $db_config['password'];
-        $name = $db_config['dbname'];
+        $host = DB_HOST;
+        $user = DB_USER;
+        $pass = DB_PASS;
+        $name = DB_NAME;
 
         // Crear el directorio de backups si no existe (fuera de la carpeta public)
         $backup_dir = '../backups';

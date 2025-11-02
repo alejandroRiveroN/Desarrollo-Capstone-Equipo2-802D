@@ -7,7 +7,6 @@
             <div class="alert alert-danger"><?php echo htmlspecialchars($error_msg); ?></div>
         <?php endif; ?>
         <form id="formUsuario" action="<?php echo Flight::get('base_url'); ?>/usuarios" method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="nombre_completo" class="form-label">Nombre Completo <span class="text-danger">*</span></label>

@@ -15,19 +15,19 @@
 <h3 class="mb-4">
   <?php echo ($_SESSION['id_rol'] == 4) ? 'Resumen de Mis Tickets' : 'Estadísticas Generales'; ?>
 </h3>
-<div class="row g-4 mb-4 dashboard-animated-row">
+<div class="row g-4 mb-4">
     <!-- Tarjeta: Tickets Abiertos -->
-    <div class="col-lg-3 col-md-6"><div class="card text-white bg-primary shadow h-100 kpi-card"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $total_abiertos; ?></h5><p class="card-text">Abiertos</p></div><i class="bi bi-envelope-open-fill fs-1 opacity-50"></i></div></div></div>
+    <div class="col-lg-3 col-md-6"><div class="card text-white bg-primary shadow h-100"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $total_abiertos; ?></h5><p class="card-text">Abiertos</p></div><i class="bi bi-envelope-open-fill fs-1 opacity-50"></i></div></div></div>
     <!-- Tarjeta: Tickets Pendientes -->
-    <div class="col-lg-3 col-md-6"><div class="card text-white bg-warning shadow h-100 kpi-card"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $total_pendientes; ?></h5><p class="card-text">Pendientes</p></div><i class="bi bi-clock-history fs-1 opacity-50"></i></div></div></div>
+    <div class="col-lg-3 col-md-6"><div class="card text-white bg-warning shadow h-100"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $total_pendientes; ?></h5><p class="card-text">Pendientes</p></div><i class="bi bi-clock-history fs-1 opacity-50"></i></div></div></div>
     <!-- Tarjeta: Tickets Resueltos -->
-    <div class="col-lg-3 col-md-6"><div class="card text-white bg-success shadow h-100 kpi-card"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $total_resueltos; ?></h5><p class="card-text">Resueltos</p></div><i class="bi bi-check-circle-fill fs-1 opacity-50"></i></div></div></div>
+    <div class="col-lg-3 col-md-6"><div class="card text-white bg-success shadow h-100"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $total_resueltos; ?></h5><p class="card-text">Resueltos</p></div><i class="bi bi-check-circle-fill fs-1 opacity-50"></i></div></div></div>
     <!-- Tarjeta: Total de Tickets Activos -->
-    <div class="col-lg-3 col-md-6"><div class="card bg-light shadow h-100 kpi-card"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $total_tickets; ?></h5><p class="card-text">Total Activos</p></div><i class="bi bi-bar-chart-fill fs-1 opacity-50"></i></div></div></div>
+    <div class="col-lg-3 col-md-6"><div class="card bg-light shadow h-100"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $total_tickets; ?></h5><p class="card-text">Total Activos</p></div><i class="bi bi-bar-chart-fill fs-1 opacity-50"></i></div></div></div>
 </div>
 
 <!-- Gráficos -->
-<div class="row g-4 mb-4 dashboard-animated-row" style="animation-delay: 0.2s;">
+<div class="row g-4 mb-4">
     <!-- Gráfico de Dona: Resumen por Estado -->
     <div class="col-lg-5"><div class="card h-100"><div class="card-header fw-bold"><i class="bi bi-pie-chart-fill"></i> Resumen por Estado</div><div class="card-body d-flex justify-content-center align-items-center"><canvas id="ticketsChartDonut" style="max-height: 300px;"></canvas></div></div></div>
     <!-- Gráfico de Barras: Tickets por Mes -->

@@ -4,51 +4,14 @@ namespace App\Controllers;
 
 class UserController extends BaseController {
 
-    private static function _getUsuariosConFiltros($request) {
-        $filtro_termino = $request->query['termino'] ?? '';
-        $filtro_rol = $request->query['rol'] ?? '';
-        $filtro_estado = $request->query['estado'] ?? '';
-
-        $where_conditions = [];
-        $params = [];
-
-        if (!empty($filtro_termino)) {
-            $where_conditions[] = "(u.nombre_completo LIKE :termino OR u.email LIKE :termino)";
-            $params[':termino'] = '%' . $filtro_termino . '%';
-        }
-        if (!empty($filtro_rol)) {
-            $where_conditions[] = "u.id_rol = :rol";
-            $params[':rol'] = $filtro_rol;
-        }
-        if ($filtro_estado !== '' && in_array($filtro_estado, ['0', '1'])) {
-            $where_conditions[] = "u.activo = :estado";
-            $params[':estado'] = $filtro_estado;
-        }
-
-        return ['where_conditions' => $where_conditions, 'params' => $params];
-    }
-
     public static function index() {
         self::checkAdmin();
-        $request = \Flight::request();
-        $filtros = self::_getUsuariosConFiltros($request);
-
-        $sql = "SELECT u.id_usuario, u.nombre_completo, u.email, u.activo, u.telefono, u.ruta_foto, r.nombre_rol FROM Usuarios u JOIN Roles r ON u.id_rol = r.id_rol";
-
-        if (!empty($filtros['where_conditions'])) {
-            $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
-        }
-        $sql .= " ORDER BY u.nombre_completo ASC";
 
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($filtros['params']);
+        $stmt = $pdo->query("SELECT u.id_usuario, u.nombre_completo, u.email, u.activo, u.telefono, u.ruta_foto, r.nombre_rol FROM Usuarios u JOIN Roles r ON u.id_rol = r.id_rol ORDER BY u.nombre_completo");
         $usuarios = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        $roles = $pdo->query("SELECT * FROM Roles ORDER BY nombre_rol ASC")->fetchAll(\PDO::FETCH_ASSOC);
 
-        \Flight::render('gestionar_usuarios.php', array_merge([
-            'usuarios' => $usuarios, 'roles' => $roles
-        ], $request->query->getData()));
+        \Flight::render('gestionar_usuarios.php', ['usuarios' => $usuarios]);
     }
 
     public static function create() {
@@ -93,7 +56,6 @@ class UserController extends BaseController {
 
     public static function store() {
         self::checkAdmin();
-        self::validateCsrfToken();
 
         $pdo = \Flight::db();
         $request = \Flight::request();
@@ -121,11 +83,14 @@ class UserController extends BaseController {
 
             // Guardar mensaje de éxito y forzar redirección absoluta
             $_SESSION['mensaje_exito'] = '¡Usuario creado correctamente!';
-            self::redirect_to('/usuarios');
+            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/usuarios';
+            \Flight::redirect($url);
+            exit();
         } catch (\Exception $e) {
             $pdo->rollBack();
             $roles = $pdo->query("SELECT * FROM Roles")->fetchAll(\PDO::FETCH_ASSOC);
 
+            // --- INICIO DE LA CORRECCIÓN ---
             // Verificar si el error es por una entrada duplicada (código de error 23000)
             if ($e instanceof \PDOException && $e->getCode() == '23000') {
                 $error_message = "El correo electrónico ya se encuentra registrado. Por favor, utiliza otro.";
@@ -133,6 +98,7 @@ class UserController extends BaseController {
                 $error_message = "Error al crear el usuario: " . $e->getMessage();
             }
             \Flight::render('crear_usuario_admin.php', ['roles' => $roles, 'error_msg' => $error_message]);
+            // --- FIN DE LA CORRECCIÓN ---
         }
     }
 
@@ -144,7 +110,11 @@ class UserController extends BaseController {
         $stmt->execute([$id]);
         $usuario = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        if (!$usuario) self::redirect_to('/usuarios');
+        if (!$usuario) {
+            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/usuarios';
+            \Flight::redirect($url);
+            exit();
+        }
 
         $roles = $pdo->query("SELECT * FROM Roles")->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -153,7 +123,6 @@ class UserController extends BaseController {
 
     public static function update($id) {
         self::checkAdmin();
-        self::validateCsrfToken();
 
         $pdo = \Flight::db();
         $request = \Flight::request();
@@ -174,64 +143,63 @@ class UserController extends BaseController {
             $stmt = $pdo->prepare("UPDATE Usuarios SET nombre_completo = ?, email = ?, id_rol = ?, activo = ?, telefono = ?, ruta_foto = ? WHERE id_usuario = ?");
             $stmt->execute([$nombre_completo, $email, $id_rol, $activo, $telefono, $ruta_foto_nueva, $id]);
 
+            // --- SOLUCIÓN DEFINITIVA ---
             // Usar el método de redirección de Flight para consistencia.
-            self::redirect_to('/usuarios');
+            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/usuarios';
+            \Flight::redirect($url);
+            exit();
         } catch (\Exception $e) {
             // Guardar el mensaje de error en la sesión para mostrarlo en la vista
             $_SESSION['mensaje_error'] = $e->getMessage();
-            self::redirect_to('/usuarios/editar/' . $id);
+            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/usuarios/editar/' . $id;
+            \Flight::redirect($url);
+            exit();
         }
     }
 
     public static function delete($id) {
         self::checkAdmin();
-        self::validateCsrfToken();
 
         // Medida de seguridad: no permitir que un usuario se elimine a sí mismo.
         if ($id == $_SESSION['id_usuario']) {
             $_SESSION['mensaje_error'] = 'No puedes eliminar tu propia cuenta de usuario.';
-            self::redirect_to('/usuarios');
+            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/usuarios';
+            \Flight::redirect($url);
+            exit();
         }
 
         $pdo = \Flight::db();
+        $pdo->beginTransaction();
         try {
-            // Primero, eliminamos la referencia en la tabla de agentes
+            // Obtener el rol y el email del usuario antes de eliminarlo.
+            $stmt_info = $pdo->prepare("SELECT id_rol, email FROM Usuarios WHERE id_usuario = ?");
+            $stmt_info->execute([$id]);
+            $userInfo = $stmt_info->fetch(\PDO::FETCH_ASSOC);
+
+            // Si el usuario es un Cliente (id_rol = 4), eliminar su registro de la tabla Clientes.
+            if ($userInfo && $userInfo['id_rol'] == 4) {
+                $stmt_cliente = $pdo->prepare("DELETE FROM Clientes WHERE email = ?");
+                $stmt_cliente->execute([$userInfo['email']]);
+            }
+
+            // Si el usuario es un Agente (id_rol = 2 o 3), eliminar su registro de la tabla Agentes.
+            if ($userInfo && in_array($userInfo['id_rol'], [2, 3])) {
+                $stmt_agente = $pdo->prepare("DELETE FROM Agentes WHERE id_usuario = ?");
+                $stmt_agente->execute([$id]);
+            }
+
+            // Finalmente, eliminar el usuario de la tabla Usuarios.
             $stmt = $pdo->prepare("DELETE FROM Agentes WHERE id_usuario = ?");
             $stmt->execute([$id]);
-
-            // Luego, eliminamos el usuario
-            $stmt = $pdo->prepare("DELETE FROM Usuarios WHERE id_usuario = ?");
-            $stmt->execute([$id]);
-
+            $pdo->commit();
             $_SESSION['mensaje_exito'] = '¡Usuario eliminado correctamente!';
         } catch (\PDOException $e) {
+            $pdo->rollBack();
             $_SESSION['mensaje_error'] = 'No se pudo eliminar el usuario. Es posible que tenga registros asociados que impiden su borrado.';
         }
 
-        self::redirect_to('/usuarios');
-    }
-
-    public static function apiGetUsuarios() {
-        self::checkAdmin();
-        $request = \Flight::request();
-        $filtros = self::_getUsuariosConFiltros($request);
-
-        $sql = "SELECT u.id_usuario, u.nombre_completo, u.email, u.activo, u.telefono, u.ruta_foto, r.nombre_rol FROM Usuarios u JOIN Roles r ON u.id_rol = r.id_rol";
-
-        if (!empty($filtros['where_conditions'])) {
-            $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
-        }
-        $sql .= " ORDER BY u.nombre_completo ASC";
-
-        $pdo = \Flight::db();
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($filtros['params']);
-        $usuarios = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        // Devolver los resultados como JSON
-        \Flight::json([
-            'success' => true,
-            'usuarios' => $usuarios
-        ]);
+        $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/usuarios';
+        \Flight::redirect($url);
+        exit();
     }
 }
