@@ -237,27 +237,11 @@
     </div>
 </div>
 <!-- 5. Scripts de JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // Pasamos los datos de PHP a variables globales de JavaScript para que el script externo pueda usarlos.
-    var chartDataDonut = {
-        labels: <?php echo $chart_labels_donut_json; ?>,
-        datasets: [{
-            label: 'Tickets',
-            data: <?php echo $chart_values_donut_json; ?>,
-            backgroundColor: ['#0d6efd', '#ffc107', '#198754', '#6c757d', '#0dcaf0', '#fd7e14'],
-            hoverOffset: 4
-        }]
-    };
-    var chartDataBar = {
-        labels: <?php echo $chart_labels_bar_json; ?>,
-        datasets: [{
-            label: 'Tickets Creados',
-            data: <?php echo $chart_values_bar_json; ?>,
-            backgroundColor: 'rgba(54, 162, 235, 0.6)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
-        }]
-    };
+    var chartDataDonut = { labels: <?php echo $chart_labels_donut_json; ?>, datasets: [{ label: 'Tickets', data: <?php echo $chart_values_donut_json; ?>, backgroundColor: ['#0d6efd', '#ffc107', '#198754', '#6c757d', '#0dcaf0', '#fd7e14'], hoverOffset: 4 }] };
+    var chartDataBar = { labels: <?php echo $chart_labels_bar_json; ?>, datasets: [{ label: 'Tickets Creados', data: <?php echo $chart_values_bar_json; ?>, backgroundColor: 'rgba(54, 162, 235, 0.6)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 }] };
 </script>
 <script src="<?php echo Flight::get('base_url'); ?>/js/dashboard.js"></script>
 

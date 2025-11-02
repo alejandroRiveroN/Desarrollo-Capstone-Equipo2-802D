@@ -1,7 +1,28 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const btnTest = document.getElementById('btn-test-limpieza');
-    if (btnTest) {
-        btnTest.addEventListener('click', function() {
+
+    // --- Confirmación para formularios peligrosos ---
+    const formLimpiezaTotal = document.querySelector('form[action*="/admin/limpieza/total"]');
+    if (formLimpiezaTotal) {
+        formLimpiezaTotal.addEventListener('submit', function (event) {
+            if (!confirm('¿Estás seguro de que quieres borrar TODA la información? Esta acción no se puede deshacer.')) {
+                event.preventDefault(); // Cancela el envío del formulario si el usuario dice "No"
+            }
+        });
+    }
+
+    const formResetSistema = document.querySelector('form[action*="/admin/limpieza/reset"]');
+    if (formResetSistema) {
+        formResetSistema.addEventListener('submit', function (event) {
+            if (!confirm('¿Estás seguro de que quieres resetear el sistema? Los usuarios no se verán afectados, pero todo lo demás será borrado.')) {
+                event.preventDefault(); // Cancela el envío del formulario
+            }
+        });
+    }
+
+    // --- Lógica para el botón de simulación de limpieza ---
+    const btnTestLimpieza = document.getElementById('btn-test-limpieza');
+    if (btnTestLimpieza) {
+        btnTestLimpieza.addEventListener('click', function() {
             const resultsContainer = document.getElementById('test-results-container');
             const resultsCount = document.getElementById('test-results-count');
             const resultsList = document.getElementById('test-results-list');

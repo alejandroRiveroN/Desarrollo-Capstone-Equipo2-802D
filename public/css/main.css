@@ -105,6 +105,29 @@ body.page-registro {
     text-decoration: underline;
 }
 
+/* Estilos adicionales para reset_password (ahora unificados) */
+.btn-send {
+    background-color: var(--color-acento);
+    color: var(--color-texto-claro);
+    border: none;
+    border-radius: 6px;
+    padding: 0.6rem;
+    font-weight: 600;
+    width: 100%;
+    transition: background-color 0.3s;
+}
+
+.btn-send:hover {
+    background-color: var(--color-acento-hover);
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.login-link a { color: var(--color-texto-oscuro); text-decoration: none; }
+
 /*
  * =================================================================
  * Estilos y Animaciones de la Landing Page (de landing.css)
@@ -130,3 +153,11 @@ body.page-registro {
 .hero-title, .hero-subtitle { opacity: 0; }
 .hero-title.animate-in { animation: fadeInUpHero 0.8s ease-out 0.3s forwards; }
 .hero-subtitle.animate-in { animation: fadeInUpHero 0.8s ease-out 0.5s forwards; }
+
+/* Estilos del carrusel y sombras de texto */
+.carousel-slide {
+    transition: opacity 0.5s ease-in-out;
+}
+.text-shadow-strong {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}

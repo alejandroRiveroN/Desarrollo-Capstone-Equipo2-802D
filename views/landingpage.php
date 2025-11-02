@@ -48,17 +48,10 @@ $status = $_GET['status'] ?? '';
     </script>
     <!-- Fuente Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
-    <style>
-        .carousel-slide {
-            transition: opacity 0.5s ease-in-out;
-        }
-        .text-shadow-strong {
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-        }
-    </style>
+    <!-- Estilos Unificados (main.css) -->
+    <link rel="stylesheet" href="<?php echo Flight::get('base_url'); ?>/css/main.css?v=1.1">
 </head>
 <body class="font-sans bg-mce-bg text-gray-800">
-
     <!-- Navbar -->
     <nav class="bg-mce-primary shadow-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

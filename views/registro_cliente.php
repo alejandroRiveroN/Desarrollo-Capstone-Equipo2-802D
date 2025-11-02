@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro - MCE</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="<?php echo Flight::get('base_url'); ?>/css/login.css?v=1.1">
+    <link rel="stylesheet" href="<?php echo Flight::get('base_url'); ?>/css/main.css?v=1.1">
 </head>
 <body class="page-registro">
     <div class="login-card">

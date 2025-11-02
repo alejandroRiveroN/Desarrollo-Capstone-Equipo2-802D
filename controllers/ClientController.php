@@ -44,8 +44,11 @@ class ClientController extends BaseController {
         return ['where_conditions' => $where_conditions, 'params' => $params];
     }
 
-    public static function index() {
-        self::checkAuth();
+    /**
+     * Método privado para obtener la lista de clientes aplicando los filtros de la solicitud.
+     * Centraliza la obtención de datos para index, exportaciones e impresiones.
+     */
+    private static function _getClientesFiltrados($orderBy = 'nombre ASC') {
         $request = \Flight::request();
         $filtros = self::_getClientesConFiltros($request);
 
@@ -54,12 +57,18 @@ class ClientController extends BaseController {
         if (!empty($filtros['where_conditions'])) {
             $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
         }
-        $sql .= " ORDER BY nombre ASC";
+        $sql .= " ORDER BY " . $orderBy;
 
         $pdo = \Flight::db();
         $stmt = $pdo->prepare($sql);
         $stmt->execute($filtros['params']);
-        $clientes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public static function index() {
+        self::checkAuth();
+        $request = \Flight::request();
+        $clientes = self::_getClientesFiltrados('nombre ASC');
 
         \Flight::render('gestionar_clientes.php', [
             'clientes' => $clientes,
@@ -94,30 +103,40 @@ class ClientController extends BaseController {
         }
 
         try {
+            self::createClientAndUser($nombre, $email, $telefono, $empresa, $pais, $ciudad, $activo);
+            
+            $_SESSION['mensaje_exito'] = '¡Cliente creado con éxito!';
+            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes';
+            \Flight::redirect($url);
+            exit();
+        } catch (\Exception $e) {
+            \Flight::render('crear_cliente.php', ['mensaje_error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Lógica centralizada para crear un cliente y su usuario asociado.
+     * Puede ser llamado desde otros controladores.
+     */
+    public static function createClientAndUser($nombre, $email, $telefono, $empresa, $pais, $ciudad, $activo = 1, $password = null) {
+        $pdo = \Flight::db();
+        try {
             $pdo->beginTransaction();
 
-            // 1️⃣ Insertar en Clientes
             $stmt = $pdo->prepare(
                 "INSERT INTO Clientes (nombre, empresa, email, telefono, pais, ciudad, activo) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)"
             );
             $stmt->execute([$nombre, $empresa, $email, $telefono, $pais, $ciudad, $activo]);
 
-            // 2️⃣ Insertar en Usuarios (rol Cliente)
-            // Suponiendo que el rol Cliente tiene id_rol = 4
-            $password = bin2hex(random_bytes(4)); // contraseña temporal
-            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+            $password_to_hash = $password ?: bin2hex(random_bytes(8)); // Genera pass si no se provee
+            $password_hash = password_hash($password_to_hash, PASSWORD_DEFAULT);
 
             $stmtUser = $pdo->prepare("INSERT INTO usuarios (id_rol, nombre_completo, email, password_hash) VALUES (?, ?, ?, ?)");
             $stmtUser->execute([4, $nombre, $email, $password_hash]);
 
             $pdo->commit();
-
-            // Al final de la creación
-            $_SESSION['mensaje_exito'] = '¡Cliente creado con éxito!';
-            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes';
-            \Flight::redirect($url);
-            exit();
+            return $pdo->lastInsertId(); // Devuelve el ID del nuevo usuario
         } catch (\Exception $e) {
             $pdo->rollBack();
 
@@ -126,8 +145,7 @@ class ClientController extends BaseController {
             } else {
                 $error_message = "Error al crear el cliente: " . $e->getMessage();
             }
-
-            \Flight::render('crear_cliente.php', ['mensaje_error' => $error_message]);
+            throw new \Exception($error_message);
         }
     }
 
@@ -196,37 +214,42 @@ class ClientController extends BaseController {
         self::checkAdmin(); // Solo los administradores pueden eliminar
         $pdo = \Flight::db();
 
+        try {
+            self::deleteClientAndUser($id);
+            $_SESSION['mensaje_exito'] = '¡Cliente y su cuenta de usuario eliminados correctamente!';
+        } catch (\Exception $e) {
+            $_SESSION['mensaje_error'] = $e->getMessage();
+        }
+
+        $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes';
+        \Flight::redirect($url);
+        exit();
+    }
+
+    /**
+     * Lógica centralizada para eliminar un cliente y su usuario asociado.
+     */
+    public static function deleteClientAndUser($id_cliente) {
+        $pdo = \Flight::db();
         $pdo->beginTransaction();
         try {
-            // 1. Obtener el email del cliente antes de borrarlo.
             $stmt_email = $pdo->prepare("SELECT email FROM Clientes WHERE id_cliente = ?");
-            $stmt_email->execute([$id]);
+            $stmt_email->execute([$id_cliente]);
             $email_cliente = $stmt_email->fetchColumn();
 
-            // 2. Eliminar al cliente de la tabla Clientes.
-            // La restricción de la BD podría impedirlo si tiene tickets asociados.
             $stmt = $pdo->prepare("DELETE FROM Clientes WHERE id_cliente = ?");
-            $stmt->execute([$id]);
+            $stmt->execute([$id_cliente]);
 
-            // 3. Si se encontró un email, eliminar al usuario correspondiente.
             if ($email_cliente) {
                 $stmt_user = $pdo->prepare("DELETE FROM Usuarios WHERE email = ? AND id_rol = 4"); // Rol 4 = Cliente
                 $stmt_user->execute([$email_cliente]);
             }
 
             $pdo->commit();
-            $_SESSION['mensaje_exito'] = '¡Cliente y su cuenta de usuario eliminados correctamente!';
-
         } catch (\PDOException $e) {
             $pdo->rollBack();
-            // Si hay una restricción de clave externa (foreign key), la eliminación fallará.
-            $_SESSION['mensaje_error'] = 'No se pudo eliminar el cliente. Es posible que tenga tickets asociados.';
+            throw new \Exception('No se pudo eliminar el cliente. Es posible que tenga tickets asociados.');
         }
-
-        // Usar el método de redirección de Flight.
-        $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes';
-        \Flight::redirect($url);
-        exit();
     }
 
     public static function publicRegister() {
@@ -321,19 +344,7 @@ class ClientController extends BaseController {
 
     public static function exportExcel() {
         self::checkAuth();
-        $pdo = \Flight::db();
-        $request = \Flight::request();
-        $filtros = self::_getClientesConFiltros($request);
-
-        $sql = "SELECT * FROM Clientes";
-        if (!empty($filtros['where_conditions'])) {
-            $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
-        }
-        $sql .= " ORDER BY id_cliente DESC";
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($filtros['params']);
-        $clientes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $clientes = self::_getClientesFiltrados('id_cliente DESC');
 
         // Creación del archivo Excel
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
@@ -400,19 +411,7 @@ class ClientController extends BaseController {
 
     public static function exportPdf() {
         self::checkAuth();
-        $pdo = \Flight::db();
-        $request = \Flight::request();
-        $filtros = self::_getClientesConFiltros($request);
-
-        $sql = "SELECT * FROM Clientes";
-        if (!empty($filtros['where_conditions'])) {
-            $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
-        }
-        $sql .= " ORDER BY nombre ASC";
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($filtros['params']);
-        $clientes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $clientes = self::_getClientesFiltrados('nombre ASC');
 
         // Creación del PDF
         $pdf = new PDF('L', 'mm', 'A4');
@@ -444,19 +443,7 @@ class ClientController extends BaseController {
 
     public static function print() {
         self::checkAdmin();
-        $pdo = \Flight::db();
-        $request = \Flight::request();
-        $filtros = self::_getClientesConFiltros($request);
-
-        $sql = "SELECT * FROM Clientes";
-        if (!empty($filtros['where_conditions'])) {
-            $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
-        }
-        $sql .= " ORDER BY nombre ASC";
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($filtros['params']);
-        $clientes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $clientes = self::_getClientesFiltrados('nombre ASC');
 
         \Flight::render('imprimir_clientes.php', ['clientes' => $clientes]);
     }

@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCE - Iniciar Sesión</title>
+    <title>Iniciar Sesión - MCE</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="<?php echo Flight::get('base_url'); ?>/css/login.css?v=1.1">
+    <link rel="stylesheet" href="<?php echo Flight::get('base_url'); ?>/css/main.css?v=1.1">
 </head>
-<body>
+<body class="page-login">
     <div class="login-card">
         <div class="login-header">
             <h2>MCE</h2>

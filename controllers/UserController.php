@@ -82,10 +82,8 @@ class UserController extends BaseController {
                 $stmt = $pdo->prepare("INSERT INTO Agentes (id_usuario, puesto, fecha_contratacion) VALUES (?, ?, CURDATE())");
                 $stmt->execute([$id_usuario, $puesto]);
             } elseif ($id_rol == 4) { // Si es Cliente (4)
-                // Asumimos que la tabla Clientes tiene estas columnas.
-                // El campo 'empresa' no está en este formulario, así que lo dejamos como NULL.
-                $stmt = $pdo->prepare("INSERT INTO Clientes (nombre, email, telefono, activo) VALUES (?, ?, ?, ?)");
-                $stmt->execute([$nombre_completo, $email, $telefono, 1]);
+                // Delegamos la creación del registro de cliente al ClientController
+                ClientController::createClientAndUser($nombre_completo, $email, $telefono, null, null, null, 1, $password);
             }
             // Si es Administrador (id_rol = 1), no se necesita ninguna acción adicional.
 
@@ -176,7 +174,11 @@ class UserController extends BaseController {
                 if (in_array($old_rol_id, [2, 3])) { // Era Agente.
                     $pdo->prepare("DELETE FROM Agentes WHERE id_usuario = ?")->execute([$id]);
                 } elseif ($old_rol_id == 4) { // Era Cliente.
-                    $pdo->prepare("DELETE FROM Clientes WHERE email = ?")->execute([$old_email]);
+                    $stmt_cliente_id = $pdo->prepare("SELECT id_cliente FROM Clientes WHERE email = ?");
+                    $stmt_cliente_id->execute([$old_email]);
+                    if ($cliente_id = $stmt_cliente_id->fetchColumn()) {
+                        ClientController::deleteClientAndUser($cliente_id);
+                    }
                 }
 
                 // Crear registro para el nuevo rol.
@@ -184,8 +186,7 @@ class UserController extends BaseController {
                     $stmt_agente = $pdo->prepare("INSERT INTO Agentes (id_usuario, puesto, fecha_contratacion) VALUES (?, ?, CURDATE())");
                     $stmt_agente->execute([$id, $puesto]);
                 } elseif ($id_rol == 4) { // Ahora es Cliente.
-                    $stmt_cliente = $pdo->prepare("INSERT INTO Clientes (nombre, email, telefono, activo) VALUES (?, ?, ?, ?)");
-                    $stmt_cliente->execute([$nombre_completo, $email, $telefono, $activo]);
+                    ClientController::createClientAndUser($nombre_completo, $email, $telefono, null, null, null, $activo);
                 }
             }
 
@@ -226,8 +227,11 @@ class UserController extends BaseController {
 
             // Si el usuario es un Cliente (id_rol = 4), eliminar su registro de la tabla Clientes.
             if ($userInfo && $userInfo['id_rol'] == 4) {
-                $stmt_cliente = $pdo->prepare("DELETE FROM Clientes WHERE email = ?");
-                $stmt_cliente->execute([$userInfo['email']]);
+                $stmt_cliente_id = $pdo->prepare("SELECT id_cliente FROM Clientes WHERE email = ?");
+                $stmt_cliente_id->execute([$userInfo['email']]);
+                if ($cliente_id = $stmt_cliente_id->fetchColumn()) {
+                    ClientController::deleteClientAndUser($cliente_id);
+                }
             }
 
             // Si el usuario es un Agente (id_rol = 2 o 3), eliminar su registro de la tabla Agentes.

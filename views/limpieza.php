@@ -55,7 +55,7 @@
             <hr>
             <p><strong>¿Estás absolutamente seguro de que quieres continuar?</strong></p>
             
-            <form action="<?php echo Flight::get('base_url'); ?>/admin/limpieza/total" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres borrar TODA la información? Esta acción no se puede deshacer.');">
+            <form action="<?php echo Flight::get('base_url'); ?>/admin/limpieza/total" method="POST">
                 <button type="submit" name="confirmar_limpieza" class="btn btn-danger btn-lg">
                     <i class="bi bi-trash-fill"></i> Sí, entiendo y quiero borrar TODO
                 </button>
@@ -84,7 +84,7 @@
             <hr>
             <p><strong>Esta acción no se puede deshacer. ¿Estás absolutamente seguro de que quieres resetear el sistema?</strong></p>
             
-            <form action="<?php echo Flight::get('base_url'); ?>/admin/limpieza/reset" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres resetear el sistema? Los usuarios no se verán afectados, pero todo lo demás será borrado.');">
+            <form action="<?php echo Flight::get('base_url'); ?>/admin/limpieza/reset" method="POST">
                 <button type="submit" name="confirmar_reseteo" class="btn btn-danger btn-lg">
                     <i class="bi bi-trash-fill"></i> Sí, entiendo las consecuencias y quiero resetear el sistema
                 </button>

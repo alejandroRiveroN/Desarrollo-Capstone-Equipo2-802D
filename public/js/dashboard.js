@@ -18,15 +18,19 @@ function exportar(formato) {
 
 // Se ejecuta cuando el DOM está completamente cargado.
 document.addEventListener("DOMContentLoaded", function() {
-    // Inicializa el gráfico de dona si el elemento canvas existe.
-    const ctxDonut = document.getElementById('ticketsChartDonut');
-    if (ctxDonut && typeof chartDataDonut !== 'undefined') {
-        new Chart(ctxDonut.getContext('2d'), { type: 'doughnut', data: chartDataDonut, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' }}}});
+    // Obtener los datos para los gráficos desde el script incrustado en el HTML.
+    // Esto permite que PHP pase los datos de forma segura al frontend.
+    if (typeof chartDataDonut !== 'undefined' && document.getElementById('ticketsChartDonut')) {
+        const ctxDonut = document.getElementById('ticketsChartDonut').getContext('2d');
+        new Chart(ctxDonut, {
+            type: 'doughnut',
+            data: chartDataDonut,
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+        });
     }
 
-    // Inicializa el gráfico de barras si el elemento canvas existe.
-    const ctxBar = document.getElementById('ticketsChartBar');
-    if (ctxBar && typeof chartDataBar !== 'undefined') {
-        new Chart(ctxBar.getContext('2d'), { type: 'bar', data: chartDataBar, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }}}, plugins: { legend: { display: false }}}});
+    if (typeof chartDataBar !== 'undefined' && document.getElementById('ticketsChartBar')) {
+        const ctxBar = document.getElementById('ticketsChartBar').getContext('2d');
+        new Chart(ctxBar, { type: 'bar', data: chartDataBar, options: { responsive: true, maintainAspectRatio: false } });
     }
 });
