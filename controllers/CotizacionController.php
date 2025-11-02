@@ -1,6 +1,9 @@
 <?php
 namespace App\Controllers;
 
+use App\Models\CotizacionRepository;
+use App\Models\TipoCasoRepository;
+
 class CotizacionController extends BaseController
 {
     /** ==========================
@@ -13,14 +16,9 @@ class CotizacionController extends BaseController
         self::checkRole([4]); // Solo clientes
 
         $pdo = \Flight::db();
+        $tipoCasoRepo = new TipoCasoRepository($pdo);
 
-        // TIPOS de tabla real: tiposdecaso
-        $tipos = $pdo->query("
-            SELECT id_tipo_caso, nombre_tipo
-            FROM tiposdecaso
-            WHERE activo = 1
-            ORDER BY nombre_tipo ASC
-        ")->fetchAll(\PDO::FETCH_ASSOC);
+        $tipos = $tipoCasoRepo->findAllActive();
 
         \Flight::render('cliente_solicitar_cotizaciones.php', [
             'tipos' => $tipos
@@ -32,6 +30,8 @@ class CotizacionController extends BaseController
     {
         self::checkRole([4]); // Solo clientes
 
+        $pdo = \Flight::db();
+        $cotizacionRepo = new CotizacionRepository($pdo);
         $req       = \Flight::request()->data;
         $idTipo    = (int)($req->id_tipo_caso ?? 0);
         $prioridad = trim($req->prioridad ?? '');
@@ -43,23 +43,19 @@ class CotizacionController extends BaseController
             self::redirect_to('/cotizaciones/crear');
         }
 
-        $pdo = \Flight::db();
-
         // Verificar tipo válido/activo
-        $stmtT = $pdo->prepare("SELECT nombre_tipo FROM tiposdecaso WHERE id_tipo_caso = ? AND activo = 1");
-        $stmtT->execute([$idTipo]);
-        $tipo = $stmtT->fetch(\PDO::FETCH_ASSOC);
+        $tipo = $cotizacionRepo->findTipoCasoById($idTipo);
         if (!$tipo) {
             $_SESSION['mensaje_error'] = 'El tipo de caso seleccionado no es válido.';
             self::redirect_to('/cotizaciones/crear');
         }
 
-        // Guarda NOMBRE del tipo en cotizaciones.tipo_caso (VARCHAR)
-        $stmt = $pdo->prepare("
-            INSERT INTO cotizaciones (id_cliente, tipo_caso, prioridad, descripcion, estado)
-            VALUES (?, ?, ?, ?, 'Nueva')
-        ");
-        $stmt->execute([$_SESSION['id_usuario'], $tipo['nombre_tipo'], $prioridad, $desc]);
+        $cotizacionRepo->create([
+            'id_cliente' => $_SESSION['id_usuario'],
+            'tipo_caso' => $tipo['nombre_tipo'],
+            'prioridad' => $prioridad,
+            'descripcion' => $desc
+        ]);
 
         $_SESSION['mensaje_exito'] = '¡Solicitud enviada! Revisa tu historial cuando sea respondida.';
         self::redirect_to('/cotizaciones');
@@ -71,22 +67,11 @@ class CotizacionController extends BaseController
         self::checkRole([4]); // Solo clientes
 
         $pdo = \Flight::db();
+        $cotizacionRepo = new CotizacionRepository($pdo);
+        $id_cliente = $_SESSION['id_usuario']; // Asumimos que el id_usuario es el id_cliente para cotizaciones
 
-        $stmt = $pdo->prepare("
-            SELECT * FROM cotizaciones
-            WHERE id_cliente=? AND estado='Nueva'
-            ORDER BY fecha_creacion DESC
-        ");
-        $stmt->execute([$_SESSION['id_usuario']]);
-        $pendientes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $stmt2 = $pdo->prepare("
-            SELECT * FROM cotizaciones
-            WHERE id_cliente=? AND estado='Respondida'
-            ORDER BY fecha_respuesta DESC, fecha_creacion DESC
-        ");
-        $stmt2->execute([$_SESSION['id_usuario']]);
-        $respondidas = $stmt2->fetchAll(\PDO::FETCH_ASSOC);
+        $pendientes = $cotizacionRepo->findPendingForClient($id_cliente);
+        $respondidas = $cotizacionRepo->findAnsweredForClient($id_cliente);
 
         \Flight::render('cliente_cotizaciones.php', [
             'pendientes'  => $pendientes,
@@ -100,34 +85,17 @@ class CotizacionController extends BaseController
         self::checkRole([4]); // Solo clientes
 
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("
-          SELECT c.*, u.nombre_completo AS nombre_responsable
-          FROM cotizaciones c
-          LEFT JOIN usuarios u ON u.id_usuario = c.id_responsable_respuesta
-          WHERE c.id = ? AND c.id_cliente = ?
-        ");
-        $stmt->execute([$id, $_SESSION['id_usuario']]);
-        $detalle = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $cotizacionRepo = new CotizacionRepository($pdo);
+        $id_cliente = $_SESSION['id_usuario'];
+
+        $detalle = $cotizacionRepo->findDetailsForClient((int)$id, $id_cliente);
         if (!$detalle) {
             self::redirect_to('/cotizaciones');
         }
 
         // recargar listas para la misma vista
-        $stmtP = $pdo->prepare("
-            SELECT * FROM cotizaciones
-            WHERE id_cliente=? AND estado='Nueva'
-            ORDER BY fecha_creacion DESC
-        ");
-        $stmtP->execute([$_SESSION['id_usuario']]);
-        $pendientes = $stmtP->fetchAll(\PDO::FETCH_ASSOC);
-
-        $stmtR = $pdo->prepare("
-            SELECT * FROM cotizaciones
-            WHERE id_cliente=? AND estado='Respondida'
-            ORDER BY fecha_respuesta DESC, fecha_creacion DESC
-        ");
-        $stmtR->execute([$_SESSION['id_usuario']]);
-        $respondidas = $stmtR->fetchAll(\PDO::FETCH_ASSOC);
+        $pendientes = $cotizacionRepo->findPendingForClient($id_cliente);
+        $respondidas = $cotizacionRepo->findAnsweredForClient($id_cliente);
 
         \Flight::render('cliente_cotizaciones.php', [
             'pendientes'  => $pendientes,
@@ -146,13 +114,8 @@ class CotizacionController extends BaseController
         self::checkRole([1, 3]); // Solo Admin y Supervisor
 
         $pdo = \Flight::db();
-        $stmt = $pdo->query("
-          SELECT c.*, u.nombre_completo AS nombre_cliente, u.email AS email_cliente
-          FROM cotizaciones c
-          JOIN usuarios u ON u.id_usuario = c.id_cliente
-          ORDER BY c.fecha_creacion DESC
-        ");
-        $items = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $cotizacionRepo = new CotizacionRepository($pdo);
+        $items = $cotizacionRepo->findAllForAdmin();
 
         \Flight::render('admin_cotizaciones.php', ['items' => $items]);
     }
@@ -163,16 +126,8 @@ class CotizacionController extends BaseController
         self::checkRole([1, 3]); // Solo Admin y Supervisor
 
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("
-          SELECT c.*, u.nombre_completo AS nombre_cliente, u.email AS email_cliente,
-                 r.nombre_completo AS nombre_responsable
-          FROM cotizaciones c
-          JOIN usuarios u ON u.id_usuario = c.id_cliente
-          LEFT JOIN usuarios r ON r.id_usuario = c.id_responsable_respuesta
-          WHERE c.id = ?
-        ");
-        $stmt->execute([$id]);
-        $c = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $cotizacionRepo = new CotizacionRepository($pdo);
+        $c = $cotizacionRepo->findDetailsForAdmin((int)$id);
         if (!$c) {
             self::redirect_to('/admin/cotizaciones');
         }
@@ -185,6 +140,8 @@ class CotizacionController extends BaseController
     {
         self::checkRole([1, 3]); // Solo Admin y Supervisor
 
+        $pdo = \Flight::db();
+        $cotizacionRepo = new CotizacionRepository($pdo);
         $req    = \Flight::request()->data;
         $precio = str_replace(',', '.', trim($req->precio_estimado ?? ''));
         $resp   = trim($req->respuesta ?? '');
@@ -194,10 +151,7 @@ class CotizacionController extends BaseController
             self::redirect_to("/admin/cotizaciones/ver/{$id}");
         }
 
-        $pdo = \Flight::db();
-        $chk = $pdo->prepare("SELECT estado FROM cotizaciones WHERE id=?");
-        $chk->execute([$id]);
-        $row = $chk->fetch(\PDO::FETCH_ASSOC);
+        $row = $cotizacionRepo->findById((int)$id);
         if (!$row) {
             self::redirect_to('/admin/cotizaciones');
         }
@@ -206,12 +160,11 @@ class CotizacionController extends BaseController
             self::redirect_to("/admin/cotizaciones/ver/{$id}");
         }
 
-        $stmt = $pdo->prepare("
-          UPDATE cotizaciones
-          SET precio_estimado = ?, respuesta = ?, id_responsable_respuesta = ?, fecha_respuesta = NOW(), estado = 'Respondida'
-          WHERE id = ? AND estado = 'Nueva'
-        ");
-        $stmt->execute([number_format((float)$precio, 2, '.', ''), $resp, $_SESSION['id_usuario'], $id]);
+        $cotizacionRepo->respond((int)$id, [
+            'precio' => $precio,
+            'respuesta' => $resp,
+            'id_responsable' => $_SESSION['id_usuario']
+        ]);
 
         $_SESSION['mensaje_exito'] = 'Respuesta enviada. La cotización quedó cerrada.';
         self::redirect_to('/admin/cotizaciones');

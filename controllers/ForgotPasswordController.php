@@ -1,8 +1,8 @@
 <?php
 namespace App\Controllers;
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+use App\Models\UserRepository; 
+use App\Services\MailService;
 
 class ForgotPasswordController {
 
@@ -18,10 +18,8 @@ class ForgotPasswordController {
         // Si es POST, procesar envío del correo
         $email = \Flight::request()->data->email;
         $pdo = \Flight::db();
-
-        $stmt = $pdo->prepare("SELECT * FROM Usuarios WHERE email = ?");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
+        $userRepo = new UserRepository($pdo);
+        $user = $userRepo->findActiveByEmail($email); // Buscamos por email
 
         if (!$user) {
             \Flight::render('reset_password.php', [
@@ -34,39 +32,25 @@ class ForgotPasswordController {
 
         // Generar token y guardar
         $token = bin2hex(random_bytes(16));
-        $stmt = $pdo->prepare("INSERT INTO password_resets (email, token) VALUES (?, ?)");
-        $stmt->execute([$email, $token]);
+        $userRepo->createPasswordResetToken($email, $token);
 
         // Enviar correo
-        $mail = new PHPMailer(true);
-        $config = \Flight::get('mail_config');
+        $mailService = new MailService();
 
         try {
-            $mail->isSMTP();
-            $mail->Host = $config['host'];
-            $mail->SMTPAuth = true;
-            $mail->Username = $config['username'];
-            $mail->Password = $config['password'];
-            $mail->SMTPSecure = $config['encryption'];
-            $mail->Port = $config['port'];
-
-            $mail->setFrom($config['from_address'], $config['from_name']);
-            $mail->addAddress($email);
-
             $resetLink = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/reset_contraseña?token=' . $token;
 
-            $mail->isHTML(true);
-            $mail->Subject = 'Recuperacion de contraseña';
-            $mail->Body = "
+            $subject = 'Recuperacion de contraseña';
+            $body = "
                 <p>Hola, has solicitado restablecer tu contraseña para Soporte MCE.</p>
                 <p><a href='$resetLink'>Haz clic aquí para restablecer tu contraseña</a></p>
             ";
 
-            $mail->send();
+            $mailService->send($email, $subject, $body);
             $mensaje = "Se ha enviado un correo con el enlace de recuperación.";
             $mensaje_tipo = "success";
-        } catch (Exception $e) {
-            $mensaje = "No se pudo enviar el correo: {$mail->ErrorInfo}";
+        } catch (\Exception $e) {
+            $mensaje = "No se pudo enviar el correo: " . $e->getMessage();
             $mensaje_tipo = "danger";
         }
 
@@ -88,6 +72,7 @@ class ForgotPasswordController {
         $nueva_password = $data->nueva_password;
         $confirmar_password = $data->confirmar_password;
         $pdo = \Flight::db();
+        $userRepo = new UserRepository($pdo);
 
         if ($nueva_password !== $confirmar_password) {
             \Flight::render('reset_password.php', [
@@ -98,9 +83,7 @@ class ForgotPasswordController {
             return;
         }
 
-        $stmt = $pdo->prepare("SELECT * FROM password_resets WHERE token = ?");
-        $stmt->execute([$token]);
-        $reset = $stmt->fetch();
+        $reset = $userRepo->findPasswordResetByToken($token);
 
         if (!$reset) {
             \Flight::render('reset_password.php', [
@@ -111,25 +94,9 @@ class ForgotPasswordController {
             return;
         }
 
-        // Actualizar contraseña solo para usuarios
-        $nuevo_hash = password_hash($nueva_password, PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("UPDATE Usuarios SET password_hash = ? WHERE email = ?");
-        $stmt->execute([$nuevo_hash, $reset['email']]);
-
-        // Borrar token
-        $stmt = $pdo->prepare("DELETE FROM password_resets WHERE token = ?");
-        $stmt->execute([$token]);
-
-        \Flight::render('login.php', [
-            'mensaje' => '¡Contraseña restablecida con éxito!',
-            'mensaje_tipo' => 'success'
-        ]);
-
         // Validar seguridad de la contraseña
-        if (!preg_match('/[a-z]/', $nueva_password) ||
-            !preg_match('/[A-Z]/', $nueva_password) ||
-            !preg_match('/[0-9]/', $nueva_password) ||
-            !preg_match('/[^A-Za-z0-9]/', $nueva_password) ||
+        if (!preg_match('/[a-z]/', $nueva_password) || !preg_match('/[A-Z]/', $nueva_password) ||
+            !preg_match('/[0-9]/', $nueva_password) || !preg_match('/[^A-Za-z0-9]/', $nueva_password) ||
             strlen($nueva_password) < 8) {
             
             \Flight::render('reset_password.php', [
@@ -139,5 +106,14 @@ class ForgotPasswordController {
             ]);
             return;
         }
+
+        $userRepo->updatePasswordByEmail($reset['email'], $nueva_password); // Necesitamos un nuevo método
+        $userRepo->deletePasswordResetToken($token);
+
+        \Flight::render('login.php', [
+            'mensaje' => '¡Contraseña restablecida con éxito!',
+            'mensaje_tipo' => 'success'
+        ]);
+
     }
 }

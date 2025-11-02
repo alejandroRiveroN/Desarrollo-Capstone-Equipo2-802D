@@ -21,6 +21,8 @@
             <?php endif; ?>
 
             <form id="registroForm" action="/registro_cliente" method="post" novalidate>
+                <!-- Campo CSRF para seguridad -->
+                <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label for="nombre" class="form-label">Nombre Completo</label>

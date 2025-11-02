@@ -49,6 +49,8 @@
             <p class="text-bg-light p-3 rounded"><?= nl2br(htmlspecialchars($c['respuesta'])); ?></p>
           <?php else: ?>
             <form action="<?= \Flight::get('base_url'); ?>/admin/cotizaciones/responder/<?= (int)$c['id']; ?>" method="POST">
+              <!-- Campo CSRF para seguridad -->
+              <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
               <div class="mb-3">
                 <label class="form-label">Precio estimado (CLP)</label>
                 <input type="number" step="0.01" min="0" class="form-control" name="precio_estimado" required>

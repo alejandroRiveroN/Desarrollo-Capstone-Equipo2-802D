@@ -2,8 +2,8 @@
 
 namespace App\Controllers;
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+use App\Models\ContactMessageRepository; 
+use App\Services\MailService;
 
 require_once __DIR__ . '/../vendor/autoload.php'; // Asegúrate de que el autoload de Composer esté incluido
 
@@ -35,11 +35,13 @@ class ContactController extends BaseController
 
         // 2. Guardar el mensaje en la base de datos
         $pdo = \Flight::db();
+        $contactRepo = new ContactMessageRepository($pdo);
         try {
-            $stmt = $pdo->prepare(
-                "INSERT INTO Formulario_contacto (nombre, email, mensaje, estado) VALUES (?, ?, ?, 'Nuevo')" // Usar las variables limpias
-            );
-            $stmt->execute([$nombre, $email, $mensaje]);
+            $contactRepo->create([
+                'nombre' => $nombre,
+                'email' => $email,
+                'mensaje' => $mensaje
+            ]);
 
             $_SESSION['mensaje_exito'] = '¡Gracias por tu mensaje! Nos pondremos en contacto contigo pronto.';
             
@@ -61,35 +63,19 @@ class ContactController extends BaseController
      * @param string $mensaje El mensaje enviado.
      */
     private static function notifyAdminsNewContact($nombre, $email, $mensaje) {
-        $mail = new PHPMailer(true);
-        $config = \Flight::get('mail_config');
+        $mailService = new MailService();
 
         try {
-            // Configuración del servidor SMTP
-            $mail->isSMTP();
-            $mail->Host       = $config['host'];
-            $mail->SMTPAuth   = true;
-            $mail->Username   = $config['username'];
-            $mail->Password   = $config['password'];
-            $mail->SMTPSecure = $config['encryption'];
-            $mail->Port       = $config['port'];
-
-            // Remitente y Destinatarios
-            $mail->setFrom($config['from_address'], $config['from_name']);
-            $mail->addAddress($config['admin_email'], 'Administrador'); // El email del administrador que recibirá la notificación
-            $mail->addReplyTo($email, $nombre); // Permite responder directamente al usuario
-
-            // Contenido del correo
-            $mail->isHTML(true);
-            $mail->Subject = 'Nuevo Mensaje de Contacto de ' . htmlspecialchars($nombre);
-            $mail->Body    = "Has recibido un nuevo mensaje desde el formulario de contacto:<br><br>" .
+            $config = \Flight::get('mail_config');
+            $subject = 'Nuevo Mensaje de Contacto de ' . htmlspecialchars($nombre);
+            $body    = "Has recibido un nuevo mensaje desde el formulario de contacto:<br><br>" .
                              "<b>Nombre:</b> " . htmlspecialchars($nombre) . "<br>" .
                              "<b>Email:</b> " . htmlspecialchars($email) . "<br>" .
                              "<b>Mensaje:</b><br>" . nl2br(htmlspecialchars($mensaje));
-            $mail->AltBody = "Nuevo mensaje de contacto:\nNombre: $nombre\nEmail: $email\nMensaje: $mensaje";
 
-            $mail->send();
-        } catch (Exception $e) {
+            $mailService->send($config['admin_email'], $subject, $body, [$email => $nombre]);
+        } catch (\Exception $e) {
+            error_log("Fallo al notificar a admin sobre nuevo contacto: " . $e->getMessage());
         }
     }
 }

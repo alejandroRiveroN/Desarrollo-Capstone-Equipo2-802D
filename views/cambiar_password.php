@@ -16,6 +16,8 @@
                 <?php endif; ?>
 
                 <form id="formPassword" action="<?php echo Flight::get('base_url'); ?>/password/cambiar" method="POST">
+                    <!-- Campo CSRF para seguridad -->
+                    <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
                     <div class="mb-3">
                         <label for="password_actual" class="form-label">Contraseña Actual <span class="text-danger">*</span></label>
                         <input type="password" class="form-control" id="password_actual" name="password_actual" required>

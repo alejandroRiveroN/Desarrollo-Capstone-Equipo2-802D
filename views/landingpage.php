@@ -190,6 +190,8 @@ $status = $_GET['status'] ?? '';
                 <p class="text-xl text-gray-600 text-center mb-12">¿Tienes alguna pregunta? Envíanos un mensaje y te responderemos a la brevedad.</p>
                 
                 <form action="<?php echo Flight::get('base_url'); ?>/contact" method="POST" class="space-y-6">
+                    <!-- Campo CSRF para seguridad -->
+                    <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
                     <div>
                         <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre y Apellidos</label>
                         <div class="mt-1">
@@ -248,6 +250,6 @@ $status = $_GET['status'] ?? '';
     </footer>
 
     <!-- JavaScript -->
-    <script src="<?php echo Flight::get('base_url'); ?>/js/landingpage.js"></script>
+    <script src="<?php echo Flight::get('base_url'); ?>/js/landing.js"></script>
 </body>
 </html>

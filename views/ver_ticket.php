@@ -45,6 +45,8 @@ if (isset($_SESSION['mensaje_exito'])) {
             <div class="card-header fw-bold">Acciones</div>
             <div class="card-body">
                 <form action="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>/estado" method="POST" class="mb-3">
+                    <!-- Campo CSRF para seguridad -->
+                    <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
                     <label for="nuevo_estado" class="form-label fw-bold">Cambiar Estado:</label>
                     <select name="nuevo_estado" id="nuevo_estado" class="form-select mb-2">
                         <?php foreach ($estados_disponibles as $estado): ?>
@@ -61,6 +63,8 @@ if (isset($_SESSION['mensaje_exito'])) {
                 <?php if ($_SESSION['id_rol'] == 1): ?>
                 <hr>
                 <form action="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>/asignar" method="POST" class="mb-3">
+                    <!-- Campo CSRF para seguridad -->
+                    <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
                     <label for="id_nuevo_agente" class="form-label fw-bold">Asignar a Agente:</label>
                     <div class="input-group">
                         <select name="id_nuevo_agente" id="id_nuevo_agente" class="form-select">
@@ -95,6 +99,8 @@ if (isset($_SESSION['mensaje_exito'])) {
                 <?php endif; ?>
 
                 <form action="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>/costo" method="POST">
+                    <!-- Campo CSRF para seguridad -->
+                    <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
                     <!-- Costo -->
                     <div class="mb-3">
                         <label for="costo" class="form-label">Costo</label>
@@ -185,6 +191,8 @@ if (isset($_SESSION['mensaje_exito'])) {
                 <hr>
                 <h5 class="card-title mt-4">Añadir Comentario</h5>
                 <form action="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>/comentario" method="POST" enctype="multipart/form-data">
+                    <!-- Campo CSRF para seguridad -->
+                    <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
                     <div class="mb-3">
                         <textarea class="form-control" name="comentario" rows="3" placeholder="Escribe tu comentario aquí..."></textarea>
                     </div>
@@ -214,6 +222,8 @@ if (isset($_SESSION['mensaje_exito'])) {
     <div class="modal-dialog">
         <div class="modal-content">
             <form action="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>/anular" method="POST">
+                <!-- Campo CSRF para seguridad -->
+                <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
                 <div class="modal-header"><h5 class="modal-title">Anular Ticket #<?php echo $ticket['id_ticket']; ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <p>Estás a punto de anular este ticket. Esta acción no se puede deshacer.</p>

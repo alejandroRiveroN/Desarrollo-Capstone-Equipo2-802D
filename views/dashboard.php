@@ -17,13 +17,13 @@
 </h3>
 <div class="row g-4 mb-4 dashboard-animated-row">
     <!-- Tarjeta: Tickets Abiertos -->
-    <div class="col-lg-3 col-md-6"><div class="card text-white bg-primary shadow h-100 kpi-card"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $total_abiertos; ?></h5><p class="card-text">Abiertos</p></div><i class="bi bi-envelope-open-fill fs-1 opacity-50"></i></div></div></div>
+    <div class="col-lg-3 col-md-6"><div class="card text-white bg-primary shadow h-100 kpi-card"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $stats['total_abiertos']; ?></h5><p class="card-text">Abiertos</p></div><i class="bi bi-envelope-open-fill fs-1 opacity-50"></i></div></div></div>
     <!-- Tarjeta: Tickets Pendientes -->
-    <div class="col-lg-3 col-md-6"><div class="card text-white bg-warning shadow h-100 kpi-card"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $total_pendientes; ?></h5><p class="card-text">Pendientes</p></div><i class="bi bi-clock-history fs-1 opacity-50"></i></div></div></div>
+    <div class="col-lg-3 col-md-6"><div class="card text-white bg-warning shadow h-100 kpi-card"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $stats['total_pendientes']; ?></h5><p class="card-text">Pendientes</p></div><i class="bi bi-clock-history fs-1 opacity-50"></i></div></div></div>
     <!-- Tarjeta: Tickets Resueltos -->
-    <div class="col-lg-3 col-md-6"><div class="card text-white bg-success shadow h-100 kpi-card"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $total_resueltos; ?></h5><p class="card-text">Resueltos</p></div><i class="bi bi-check-circle-fill fs-1 opacity-50"></i></div></div></div>
+    <div class="col-lg-3 col-md-6"><div class="card text-white bg-success shadow h-100 kpi-card"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $stats['total_resueltos']; ?></h5><p class="card-text">Resueltos</p></div><i class="bi bi-check-circle-fill fs-1 opacity-50"></i></div></div></div>
     <!-- Tarjeta: Total de Tickets Activos -->
-    <div class="col-lg-3 col-md-6"><div class="card bg-light shadow h-100 kpi-card"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $total_tickets; ?></h5><p class="card-text">Total Activos</p></div><i class="bi bi-bar-chart-fill fs-1 opacity-50"></i></div></div></div>
+    <div class="col-lg-3 col-md-6"><div class="card bg-light shadow h-100 kpi-card"><div class="card-body d-flex justify-content-between align-items-center"><div><h5 class="card-title fs-2"><?php echo $stats['total_tickets']; ?></h5><p class="card-text">Total Activos</p></div><i class="bi bi-bar-chart-fill fs-1 opacity-50"></i></div></div></div>
 </div>
 
 <!-- Gráficos -->
@@ -163,8 +163,13 @@
     <a href="<?php echo Flight::get('base_url'); ?>/tickets/crear" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Crear Ticket</a>
     <?php endif; ?>
 </div>
-<!-- Muestra un mensaje de éxito si existe en la sesión -->
-<?php echo $mensaje_exito; ?>
+<!-- Muestra un mensaje de éxito si existe -->
+<?php if (!empty($mensaje_exito)): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <?php echo htmlspecialchars($mensaje_exito); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
 <div class="card">
     <div class="card-header fw-bold"><i class="bi bi-table"></i> Lista de Tickets (<?php echo count($tickets); ?> encontrados)</div>
     <div class="card-body">
@@ -216,9 +221,9 @@
                                 <td><?php echo htmlspecialchars($ticket['nombre_agente'] ?? 'Sin asignar'); ?></td>
                                 <td><?php echo htmlspecialchars($ticket['nombre_tipo'] ?? 'N/A'); ?></td>
                                 <!-- Badge (etiqueta) con color dinámico para el estado -->
-                                <td><span class="badge bg-<?php echo $status_classes[$ticket['estado']] ?? 'light'; ?>"><?php echo htmlspecialchars($ticket['estado']); ?></span></td>
+                                <td><span class="badge bg-<?php echo get_status_badge_class($ticket['estado']); ?>"><?php echo htmlspecialchars($ticket['estado']); ?></span></td>
                                 <!-- Badge con color dinámico para la prioridad -->
-                                <td><span class="badge bg-<?php echo $priority_classes[$ticket['prioridad']] ?? 'light'; ?>"><?php echo htmlspecialchars($ticket['prioridad']); ?></span></td>
+                                <td><span class="badge bg-<?php echo get_priority_badge_class($ticket['prioridad']); ?>"><?php echo htmlspecialchars($ticket['prioridad']); ?></span></td>
                                 <!-- Fecha formateada -->
                                 <td><?php echo date('d/m/Y', strtotime($ticket['fecha_creacion'])); ?></td>
                                 <?php if ($_SESSION['id_rol'] == 1): /* Columnas de facturación solo para Admins */ ?>
