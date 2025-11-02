@@ -47,9 +47,16 @@ if (isset($_SESSION['mensaje_error'])) {
                                 <td><?php echo htmlspecialchars($mensaje['email']); ?></td>
                                 <td><?php echo htmlspecialchars(substr($mensaje['mensaje'], 0, 50)) . '...'; ?></td>
                                 <td>
-                                    <a href="<?php echo Flight::get('base_url'); ?>/admin/mensajes/ver/<?php echo $mensaje['id']; ?>" class="btn btn-sm btn-info">
-                                        <i class="bi bi-eye-fill"></i> Ver / Responder
-                                    </a>
+                                    <div class="d-flex gap-2">
+                                        <a href="<?php echo Flight::get('base_url'); ?>/admin/mensajes/ver/<?php echo $mensaje['id']; ?>" class="btn btn-sm btn-info" title="Ver / Responder">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </a>
+                                        <form action="<?php echo Flight::get('base_url'); ?>/admin/mensajes/eliminar/<?php echo $mensaje['id']; ?>" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este mensaje? Esta acción no se puede deshacer.');">
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Eliminar Mensaje">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

@@ -90,6 +90,7 @@ Flight::route('POST /admin/limpieza/reset', ['App\Controllers\AdminController', 
 Flight::route('GET /admin/mensajes', ['App\Controllers\AdminController', 'viewMessages']);
 Flight::route('GET /admin/mensajes/ver/@id', ['App\Controllers\AdminController', 'viewMessage']);
 Flight::route('POST /admin/mensajes/responder/@id', ['App\Controllers\AdminController', 'replyToMessage']);
+Flight::route('POST /admin/mensajes/eliminar/@id', ['App\Controllers\AdminController', 'deleteMessage']);
 
 // COTIZACIONES CLIENTE 
 \Flight::route('GET /cotizaciones',        ['App\Controllers\CotizacionController', 'myIndex']);   

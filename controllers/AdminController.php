@@ -184,4 +184,26 @@ class AdminController extends BaseController {
             \Flight::redirect($redirect_url);
         }
     }
+
+    /**
+     * Elimina un mensaje de contacto.
+     */
+    public static function deleteMessage($id)
+    {
+        self::checkAdmin();
+        $pdo = \Flight::db();
+
+        try {
+            $stmt = $pdo->prepare("DELETE FROM Formulario_contacto WHERE id = ?");
+            $stmt->execute([$id]);
+            $_SESSION['mensaje_exito'] = '¡Mensaje eliminado correctamente!';
+        } catch (\Exception $e) {
+            $_SESSION['mensaje_error'] = 'Error al eliminar el mensaje: ' . $e->getMessage();
+        }
+
+        // Redirigir de vuelta a la bandeja de entrada.
+        $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/admin/mensajes';
+        \Flight::redirect($url);
+        exit();
+    }
 }

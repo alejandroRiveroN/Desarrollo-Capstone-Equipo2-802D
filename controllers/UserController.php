@@ -77,8 +77,18 @@ class UserController extends BaseController {
             $stmt->execute([$id_rol, $nombre_completo, $email, $password_hash, $telefono, $ruta_foto]);
             $id_usuario = $pdo->lastInsertId();
 
-            $stmt = $pdo->prepare("INSERT INTO Agentes (id_usuario, puesto, fecha_contratacion) VALUES (?, ?, CURDATE())");
-            $stmt->execute([$id_usuario, $puesto]);
+            // Lógica condicional basada en el rol del usuario
+            if (in_array($id_rol, [2, 3])) { // Si es Agente (2) o Agente Supervisor (3)
+                $stmt = $pdo->prepare("INSERT INTO Agentes (id_usuario, puesto, fecha_contratacion) VALUES (?, ?, CURDATE())");
+                $stmt->execute([$id_usuario, $puesto]);
+            } elseif ($id_rol == 4) { // Si es Cliente (4)
+                // Asumimos que la tabla Clientes tiene estas columnas.
+                // El campo 'empresa' no está en este formulario, así que lo dejamos como NULL.
+                $stmt = $pdo->prepare("INSERT INTO Clientes (nombre, email, telefono, activo) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$nombre_completo, $email, $telefono, 1]);
+            }
+            // Si es Administrador (id_rol = 1), no se necesita ninguna acción adicional.
+
             $pdo->commit();
 
             // Guardar mensaje de éxito y forzar redirección absoluta
@@ -116,6 +126,14 @@ class UserController extends BaseController {
             exit();
         }
 
+        // Si el usuario es un agente, obtener su puesto actual.
+        if (in_array($usuario['id_rol'], [2, 3])) {
+            $stmt_agente = $pdo->prepare("SELECT puesto FROM Agentes WHERE id_usuario = ?");
+            $stmt_agente->execute([$id]);
+            $puesto_agente = $stmt_agente->fetchColumn();
+            $usuario['puesto'] = $puesto_agente;
+        }
+
         $roles = $pdo->query("SELECT * FROM Roles")->fetchAll(\PDO::FETCH_ASSOC);
 
         \Flight::render('editar_usuario.php', ['usuario' => $usuario, 'roles' => $roles]);
@@ -133,24 +151,54 @@ class UserController extends BaseController {
         $id_rol = $data->id_rol;
         $activo = isset($data->activo) ? 1 : 0;
         $telefono = $data->telefono;
+        $puesto = $data->puesto ?? null; // Recoger el puesto para cuando se cambia a Agente.
 
+        $pdo->beginTransaction();
         try {
-            $stmt = $pdo->prepare("SELECT ruta_foto FROM Usuarios WHERE id_usuario = ?");
-            $stmt->execute([$id]);
-            $ruta_foto_actual = $stmt->fetchColumn();
+            // 1. Obtener el rol y email actuales del usuario ANTES de actualizar.
+            $stmt_old_user = $pdo->prepare("SELECT id_rol, email, ruta_foto FROM Usuarios WHERE id_usuario = ?");
+            $stmt_old_user->execute([$id]);
+            $old_user_data = $stmt_old_user->fetch(\PDO::FETCH_ASSOC);
+            $old_rol_id = $old_user_data['id_rol'];
+            $old_email = $old_user_data['email'];
+            $ruta_foto_actual = $old_user_data['ruta_foto'];
 
-            $ruta_foto_nueva = self::_handleAvatarUpload($ruta_foto_actual); 
+            // 2. Manejar la subida del avatar.
+            $ruta_foto_nueva = self::_handleAvatarUpload($ruta_foto_actual);
+
+            // 3. Actualizar la tabla principal de Usuarios.
             $stmt = $pdo->prepare("UPDATE Usuarios SET nombre_completo = ?, email = ?, id_rol = ?, activo = ?, telefono = ?, ruta_foto = ? WHERE id_usuario = ?");
             $stmt->execute([$nombre_completo, $email, $id_rol, $activo, $telefono, $ruta_foto_nueva, $id]);
 
-            // --- SOLUCIÓN DEFINITIVA ---
-            // Usar el método de redirección de Flight para consistencia.
+            // 4. Lógica de transición de roles si el rol ha cambiado.
+            if ($old_rol_id != $id_rol) {
+                // Eliminar registro del rol anterior.
+                if (in_array($old_rol_id, [2, 3])) { // Era Agente.
+                    $pdo->prepare("DELETE FROM Agentes WHERE id_usuario = ?")->execute([$id]);
+                } elseif ($old_rol_id == 4) { // Era Cliente.
+                    $pdo->prepare("DELETE FROM Clientes WHERE email = ?")->execute([$old_email]);
+                }
+
+                // Crear registro para el nuevo rol.
+                if (in_array($id_rol, [2, 3])) { // Ahora es Agente.
+                    $stmt_agente = $pdo->prepare("INSERT INTO Agentes (id_usuario, puesto, fecha_contratacion) VALUES (?, ?, CURDATE())");
+                    $stmt_agente->execute([$id, $puesto]);
+                } elseif ($id_rol == 4) { // Ahora es Cliente.
+                    $stmt_cliente = $pdo->prepare("INSERT INTO Clientes (nombre, email, telefono, activo) VALUES (?, ?, ?, ?)");
+                    $stmt_cliente->execute([$nombre_completo, $email, $telefono, $activo]);
+                }
+            }
+
+            $pdo->commit();
+
+            $_SESSION['mensaje_exito'] = '¡Usuario actualizado correctamente!';
             $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/usuarios';
             \Flight::redirect($url);
             exit();
         } catch (\Exception $e) {
-            // Guardar el mensaje de error en la sesión para mostrarlo en la vista
-            $_SESSION['mensaje_error'] = $e->getMessage();
+            $pdo->rollBack();
+            $_SESSION['mensaje_error'] = "Error al actualizar el usuario: " . $e->getMessage();
+            $stmt->execute([$id]);
             $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/usuarios/editar/' . $id;
             \Flight::redirect($url);
             exit();
@@ -189,7 +237,7 @@ class UserController extends BaseController {
             }
 
             // Finalmente, eliminar el usuario de la tabla Usuarios.
-            $stmt = $pdo->prepare("DELETE FROM Agentes WHERE id_usuario = ?");
+            $stmt = $pdo->prepare("DELETE FROM Usuarios WHERE id_usuario = ?");
             $stmt->execute([$id]);
             $pdo->commit();
             $_SESSION['mensaje_exito'] = '¡Usuario eliminado correctamente!';
