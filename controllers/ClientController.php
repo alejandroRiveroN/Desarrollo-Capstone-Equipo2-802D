@@ -2,8 +2,8 @@
 
 namespace App\Controllers;
 
-use App\Models\ClientRepository; 
-use App\Services\MailService;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
@@ -14,18 +14,64 @@ class PDF extends \FPDF {
 
 class ClientController extends BaseController {
 
+    /**
+     * Método privado para obtener clientes aplicando filtros comunes.
+     * Centraliza la lógica de filtrado para reutilizarla.
+     */
+    private static function _getClientesConFiltros($request) {
+        $pdo = \Flight::db();
+
+        $filtro_termino = $request->query['termino'] ?? '';
+        $filtro_telefono = $request->query['telefono'] ?? '';
+        $filtro_pais = $request->query['pais'] ?? '';
+        $filtro_estado = $request->query['estado'] ?? '';
+
+        $where_conditions = [];
+        $params = [];
+
+        if (!empty($filtro_termino)) {
+            $where_conditions[] = "(nombre LIKE :termino OR empresa LIKE :termino OR email LIKE :termino)";
+            $params[':termino'] = '%' . $filtro_termino . '%';
+        }
+        if (!empty($filtro_telefono)) {
+            $where_conditions[] = "telefono LIKE :telefono";
+            $params[':telefono'] = '%' . $filtro_telefono . '%';
+        }
+        if (!empty($filtro_pais)) {
+            $where_conditions[] = "pais LIKE :pais";
+            $params[':pais'] = '%' . $filtro_pais . '%';
+        }
+        if ($filtro_estado !== '' && in_array($filtro_estado, ['0', '1'])) {
+            $where_conditions[] = "activo = :estado";
+            $params[':estado'] = $filtro_estado;
+        }
+
+        return ['where_conditions' => $where_conditions, 'params' => $params];
+    }
+
     public static function index() {
         self::checkAuth();
         $request = \Flight::request();
-        $pdo = \Flight::db();
-        $clientRepo = new ClientRepository($pdo);
+        $filtros = self::_getClientesConFiltros($request);
 
-        $clientes = $clientRepo->findAllWithFilters($request->query->getData());
+        $sql = "SELECT id_cliente, nombre, empresa, email, telefono, pais, ciudad, activo FROM Clientes";
+
+        if (!empty($filtros['where_conditions'])) {
+            $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
+        }
+        $sql .= " ORDER BY nombre ASC";
+
+        $pdo = \Flight::db();
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($filtros['params']);
+        $clientes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         \Flight::render('gestionar_clientes.php', [
             'clientes' => $clientes,
-            'filtro_termino' => $request->query['termino'] ?? '', 'filtro_telefono' => $request->query['telefono'] ?? '',
-            'filtro_pais' => $request->query['pais'] ?? '', 'filtro_estado' => $request->query['estado'] ?? '',
+            'filtro_termino' => $request->query['termino'] ?? '',
+            'filtro_telefono' => $request->query['telefono'] ?? '',
+            'filtro_pais' => $request->query['pais'] ?? '',
+            'filtro_estado' => $request->query['estado'] ?? '',
         ]);
     }
 
@@ -37,39 +83,50 @@ class ClientController extends BaseController {
         self::checkAuth();
         self::validateCsrfToken();
         $pdo = \Flight::db();
-        $clientRepo = new ClientRepository($pdo);
         $request = \Flight::request();
+        $data = $request->data;
 
-        $clientData = [
-            'nombre'   => trim($request->data->nombre),
-            'email'    => trim($request->data->email),
-            'telefono' => trim($request->data->telefono) ?: null,
-            'empresa'  => trim($request->data->empresa) ?: null,
-            'pais'     => trim($request->data->pais) ?: null,
-            'ciudad'   => trim($request->data->ciudad) ?: null,
-            'activo'   => isset($request->data->activo) ? 1 : 0,
-        ];
+        $nombre = trim($data->nombre);
+        $email = trim($data->email);
+        $telefono = trim($data->telefono) ?: null;
+        $empresa = trim($data->empresa) ?: null;
+        $pais = trim($data->pais) ?: null;
+        $ciudad = trim($data->ciudad) ?: null;
+        $activo = isset($data->activo) ? 1 : 0;
 
-        if (empty($clientData['nombre']) || empty($clientData['email'])) {
+        if (empty($nombre) || empty($correo_electronico)) {
             \Flight::render('crear_cliente.php', ['mensaje_error' => "Los campos 'Nombre Completo' y 'Correo Electrónico' son obligatorios."]);
             return;
         }
 
         try {
-            // Este método no está completamente implementado en el repositorio porque
-            // la creación de un usuario asociado sin contraseña no es ideal.
-            // Se prioriza el `publicRegister`.
-            // $clientRepo->create($clientData);
-            
+            $pdo->beginTransaction();
+            $stmt = $pdo->prepare(
+                "INSERT INTO Clientes (nombre, empresa, correo_electronico, telefono, pais, ciudad, activo) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)"
+            );
+            $stmt->execute([$nombre, $empresa, $correo_electronico, $telefono, $pais, $ciudad, $activo]);
+
+            $password = bin2hex(random_bytes(4)); // contraseña temporal
+            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+
+            $stmtUser = $pdo->prepare("INSERT INTO usuarios (id_rol, nombre_completo, email, password_hash) VALUES (?, ?, ?, ?)");
+            $stmtUser->execute([4, $nombre, $correo_electronico, $password_hash]);
+
+            $pdo->commit();
+
             // Al final de la creación
             $_SESSION['mensaje_exito'] = '¡Registro completado con éxito! Ahora puedes iniciar sesión.';
             self::redirect_to('/');
         } catch (\Exception $e) {
+            $pdo->rollBack();
+
             if ($e instanceof \PDOException && $e->getCode() == '23000') {
                 $error_message = "El correo electrónico ya se encuentra registrado. Por favor, utiliza otro.";
             } else {
                 $error_message = "Error al crear el cliente: " . $e->getMessage();
             }
+
             \Flight::render('crear_cliente.php', ['mensaje_error' => $error_message]);
         }
     }
@@ -77,8 +134,9 @@ class ClientController extends BaseController {
     public static function edit($id) {
         self::checkAuth();
         $pdo = \Flight::db();
-        $clientRepo = new ClientRepository($pdo);
-        $cliente = $clientRepo->findById((int)$id);
+        $stmt = $pdo->prepare("SELECT * FROM Clientes WHERE id_cliente = ?");
+        $stmt->execute([$id]);
+        $cliente = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if (!$cliente) self::redirect_to('/clientes');
 
@@ -92,31 +150,36 @@ class ClientController extends BaseController {
         self::checkAuth();
         self::validateCsrfToken();
         $pdo = \Flight::db();
-        $clientRepo = new ClientRepository($pdo);
         $request = \Flight::request();
+        $data = $request->data;
 
-        $clientData = [
-            'nombre'   => trim($request->data->nombre),
-            'email'    => trim($request->data->email),
-            'telefono' => trim($request->data->telefono) ?: null,
-            'empresa'  => trim($request->data->empresa) ?: null,
-            'pais'     => trim($request->data->pais) ?: null,
-            'ciudad'   => trim($request->data->ciudad) ?: null,
-            'activo'   => isset($request->data->activo) ? 1 : 0,
-        ];
+        $nombre = trim($data->nombre);
+        $email = trim($data->email);
+        $telefono = trim($data->telefono) ?: null;
+        $empresa = trim($data->empresa) ?: null;
+        $pais = trim($data->pais) ?: null;
+        $ciudad = trim($data->ciudad) ?: null;
+        $activo = isset($data->activo) ? 1 : 0;
 
-        if (empty($clientData['nombre']) || empty($clientData['email'])) {
-            $cliente = $clientRepo->findById((int)$id);
+        if (empty($nombre) || empty($correo_electronico)) {
+            $stmt = $pdo->prepare("SELECT * FROM Clientes WHERE id_cliente = ?");
+            $stmt->execute([$id]);
+            $cliente = $stmt->fetch(\PDO::FETCH_ASSOC);
             \Flight::render('editar_cliente.php', [
                 'cliente' => $cliente,
                 'mensaje_error' => "Los campos 'Nombre Completo' y 'Correo Electrónico' son obligatorios."
             ]);
         } else {
             try {
-                $clientRepo->update((int)$id, $clientData);
+                $stmt = $pdo->prepare(
+                    "UPDATE Clientes SET nombre = ?, empresa = ?, correo_electronico = ?, telefono = ?, pais = ?, ciudad = ?, activo = ? WHERE id_cliente = ?"
+                );
+                $stmt->execute([$nombre, $empresa, $email, $telefono, $pais, $ciudad, $activo, $id]);
                 self::redirect_to('/clientes?status=updated');
             } catch (\Exception $e) {
-                $cliente = $clientRepo->findById((int)$id);
+                $stmt = $pdo->prepare("SELECT * FROM Clientes WHERE id_cliente = ?");
+                $stmt->execute([$id]);
+                $cliente = $stmt->fetch(\PDO::FETCH_ASSOC);
                 \Flight::render('editar_cliente.php', [
                     'cliente' => $cliente,
                     'mensaje_error' => "Error al actualizar el cliente: " . $e->getMessage()
@@ -129,9 +192,10 @@ class ClientController extends BaseController {
         self::checkAdmin(); // Solo los administradores pueden eliminar
         self::validateCsrfToken();
         $pdo = \Flight::db();
-        $clientRepo = new ClientRepository($pdo);
+
         try {
-            $clientRepo->delete((int)$id);
+            $stmt = $pdo->prepare("DELETE FROM Clientes WHERE id_cliente = ?");
+            $stmt->execute([$id]);
 
             $_SESSION['mensaje_exito'] = '¡Cliente eliminado correctamente!';
 
@@ -148,17 +212,16 @@ class ClientController extends BaseController {
         $request = \Flight::request();
         $data = $request->data;
 
-        $clientData = [
-            'nombre'           => trim($data->nombre ?? ''),
-            'email'            => strtolower(trim($data->email ?? '')),
-            'telefono'         => trim($data->telefono) ?: null,
-            'empresa'          => trim($data->empresa) ?: null,
-            'pais'             => trim($data->pais) ?: null,
-            'ciudad'           => trim($data->ciudad) ?: null,
-            'password'         => $data->password ?? '',
-            'confirm_password' => $data->confirmar_password ?? '',
-        ];
-        extract($clientData); // Para validaciones
+        // Recoger y normalizar datos
+        $nombre = trim($data->nombre ?? '');
+        $email = strtolower(trim($data->email ?? ''));
+        $telefono = trim($data->telefono) ?: null;
+        $empresa = trim($data->empresa) ?: null;
+        $pais = trim($data->pais) ?: null;
+        $ciudad = trim($data->ciudad) ?: null;
+        $password = $data->password ?? '';
+        $confirm_password = $data->confirmar_password ?? '';
+        $activo = 1;
 
         // Validación básica servidor-side
         $errors = [];
@@ -176,25 +239,46 @@ class ClientController extends BaseController {
 
         if (!empty($errors)) {
             \Flight::render('registro_cliente.php', [
-                'mensaje_error' => implode(' ', $errors), 'nombre' => $clientData['nombre'],
-                'email' => $clientData['email'], 'telefono' => $clientData['telefono'],
-                'empresa' => $clientData['empresa'], 'pais' => $clientData['pais'], 
-                'ciudad' => $clientData['ciudad']
+                'mensaje_error' => implode(' ', $errors),
+                'nombre' => $nombre,
+                'email' => $email,
+                'telefono' => $telefono,
+                'empresa' => $empresa,
+                'pais' => $pais, 
+                'ciudad' => $ciudad
             ]);
             return;
         }
         
         try {
             $pdo = \Flight::db();
-            $clientRepo = new ClientRepository($pdo);
-            $clientRepo->createPublicUser($clientData);
+            $pdo->beginTransaction();
+
+            // Insertar en Clientes (usar columna email en la tabla Clientes)
+            $stmt = $pdo->prepare(
+                "INSERT INTO Clientes (nombre, empresa, email, telefono, pais, ciudad, activo) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)"
+            );
+            $stmt->execute([$nombre, $empresa, $email, $telefono, $pais, $ciudad, $activo]);
+
+            // Hash de la contraseña elegida por el usuario
+            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+
+            // Insertar en Usuarios (rol Cliente = 4)
+            $stmtUser = $pdo->prepare(
+                "INSERT INTO usuarios (id_rol, nombre_completo, email, password_hash, activo) VALUES (?, ?, ?, ?, ?)"
+            );
+            $stmtUser->execute([4, $nombre, $email, $password_hash, 1]);
+
+            $pdo->commit();
 
             //Notificación por email al nuevo cliente ---
-            self::sendWelcomeEmailToClient($clientData['nombre'], $clientData['email']);
+            self::sendWelcomeEmailToClient($nombre, $email);
 
             $_SESSION['mensaje_exito'] = "¡Registro exitoso! Ya puedes iniciar sesión.";
             self::redirect_to('/');
         } catch (\Exception $e) {
+            $pdo->rollBack();
             // Detectar email duplicado
             if ($e instanceof \PDOException && $e->getCode() == '23000') {
                 $error_message = "El correo ya está registrado.";
@@ -203,9 +287,13 @@ class ClientController extends BaseController {
             }
 
             \Flight::render('registro_cliente.php', [
-                'mensaje_error' => $error_message, 'nombre' => $clientData['nombre'],
-                'email' => $clientData['email'], 'telefono' => $clientData['telefono'],
-                'empresa' => $clientData['empresa'], 'pais' => $clientData['pais'], 'ciudad' => $clientData['ciudad']
+                'mensaje_error' => $error_message,
+                'nombre' => $nombre,
+                'email' => $email,
+                'telefono' => $telefono,
+                'empresa' => $empresa,
+                'pais' => $pais, 
+                'ciudad' => $ciudad
             ]);
         }
     }
@@ -217,29 +305,54 @@ class ClientController extends BaseController {
      * @param string $email El email del nuevo cliente.
      */
     private static function sendWelcomeEmailToClient($nombre, $email) {
-        $mailService = new MailService();
+        $mail = new PHPMailer(true);
+        $config = \Flight::get('mail_config');
 
         try {
-            $subject = '¡Bienvenido/a a nuestro Sistema de Soporte!';
-            $body    = "Hola " . htmlspecialchars($nombre) . ",<br><br>" .
+            // Configuración del servidor SMTP
+            $mail->isSMTP();
+            $mail->Host       = $config['host'];
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $config['username'];
+            $mail->Password   = $config['password'];
+            $mail->SMTPSecure = $config['encryption'];
+            $mail->Port       = $config['port'];
+            $mail->CharSet    = 'UTF-8';
+
+            // Remitente y Destinatario
+            $mail->setFrom($config['from_address'], $config['from_name']);
+            $mail->addAddress($email, $nombre);
+
+            // Contenido del correo
+            $mail->isHTML(true);
+            $mail->Subject = '¡Bienvenido/a a nuestro Sistema de Soporte!';
+            $mail->Body    = "Hola " . htmlspecialchars($nombre) . ",<br><br>" .
                              "¡Gracias por registrarte en nuestro sistema de soporte! Ahora puedes iniciar sesión y comenzar a crear tus tickets de soporte.<br><br>" .
                              "Si tienes alguna pregunta, no dudes en contactarnos.<br><br>" .
                              "Saludos cordiales,<br>" .
                              "El equipo de Soporte";
-            
-            $mailService->send($email, $subject, $body);
-        } catch (\Exception $e) {
-            // No detener la ejecución si el correo de bienvenida falla.
-            // Opcional: registrar el error.
-            error_log("Fallo al enviar correo de bienvenida: " . $e->getMessage());
+            $mail->AltBody = "Hola " . htmlspecialchars($nombre) . ",\n\n¡Gracias por registrarte en nuestro sistema de soporte! Ahora puedes iniciar sesión y comenzar a crear tus tickets de soporte.\n\nSaludos,\nEl equipo de Soporte";
+
+            $mail->send();
+        } catch (Exception $e) {
         }
     }
 
     public static function exportExcel() {
         self::checkAuth();
         $pdo = \Flight::db();
-        $clientRepo = new ClientRepository($pdo);
-        $clientes = $clientRepo->findAllWithFilters(\Flight::request()->query->getData());
+        $request = \Flight::request();
+        $filtros = self::_getClientesConFiltros($request);
+
+        $sql = "SELECT * FROM Clientes";
+        if (!empty($filtros['where_conditions'])) {
+            $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
+        }
+        $sql .= " ORDER BY id_cliente DESC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($filtros['params']);
+        $clientes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         // Creación del archivo Excel
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
@@ -307,8 +420,18 @@ class ClientController extends BaseController {
     public static function exportPdf() {
         self::checkAuth();
         $pdo = \Flight::db();
-        $clientRepo = new ClientRepository($pdo);
-        $clientes = $clientRepo->findAllWithFilters(\Flight::request()->query->getData());
+        $request = \Flight::request();
+        $filtros = self::_getClientesConFiltros($request);
+
+        $sql = "SELECT * FROM Clientes";
+        if (!empty($filtros['where_conditions'])) {
+            $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
+        }
+        $sql .= " ORDER BY nombre ASC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($filtros['params']);
+        $clientes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         // Creación del PDF
         $pdf = new PDF('L', 'mm', 'A4');
@@ -341,8 +464,18 @@ class ClientController extends BaseController {
     public static function print() {
         self::checkAdmin();
         $pdo = \Flight::db();
-        $clientRepo = new ClientRepository($pdo);
-        $clientes = $clientRepo->findAllWithFilters(\Flight::request()->query->getData());
+        $request = \Flight::request();
+        $filtros = self::_getClientesConFiltros($request);
+
+        $sql = "SELECT * FROM Clientes";
+        if (!empty($filtros['where_conditions'])) {
+            $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
+        }
+        $sql .= " ORDER BY nombre ASC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($filtros['params']);
+        $clientes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         \Flight::render('imprimir_clientes.php', ['clientes' => $clientes]);
     }
@@ -354,9 +487,21 @@ class ClientController extends BaseController {
     public static function apiGetClientes() {
         self::checkAuth(); // Asegurar que el usuario esté autenticado
         $request = \Flight::request();
+        
+        // Reutilizar la lógica de filtrado existente
+        $filtros = self::_getClientesConFiltros($request);
+
+        $sql = "SELECT id_cliente, nombre, empresa, email, telefono, pais, ciudad, activo FROM Clientes";
+
+        if (!empty($filtros['where_conditions'])) {
+            $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
+        }
+        $sql .= " ORDER BY nombre ASC";
+
         $pdo = \Flight::db();
-        $clientRepo = new ClientRepository($pdo);
-        $clientes = $clientRepo->findAllWithFilters($request->query->getData());
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($filtros['params']);
+        $clientes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         // Devolver los resultados como JSON
         \Flight::json([

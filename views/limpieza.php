@@ -27,10 +27,6 @@
         <div class="card-body">
             <p>Esta herramienta busca tickets cerrados o resueltos hace más de un año y te permite borrarlos para mantener la base de datos limpia.</p>
             <button id="btn-test-limpieza" class="btn btn-info no-print">Verificar Tickets a Borrar (Simulación)</button>
-            <form id="form-limpieza-tickets" action="<?php echo Flight::get('base_url'); ?>/admin/limpieza/tickets-antiguos" method="POST" class="mt-3" style="display:none;" onsubmit="return confirm('¿Estás seguro de que quieres eliminar permanentemente estos tickets? Esta acción no se puede deshacer.');">
-                <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
-                <button type="submit" class="btn btn-warning">Eliminar Tickets Antiguos</button>
-            </form>
             <div id="test-results-container" class="mt-3" style="display:none;">
                 <h4>Resultados de la Simulación</h4>
                 <p><strong id="test-results-count"></strong></p>

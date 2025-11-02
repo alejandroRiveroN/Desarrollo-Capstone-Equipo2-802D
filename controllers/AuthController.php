@@ -2,8 +2,6 @@
 
 namespace App\Controllers;
 
-use App\Models\UserRepository;
-
 class AuthController {
 
     public static function login() {
@@ -17,8 +15,7 @@ class AuthController {
     }
 
     public static function authenticate() {
-        $pdo = \Flight::db();
-        $userRepo = new UserRepository($pdo);
+        $db = \Flight::db();
         $email = \Flight::request()->data->email;
         $password = \Flight::request()->data->password;
         $error_message = '';
@@ -26,8 +23,9 @@ class AuthController {
         if (empty($email) || empty($password)) {
             $error_message = 'Por favor, introduce tu email y contraseña.';
         } else {
-            // Usamos el repositorio para encontrar al usuario
-            $usuario = $userRepo->findActiveByEmail($email);
+            $stmt = $db->prepare('SELECT * FROM Usuarios WHERE email = ? AND activo = 1');
+            $stmt->execute([$email]);
+            $usuario = $stmt->fetch(\PDO::FETCH_ASSOC);
 
             if ($usuario && password_verify($password, $usuario['password_hash'])) {
                 $_SESSION['id_usuario'] = $usuario['id_usuario'];

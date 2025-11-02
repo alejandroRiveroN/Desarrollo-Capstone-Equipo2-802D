@@ -17,8 +17,6 @@
   <div class="card">
     <div class="card-body">
       <form action="<?= \Flight::get('base_url'); ?>/cotizaciones" method="POST" class="row g-3">
-        <!-- Campo CSRF para seguridad -->
-        <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
         <div class="col-md-6">
           <label class="form-label">Tipo de caso</label>
           <select class="form-select" name="id_tipo_caso" required>

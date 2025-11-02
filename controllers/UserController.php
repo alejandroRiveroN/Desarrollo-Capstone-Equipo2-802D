@@ -2,18 +2,49 @@
 
 namespace App\Controllers;
 
-use App\Models\UserRepository;
-
 class UserController extends BaseController {
+
+    private static function _getUsuariosConFiltros($request) {
+        $filtro_termino = $request->query['termino'] ?? '';
+        $filtro_rol = $request->query['rol'] ?? '';
+        $filtro_estado = $request->query['estado'] ?? '';
+
+        $where_conditions = [];
+        $params = [];
+
+        if (!empty($filtro_termino)) {
+            $where_conditions[] = "(u.nombre_completo LIKE :termino OR u.email LIKE :termino)";
+            $params[':termino'] = '%' . $filtro_termino . '%';
+        }
+        if (!empty($filtro_rol)) {
+            $where_conditions[] = "u.id_rol = :rol";
+            $params[':rol'] = $filtro_rol;
+        }
+        if ($filtro_estado !== '' && in_array($filtro_estado, ['0', '1'])) {
+            $where_conditions[] = "u.activo = :estado";
+            $params[':estado'] = $filtro_estado;
+        }
+
+        return ['where_conditions' => $where_conditions, 'params' => $params];
+    }
 
     public static function index() {
         self::checkAdmin();
         $request = \Flight::request();
-        $pdo = \Flight::db();
-        $userRepo = new UserRepository($pdo);
+        $filtros = self::_getUsuariosConFiltros($request);
 
-        $usuarios = $userRepo->findAllWithRoles($request->query->getData());
-        $roles = $userRepo->findAllRoles();
+        $sql = "SELECT u.id_usuario, u.nombre_completo, u.email, u.activo, u.telefono, u.ruta_foto, r.nombre_rol FROM Usuarios u JOIN Roles r ON u.id_rol = r.id_rol";
+
+        if (!empty($filtros['where_conditions'])) {
+            $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
+        }
+        $sql .= " ORDER BY u.nombre_completo ASC";
+
+        $pdo = \Flight::db();
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($filtros['params']);
+        $usuarios = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $roles = $pdo->query("SELECT * FROM Roles ORDER BY nombre_rol ASC")->fetchAll(\PDO::FETCH_ASSOC);
 
         \Flight::render('gestionar_usuarios.php', array_merge([
             'usuarios' => $usuarios, 'roles' => $roles
@@ -22,9 +53,9 @@ class UserController extends BaseController {
 
     public static function create() {
         self::checkAdmin();
+
         $pdo = \Flight::db();
-        $userRepo = new UserRepository($pdo);
-        $roles = $userRepo->findAllRoles();
+        $roles = $pdo->query("SELECT * FROM Roles")->fetchAll(\PDO::FETCH_ASSOC);
 
         \Flight::render('crear_usuario_admin.php', ['roles' => $roles, 'error_msg' => '']);
     }
@@ -66,20 +97,27 @@ class UserController extends BaseController {
 
         $pdo = \Flight::db();
         $request = \Flight::request();
-        $userRepo = new UserRepository($pdo);
+        $data = $request->data;
 
-        $userData = [
-            'nombre_completo' => $request->data->nombre_completo,
-            'email'           => $request->data->email,
-            'password'        => $request->data->password,
-            'id_rol'          => (int)$request->data->id_rol,
-            'puesto'          => $request->data->puesto,
-            'telefono'        => $request->data->telefono,
-        ];
+        $nombre_completo = $data->nombre_completo;
+        $email = $data->email;
+        $password = $data->password;
+        $id_rol = (int)$data->id_rol;
+        $puesto = $data->puesto;
+        $telefono = $data->telefono;
 
+        $password_hash = password_hash($password, PASSWORD_DEFAULT);
+        $pdo->beginTransaction();
         try {
-            $userData['ruta_foto'] = self::_handleAvatarUpload();
-            $userRepo->create($userData);
+            $ruta_foto = self::_handleAvatarUpload();
+
+            $stmt = $pdo->prepare("INSERT INTO Usuarios (id_rol, nombre_completo, email, password_hash, telefono, ruta_foto) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$id_rol, $nombre_completo, $email, $password_hash, $telefono, $ruta_foto]);
+            $id_usuario = $pdo->lastInsertId();
+
+            $stmt = $pdo->prepare("INSERT INTO Agentes (id_usuario, puesto, fecha_contratacion) VALUES (?, ?, CURDATE())");
+            $stmt->execute([$id_usuario, $puesto]);
+            $pdo->commit();
 
             // Guardar mensaje de éxito y forzar redirección absoluta
             $_SESSION['mensaje_exito'] = '¡Usuario creado correctamente!';
@@ -87,7 +125,7 @@ class UserController extends BaseController {
         } catch (\Exception $e) {
             $pdo->rollBack();
             $roles = $pdo->query("SELECT * FROM Roles")->fetchAll(\PDO::FETCH_ASSOC);
-            
+
             // Verificar si el error es por una entrada duplicada (código de error 23000)
             if ($e instanceof \PDOException && $e->getCode() == '23000') {
                 $error_message = "El correo electrónico ya se encuentra registrado. Por favor, utiliza otro.";
@@ -102,12 +140,13 @@ class UserController extends BaseController {
         self::checkAdmin();
 
         $pdo = \Flight::db();
-        $userRepo = new UserRepository($pdo);
-        $usuario = $userRepo->findById($id);
+        $stmt = $pdo->prepare("SELECT * FROM Usuarios WHERE id_usuario = ?");
+        $stmt->execute([$id]);
+        $usuario = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if (!$usuario) self::redirect_to('/usuarios');
 
-        $roles = $userRepo->findAllRoles();
+        $roles = $pdo->query("SELECT * FROM Roles")->fetchAll(\PDO::FETCH_ASSOC);
 
         \Flight::render('editar_usuario.php', ['usuario' => $usuario, 'roles' => $roles]);
     }
@@ -118,25 +157,23 @@ class UserController extends BaseController {
 
         $pdo = \Flight::db();
         $request = \Flight::request();
-        $userRepo = new UserRepository($pdo);
+        $data = $request->data;
+
+        $nombre_completo = $data->nombre_completo;
+        $email = $data->email;
+        $id_rol = $data->id_rol;
+        $activo = isset($data->activo) ? 1 : 0;
+        $telefono = $data->telefono;
 
         try {
-            $usuario_actual = $userRepo->findById($id);
-            if (!$usuario_actual) {
-                throw new \Exception("Usuario no encontrado.");
-            }
+            $stmt = $pdo->prepare("SELECT ruta_foto FROM Usuarios WHERE id_usuario = ?");
+            $stmt->execute([$id]);
+            $ruta_foto_actual = $stmt->fetchColumn();
 
-            $ruta_foto_nueva = self::_handleAvatarUpload($usuario_actual['ruta_foto']);
+            $ruta_foto_nueva = self::_handleAvatarUpload($ruta_foto_actual); 
+            $stmt = $pdo->prepare("UPDATE Usuarios SET nombre_completo = ?, email = ?, id_rol = ?, activo = ?, telefono = ?, ruta_foto = ? WHERE id_usuario = ?");
+            $stmt->execute([$nombre_completo, $email, $id_rol, $activo, $telefono, $ruta_foto_nueva, $id]);
 
-            $userData = [
-                'nombre_completo' => $request->data->nombre_completo,
-                'email'           => $request->data->email,
-                'id_rol'          => $request->data->id_rol,
-                'activo'          => isset($request->data->activo) ? 1 : 0,
-                'telefono'        => $request->data->telefono,
-                'ruta_foto'       => $ruta_foto_nueva
-            ];
-            $userRepo->update($id, $userData);
             // Usar el método de redirección de Flight para consistencia.
             self::redirect_to('/usuarios');
         } catch (\Exception $e) {
@@ -157,9 +194,15 @@ class UserController extends BaseController {
         }
 
         $pdo = \Flight::db();
-        $userRepo = new UserRepository($pdo);
         try {
-            $userRepo->delete($id);
+            // Primero, eliminamos la referencia en la tabla de agentes
+            $stmt = $pdo->prepare("DELETE FROM Agentes WHERE id_usuario = ?");
+            $stmt->execute([$id]);
+
+            // Luego, eliminamos el usuario
+            $stmt = $pdo->prepare("DELETE FROM Usuarios WHERE id_usuario = ?");
+            $stmt->execute([$id]);
+
             $_SESSION['mensaje_exito'] = '¡Usuario eliminado correctamente!';
         } catch (\PDOException $e) {
             $_SESSION['mensaje_error'] = 'No se pudo eliminar el usuario. Es posible que tenga registros asociados que impiden su borrado.';
@@ -171,10 +214,19 @@ class UserController extends BaseController {
     public static function apiGetUsuarios() {
         self::checkAdmin();
         $request = \Flight::request();
+        $filtros = self::_getUsuariosConFiltros($request);
+
+        $sql = "SELECT u.id_usuario, u.nombre_completo, u.email, u.activo, u.telefono, u.ruta_foto, r.nombre_rol FROM Usuarios u JOIN Roles r ON u.id_rol = r.id_rol";
+
+        if (!empty($filtros['where_conditions'])) {
+            $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
+        }
+        $sql .= " ORDER BY u.nombre_completo ASC";
+
         $pdo = \Flight::db();
-        $userRepo = new UserRepository($pdo);
-        
-        $usuarios = $userRepo->findAllWithRoles($request->query->getData());
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($filtros['params']);
+        $usuarios = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         // Devolver los resultados como JSON
         \Flight::json([

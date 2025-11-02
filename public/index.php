@@ -4,9 +4,6 @@ require '../vendor/autoload.php';
 // Iniciar la sesión
 session_start();
 
-// Incluir helpers
-require_once __DIR__ . '/../helpers/template_helper.php';
-
 // Incluir la configuración de la base de datos y registrar la conexión con Flight
 $db_config = require_once '../config/database.php';
 Flight::set('db_config', $db_config);

@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Controllers;
-use App\Models\TipoCasoRepository;
 
 use Flight;
 
@@ -14,7 +13,6 @@ class TipoCasoController extends BaseController
     {
         self::checkAdmin();
         $pdo = Flight::db();
-        $tipoCasoRepo = new TipoCasoRepository($pdo);
 
         // Datos por defecto para el formulario de creación
         $tipo_caso_actual = [
@@ -24,7 +22,8 @@ class TipoCasoController extends BaseController
             'activo' => 1
         ];
 
-        $tipos_de_caso = $tipoCasoRepo->findAll();
+        $stmt = $pdo->query("SELECT * FROM TiposDeCaso ORDER BY nombre_tipo ASC");
+        $tipos_de_caso = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         Flight::render('gestionar_tipos_caso.php', [
             'tipos_de_caso' => $tipos_de_caso,
@@ -39,19 +38,17 @@ class TipoCasoController extends BaseController
     {
         self::checkAdmin();
         self::validateCsrfToken();
-        $pdo = \Flight::db();
-        $tipoCasoRepo = new TipoCasoRepository($pdo);
+        $pdo = Flight::db();
         $request = Flight::request();
         $data = $request->data;
 
-        $tipoCasoData = [
-            'nombre_tipo' => trim($data->nombre_tipo),
-            'descripcion' => trim($data->descripcion),
-            'activo'      => isset($data->activo) ? 1 : 0,
-        ];
+        $nombre_tipo = trim($data->nombre_tipo);
+        $descripcion = trim($data->descripcion);
+        $activo = isset($data->activo) ? 1 : 0;
 
         try {
-            $tipoCasoRepo->create($tipoCasoData);
+            $stmt = $pdo->prepare("INSERT INTO TiposDeCaso (nombre_tipo, descripcion, activo) VALUES (?, ?, ?)");
+            $stmt->execute([$nombre_tipo, $descripcion, $activo]);
             $_SESSION['mensaje_exito'] = '¡Tipo de caso creado correctamente!';
         } catch (\Exception $e) {
             $_SESSION['mensaje_error'] = 'Error al crear el tipo de caso: ' . $e->getMessage();
@@ -67,13 +64,15 @@ class TipoCasoController extends BaseController
     {
         self::checkAdmin();
         $pdo = Flight::db();
-        $tipoCasoRepo = new TipoCasoRepository($pdo);
 
-        $tipo_caso_actual = $tipoCasoRepo->findById((int)$id);
+        $stmt = $pdo->prepare("SELECT * FROM TiposDeCaso WHERE id_tipo_caso = ?");
+        $stmt->execute([$id]);
+        $tipo_caso_actual = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if (!$tipo_caso_actual) self::redirect_to('/casos/tipos');
 
-        $tipos_de_caso = $tipoCasoRepo->findAll();
+        $stmt_all = $pdo->query("SELECT * FROM TiposDeCaso ORDER BY nombre_tipo ASC");
+        $tipos_de_caso = $stmt_all->fetchAll(\PDO::FETCH_ASSOC);
 
         Flight::render('gestionar_tipos_caso.php', [
             'tipos_de_caso' => $tipos_de_caso,
@@ -88,19 +87,17 @@ class TipoCasoController extends BaseController
     {
         self::checkAdmin();
         self::validateCsrfToken();
-        $pdo = \Flight::db();
-        $tipoCasoRepo = new TipoCasoRepository($pdo);
+        $pdo = Flight::db();
         $request = Flight::request();
         $data = $request->data;
 
-        $tipoCasoData = [
-            'nombre_tipo' => trim($data->nombre_tipo),
-            'descripcion' => trim($data->descripcion),
-            'activo'      => isset($data->activo) ? 1 : 0,
-        ];
+        $nombre_tipo = trim($data->nombre_tipo);
+        $descripcion = trim($data->descripcion);
+        $activo = isset($data->activo) ? 1 : 0;
 
         try {
-            $tipoCasoRepo->update((int)$id, $tipoCasoData);
+            $stmt = $pdo->prepare("UPDATE TiposDeCaso SET nombre_tipo = ?, descripcion = ?, activo = ? WHERE id_tipo_caso = ?");
+            $stmt->execute([$nombre_tipo, $descripcion, $activo, $id]);
             $_SESSION['mensaje_exito'] = '¡Tipo de caso actualizado correctamente!';
         } catch (\Exception $e) {
             $_SESSION['mensaje_error'] = 'Error al actualizar el tipo de caso: ' . $e->getMessage();
@@ -116,11 +113,11 @@ class TipoCasoController extends BaseController
     {
         self::checkAdmin();
         self::validateCsrfToken();
-        $pdo = \Flight::db();
-        $tipoCasoRepo = new TipoCasoRepository($pdo);
+        $pdo = Flight::db();
 
         try {
-            $tipoCasoRepo->delete((int)$id);
+            $stmt = $pdo->prepare("DELETE FROM TiposDeCaso WHERE id_tipo_caso = ?");
+            $stmt->execute([$id]);
             $_SESSION['mensaje_exito'] = '¡Tipo de caso eliminado correctamente!';
         } catch (\PDOException $e) {
             $_SESSION['mensaje_error'] = 'No se pudo eliminar el tipo de caso. Es posible que esté en uso por uno o más tickets.';

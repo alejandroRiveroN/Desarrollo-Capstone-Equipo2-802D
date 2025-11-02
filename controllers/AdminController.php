@@ -1,7 +1,8 @@
 <?php
 namespace App\Controllers;
 
-use App\Services\MailService;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 class AdminController extends BaseController {
 
@@ -136,29 +137,44 @@ class AdminController extends BaseController {
         if (!$mensaje_original) self::redirect_to('/admin/mensajes');
 
         // Enviar correo con PHPMailer
-        $mailService = new MailService();
+        $mail = new PHPMailer(true);
+        $config = \Flight::get('mail_config');
 
         try {
-            $subject = 'Re: Tu consulta a MCE';
-            $body    = "Hola " . htmlspecialchars($mensaje_original['nombre']) . ",<br><br>" .
+            // Configuración del servidor SMTP
+            $mail->isSMTP();
+            $mail->Host = $config['host'];
+            $mail->SMTPAuth = true;
+            $mail->Username = $config['username'];
+            $mail->Password = $config['password'];
+            $mail->SMTPSecure = $config['encryption'];
+            $mail->Port = $config['port'];
+            $mail->CharSet = 'UTF-8';
+            $mail->setLanguage('es', '../vendor/phpmailer/phpmailer/language/');
+
+            // Contenido del correo
+            $mail->setFrom($config['from_address'], $config['from_name']);
+            $mail->addAddress($mensaje_original['email'], $mensaje_original['nombre']);
+            $mail->addReplyTo('soporte@mce-ti.com', 'Soporte MCE');
+
+            $mail->isHTML(true);
+            $mail->Subject = 'Re: Tu consulta a MCE';
+            $mail->Body    = "Hola " . htmlspecialchars($mensaje_original['nombre']) . ",<br><br>" .
                              "Gracias por contactarnos. Aquí está la respuesta a tu consulta:<br><br>" .
                              "<div style='padding: 15px; border-left: 4px solid #ccc; background-color: #f9f9f9;'>" . nl2br(htmlspecialchars($respuesta)) . "</div><br>" .
                              "Saludos,<br>El equipo de MCE.";
 
-            $enviado = $mailService->send($mensaje_original['email'], $subject, $body);
+            $mail->send();
 
-            if (!$enviado) {
-                throw new \Exception("El servicio de correo no pudo enviar el mensaje.");
-            }
-
+            // Actualizar la base de datos si el correo se envió correctamente
             $stmt_update = $pdo->prepare("UPDATE Formulario_contacto SET respuesta = ?, id_admin_respuesta = ?, fecha_respuesta = NOW(), estado = 'Respondido' WHERE id = ?");
             $stmt_update->execute([$respuesta, $_SESSION['id_usuario'], $id]);
 
             $_SESSION['mensaje_exito'] = 'Respuesta enviada y registrada correctamente.';
             self::redirect_to('/admin/mensajes/ver/' . $id);
 
-        } catch (\Exception $e) {
-            $_SESSION['mensaje_error'] = "La respuesta no pudo ser enviada. " . $e->getMessage();
+        } catch (Exception $e) {
+            $_SESSION['mensaje_error'] = "La respuesta no pudo ser enviada. Error de PHPMailer: {$mail->ErrorInfo}";
             self::redirect_to('/admin/mensajes/ver/' . $id);
         }
     }

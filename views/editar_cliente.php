@@ -15,7 +15,6 @@
 <div class="card">
     <div class="card-body">
         <form action="<?php echo Flight::get('base_url'); ?>/clientes/editar/<?php echo $cliente['id_cliente']; ?>" method="POST" class="p-3">
-            <!-- Campo CSRF para seguridad -->
             <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
             <div class="row g-4">
                 <div class="col-md-6">

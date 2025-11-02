@@ -46,8 +46,6 @@ if (isset($_SESSION['mensaje_error'])) {
                     <p class="text-bg-light p-3 rounded"><?php echo nl2br(htmlspecialchars($mensaje['respuesta'])); ?></p>
                 <?php else: ?>
                     <form action="<?php echo Flight::get('base_url'); ?>/admin/mensajes/responder/<?php echo $mensaje['id']; ?>" method="POST">
-                        <!-- Campo CSRF para seguridad -->
-                        <input type="hidden" name="csrf_token" value="<?php echo \App\Controllers\BaseController::getCsrfToken(); ?>">
                         <div class="mb-3">
                             <label for="respuesta" class="form-label">Escribe tu respuesta:</label>
                             <textarea class="form-control" id="respuesta" name="respuesta" rows="10" required></textarea>
