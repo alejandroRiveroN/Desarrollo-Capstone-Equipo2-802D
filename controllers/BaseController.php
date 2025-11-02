@@ -31,26 +31,6 @@ abstract class BaseController {
     }
 
     /**
-     * Verifica si el usuario tiene al menos uno de los roles permitidos.
-     * @param array $allowedRoles Array de IDs de rol permitidos (ej: [1, 3] para Admin y Supervisor).
-     */
-    protected static function checkRole(array $allowedRoles) {
-        if (!isset($_SESSION['id_usuario']) || !in_array($_SESSION['id_rol'], $allowedRoles)) {
-            // Opcional: podrías redirigir a una página de "acceso denegado" en lugar del login
-            // si el usuario ya está logueado pero no tiene el rol correcto.
-            self::redirect_to('/dashboard', 'No tienes permiso para acceder a esta sección.');
-        }
-    }
-
-    /**
-     * Helper para saber si el usuario actual es un cliente.
-     * @return bool
-     */
-    protected static function isClient() {
-        return isset($_SESSION['id_rol']) && (int)$_SESSION['id_rol'] === 4;
-    }
-
-    /**
      * Genera un token CSRF si no existe uno en la sesión.
      */
     protected static function generateCsrfToken() {

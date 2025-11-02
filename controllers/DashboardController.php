@@ -25,7 +25,7 @@ class DashboardController extends BaseController
         $where_parts_rol = [];
         $params_rol = [];
 
-        if (self::isClient()) {
+        if ((int)($_SESSION['id_rol'] ?? 0) === 4) {
             // Cliente: obtener su id_cliente por email vinculado
             $stmt_cliente = $pdo->prepare("
                 SELECT c.id_cliente
@@ -49,7 +49,7 @@ class DashboardController extends BaseController
         $where_sql_rol = $where_parts_rol ? ('WHERE ' . implode(' AND ', $where_parts_rol)) : '';
 
         // --------- Estadísticas y Gráficos (solo admin y cliente) ---------
-        if ((int)($_SESSION['id_rol'] ?? 0) === 1 || self::isClient()) {
+        if ((int)$_SESSION['id_rol'] === 1 || (int)$_SESSION['id_rol'] === 4) {
             // --- Estadísticas generales ---
             $stats_query = "
                 SELECT 
@@ -159,7 +159,7 @@ class DashboardController extends BaseController
             } else {
                 $where_conditions[] = "1=0";
             }
-        } elseif (self::isClient()) {
+        } elseif ((int)$_SESSION['id_rol'] === 4) {
             // Cliente: solo sus tickets (vinculo por email)
             $stmt_cliente = $pdo->prepare("
                 SELECT c.id_cliente

@@ -10,7 +10,9 @@ class CotizacionController extends BaseController
     /** Página A: Formulario (separado del historial) */
     public static function createForm()
     {
-        self::checkRole([4]); // Solo clientes
+        if (!isset($_SESSION['id_rol']) || $_SESSION['id_rol'] != 4) {
+            self::redirect_to('/');
+        }
 
         $pdo = \Flight::db();
 
@@ -30,7 +32,9 @@ class CotizacionController extends BaseController
     /** Guardar nueva cotización (valida tipo contra BD) */
     public static function store()
     {
-        self::checkRole([4]); // Solo clientes
+        if (!isset($_SESSION['id_rol']) || $_SESSION['id_rol'] != 4) {
+            self::redirect_to('/');
+        }
 
         $req       = \Flight::request()->data;
         $idTipo    = (int)($req->id_tipo_caso ?? 0);
@@ -68,7 +72,9 @@ class CotizacionController extends BaseController
     /** Página B: Historial (en curso y respondidas) */
     public static function myIndex()
     {
-        self::checkRole([4]); // Solo clientes
+        if (!isset($_SESSION['id_rol']) || $_SESSION['id_rol'] != 4) {
+            self::redirect_to('/');
+        }
 
         $pdo = \Flight::db();
 
@@ -97,7 +103,9 @@ class CotizacionController extends BaseController
     /** Ver detalle (solo lectura) dentro del historial */
     public static function showClient($id)
     {
-        self::checkRole([4]); // Solo clientes
+        if (!isset($_SESSION['id_rol']) || $_SESSION['id_rol'] != 4) {
+            self::redirect_to('/');
+        }
 
         $pdo = \Flight::db();
         $stmt = $pdo->prepare("
@@ -143,7 +151,9 @@ class CotizacionController extends BaseController
     /** Bandeja general */
     public static function indexAdmin()
     {
-        self::checkRole([1, 3]); // Solo Admin y Supervisor
+        if (!isset($_SESSION['id_rol']) || !in_array($_SESSION['id_rol'], [1,3])) {
+            self::redirect_to('/');
+        }
 
         $pdo = \Flight::db();
         $stmt = $pdo->query("
@@ -160,7 +170,9 @@ class CotizacionController extends BaseController
     /** Ver y responder */
     public static function showAdmin($id)
     {
-        self::checkRole([1, 3]); // Solo Admin y Supervisor
+        if (!isset($_SESSION['id_rol']) || !in_array($_SESSION['id_rol'], [1,3])) {
+            self::redirect_to('/');
+        }
 
         $pdo = \Flight::db();
         $stmt = $pdo->prepare("
@@ -183,7 +195,9 @@ class CotizacionController extends BaseController
     /** Responder (cierra) */
     public static function respond($id)
     {
-        self::checkRole([1, 3]); // Solo Admin y Supervisor
+        if (!isset($_SESSION['id_rol']) || !in_array($_SESSION['id_rol'], [1,3])) {
+            self::redirect_to('/');
+        }
 
         $req    = \Flight::request()->data;
         $precio = str_replace(',', '.', trim($req->precio_estimado ?? ''));
