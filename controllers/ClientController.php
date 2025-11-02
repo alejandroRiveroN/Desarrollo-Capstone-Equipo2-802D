@@ -2,11 +2,6 @@
 
 namespace App\Controllers;
 
-class PDF extends \FPDF {
-    function Header() { $this->SetFont('Arial', 'B', 12); $this->Cell(0, 10, 'Reporte de Clientes', 0, 1, 'C'); $this->Ln(5); }
-    function Footer() { $this->SetY(-15); $this->SetFont('Arial', 'I', 8); $this->Cell(0, 10, 'Pagina ' . $this->PageNo(), 0, 0, 'C'); }
-}
-
 class ClientController extends BaseController {
 
     /**
@@ -352,8 +347,6 @@ class ClientController extends BaseController {
         $sheet->setTitle('Reporte de Clientes');
 
 
-        // --- APLICACIÓN DE FORMATO ---
-
         // 1. Estilo para los encabezados
         $headerStyle = [
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
@@ -378,10 +371,6 @@ class ClientController extends BaseController {
 
         // 4. Centrar verticalmente todas las celdas
         $sheet->getStyle('A1:H' . (count($clientes) + 1))->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-
-
-        // --- FIN DE APLICACIÓN DE FORMATO ---
-
 
         // Añadir los encabezados
         $sheet->setCellValue('A1', 'ID')->setCellValue('B1', 'Nombre Completo')->setCellValue('C1', 'Email')->setCellValue('D1', 'Teléfono')->setCellValue('E1', 'Empresa')->setCellValue('F1', 'País')->setCellValue('G1', 'Ciudad')->setCellValue('H1', 'Estado');
@@ -415,10 +404,11 @@ class ClientController extends BaseController {
 
         // Creación del PDF
         $pdf = new PDF('L', 'mm', 'A4');
+        $pdf->SetTitle('Reporte de Clientes');
         $pdf->AddPage();
         $pdf->SetFont('Arial', 'B', 8);
         $pdf->Cell(35, 7, 'Nombre', 1);
-        $pdf->Cell(50, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $cliente['email']), 1);
+        $pdf->Cell(50, 7, 'Email', 1);
         $pdf->Cell(30, 7, 'Telefono', 1);
         $pdf->Cell(40, 7, 'Empresa', 1);
         $pdf->Cell(30, 7, 'Pais', 1);
@@ -447,4 +437,12 @@ class ClientController extends BaseController {
 
         \Flight::render('imprimir_clientes.php', ['clientes' => $clientes]);
     }
+}
+
+/**
+ * Clase PDF personalizada para este controlador.
+ */
+class PDF extends \FPDF {
+    function Header() { $this->SetFont('Arial', 'B', 12); $this->Cell(0, 10, 'Reporte', 0, 1, 'C'); $this->Ln(5); }
+    function Footer() { $this->SetY(-15); $this->SetFont('Arial', 'I', 8); $this->Cell(0, 10, 'Pagina ' . $this->PageNo(), 0, 0, 'C'); }
 }

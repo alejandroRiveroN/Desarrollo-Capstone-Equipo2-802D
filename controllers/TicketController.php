@@ -2,7 +2,6 @@
 namespace App\Controllers;
 
 class TicketController extends BaseController {
-
     // --- FORMULARIO CREAR TICKET ---
     public static function create() {
         self::checkAuth();
@@ -513,12 +512,14 @@ class TicketController extends BaseController {
         \Flight::redirect($url);
     }
 
-    public static function print() {
-        self::checkAuth();
-
+    /**
+     * Método privado para obtener la lista de tickets aplicando los filtros de la solicitud.
+     * Centraliza la obtención de datos para index, exportaciones e impresiones.
+     */
+    private static function _getTicketsFiltrados($orderBy = 't.id_ticket DESC') {
         $pdo = \Flight::db();
         $request = \Flight::request();
-        
+
         $filtro_termino = $request->query['termino'] ?? '';
         $filtro_cliente = $request->query['cliente'] ?? '';
         $filtro_agente = $request->query['agente'] ?? '';
@@ -531,14 +532,16 @@ class TicketController extends BaseController {
         $where_conditions = [];
         $params = [];
 
-        if ($_SESSION['id_rol'] != 1) {
-            $stmt_agente_logueado = $pdo->prepare("SELECT id_agente FROM Agentes WHERE id_usuario = ?");
-            $stmt_agente_logueado->execute([$_SESSION['id_usuario']]);
-            $id_agente_actual = $stmt_agente_logueado->fetchColumn();
+        // Restricción por rol
+        if (in_array((int)$_SESSION['id_rol'], [2, 3])) { // Agente o Supervisor
+            $stmt_agente = $pdo->prepare("SELECT id_agente FROM agentes WHERE id_usuario = ?");
+            $stmt_agente->execute([$_SESSION['id_usuario']]);
+            $id_agente_actual = $stmt_agente->fetchColumn();
             $where_conditions[] = "t.id_agente_asignado = :id_agente_logueado";
             $params[':id_agente_logueado'] = $id_agente_actual ?: 0;
         }
 
+        // Filtros de la UI
         if (!empty($filtro_termino)) { $where_conditions[] = "(t.asunto LIKE :termino OR t.id_ticket = :id_ticket)"; $params[':termino'] = '%' . $filtro_termino . '%'; $params[':id_ticket'] = $filtro_termino; }
         if (!empty($filtro_cliente)) { $where_conditions[] = "t.id_cliente = :cliente"; $params[':cliente'] = $filtro_cliente; }
         if (!empty($filtro_agente) && $_SESSION['id_rol'] == 1) { $where_conditions[] = "t.id_agente_asignado = :agente"; $params[':agente'] = $filtro_agente; }
@@ -549,14 +552,88 @@ class TicketController extends BaseController {
         if (!empty($filtro_fecha_fin)) { $where_conditions[] = "DATE(t.fecha_creacion) <= :fecha_fin"; $params[':fecha_fin'] = $filtro_fecha_fin; }
 
         $sql = "SELECT t.id_ticket, c.nombre AS cliente, t.asunto, tc.nombre_tipo, t.estado, t.prioridad, t.costo, t.moneda, t.estado_facturacion, u.nombre_completo AS agente, t.fecha_creacion FROM Tickets AS t JOIN Clientes AS c ON t.id_cliente = c.id_cliente LEFT JOIN TiposDeCaso AS tc ON t.id_tipo_caso = tc.id_tipo_caso LEFT JOIN Agentes AS ag ON t.id_agente_asignado = ag.id_agente LEFT JOIN Usuarios AS u ON ag.id_usuario = u.id_usuario";
+        
         if (!empty($where_conditions)) {
             $sql .= " WHERE " . implode(' AND ', $where_conditions);
         }
-        $sql .= " ORDER BY t.id_ticket DESC";
+        
+        $sql .= " ORDER BY " . $orderBy;
+
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        $tickets = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public static function print() {
+        self::checkAuth();
+        $tickets = self::_getTicketsFiltrados();
 
         \Flight::render('imprimir_tickets.php', ['tickets' => $tickets]);
     }
+
+    public static function exportExcel() {
+        self::checkAuth();
+        $tickets = self::_getTicketsFiltrados();
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Reporte de Tickets');
+
+        $headers = ['ID', 'Cliente', 'Asunto', 'Tipo de Caso', 'Estado', 'Prioridad', 'Costo', 'Moneda', 'Est. Facturación', 'Agente', 'Fecha Creación'];
+        $sheet->fromArray($headers, NULL, 'A1');
+
+        $row = 2;
+        foreach ($tickets as $ticket) {
+            $sheet->fromArray([
+                $ticket['id_ticket'], $ticket['cliente'], $ticket['asunto'], $ticket['nombre_tipo'], $ticket['estado'], $ticket['prioridad'],
+                $ticket['costo'], $ticket['moneda'], $ticket['estado_facturacion'], $ticket['agente'], $ticket['fecha_creacion']
+            ], NULL, 'A' . $row);
+            $row++;
+        }
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="reporte_tickets.xlsx"');
+        header('Cache-Control: max-age=0');
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
+    public static function exportPdf() {
+        self::checkAuth();
+        $tickets = self::_getTicketsFiltrados();
+
+        $pdf = new PDF('L', 'mm', 'A4');
+        $pdf->SetTitle('Reporte de Tickets');
+        $pdf->AddPage();
+        $pdf->SetFont('Arial', 'B', 8);
+        $headers = ['ID', 'Asunto', 'Cliente', 'Agente', 'Estado', 'Prioridad', 'Fecha'];
+        $widths = [15, 70, 40, 40, 30, 30, 30];
+        for ($i = 0; $i < count($headers); $i++) {
+            $pdf->Cell($widths[$i], 7, $headers[$i], 1, 0, 'C');
+        }
+        $pdf->Ln();
+
+        $pdf->SetFont('Arial', '', 7);
+        foreach ($tickets as $ticket) {
+            $pdf->Cell($widths[0], 6, $ticket['id_ticket'], 1);
+            $pdf->Cell($widths[1], 6, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $ticket['asunto']), 1);
+            $pdf->Cell($widths[2], 6, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $ticket['cliente']), 1);
+            $pdf->Cell($widths[3], 6, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $ticket['agente'] ?? 'N/A'), 1);
+            $pdf->Cell($widths[4], 6, $ticket['estado'], 1);
+            $pdf->Cell($widths[5], 6, $ticket['prioridad'], 1);
+            $pdf->Cell($widths[6], 6, date('d/m/Y', strtotime($ticket['fecha_creacion'])), 1);
+            $pdf->Ln();
+        }
+        $pdf->Output('D', 'reporte_tickets.pdf');
+        exit;
+    }
+}
+
+/**
+ * Clase PDF personalizada para este controlador.
+ */
+class PDF extends \FPDF {
+    function Header() { $this->SetFont('Arial', 'B', 12); $this->Cell(0, 10, 'Reporte', 0, 1, 'C'); $this->Ln(5); }
+    function Footer() { $this->SetY(-15); $this->SetFont('Arial', 'I', 8); $this->Cell(0, 10, 'Pagina ' . $this->PageNo(), 0, 0, 'C'); }
 }

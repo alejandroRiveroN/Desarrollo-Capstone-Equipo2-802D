@@ -45,7 +45,7 @@ Flight::route('POST /clientes/editar/@id', ['App\Controllers\ClientController', 
 Flight::route('POST /clientes/eliminar/@id', ['App\Controllers\ClientController', 'delete']);
 Flight::route('GET /clientes/exportar/excel', ['App\Controllers\ClientController', 'exportExcel']);
 Flight::route('GET /clientes/exportar/pdf', ['App\Controllers\ClientController', 'exportPdf']);
-Flight::route('GET /clientes/imprimir', ['App\Controllers\ClientController', 'print']);
+Flight::route('GET /clientes/imprimir', ['App\Controllers\ClientController', 'print']); // Esta ruta faltaba
 
 // Mostrar formulario de registro público
 Flight::route('GET /registro_cliente', function(){
