@@ -35,6 +35,18 @@ class Client
     }
 
     /**
+     * Busca el ID de un cliente por su email.
+     */
+    public static function findIdByEmail(string $email): ?int
+    {
+        $pdo = \Flight::db();
+        $stmt = $pdo->prepare("SELECT id_cliente FROM Clientes WHERE email = ?");
+        $stmt->execute([$email]);
+        $result = $stmt->fetchColumn();
+        return $result ? (int)$result : null;
+    }
+
+    /**
      * Crea un cliente y su usuario asociado en una transacción.
      */
     public static function createWithUser(string $nombre, string $email, ?string $telefono, ?string $empresa, ?string $pais, ?string $ciudad, int $activo = 1, ?string $password = null): int
@@ -85,6 +97,7 @@ class Client
     public static function deleteWithUser(int $id_cliente): void
     {
         $pdo = \Flight::db();
+        $pdo->beginTransaction();
         try {
             // Obtener el email y el id_usuario asociado al cliente. El id_cliente en la tabla Clientes
             // se corresponde con el id_usuario en la tabla Usuarios para los clientes.
@@ -119,8 +132,10 @@ class Client
                 $stmt_user->execute([$email_cliente]);
             }
 
+            $pdo->commit();
         } catch (\PDOException $e) {
             // Relanzamos la excepción para que la transacción del controlador pueda hacer rollback.
+            $pdo->rollBack();
             throw new \Exception('Error en la base de datos durante la eliminación en cascada: ' . $e->getMessage());
         }
     }
