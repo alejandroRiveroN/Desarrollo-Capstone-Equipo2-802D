@@ -67,8 +67,9 @@ class Client
             $stmtUser = $pdo->prepare("INSERT INTO usuarios (id_rol, nombre_completo, email, password_hash, activo) VALUES (?, ?, ?, ?, ?)");
             $stmtUser->execute([4, $nombre, $email, $password_hash, $activo]);
 
+            $id_usuario_nuevo = (int)$pdo->lastInsertId();
             $pdo->commit();
-            return (int)$pdo->lastInsertId();
+            return $id_usuario_nuevo;
         } catch (\Exception $e) {
             $pdo->rollBack();
 

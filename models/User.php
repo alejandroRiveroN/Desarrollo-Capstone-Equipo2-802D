@@ -141,11 +141,15 @@ class User
         $pdo = \Flight::db();
         $pdo->beginTransaction();
         try {
-            $id_usuario = self::create($id_rol, $nombre, $email, $password, $telefono, $ruta_foto);
-
             if ($id_rol == 4) { // Si es Cliente (4)
-                Client::createWithUser($nombre, $email, $telefono, null, null, null, 1, $password);
+                // La creación del usuario y cliente se maneja en el modelo Client
+                $id_usuario = Client::createWithUser($nombre, $email, $telefono, null, null, null, 1, $password);
+                // Si se subió una foto, la actualizamos en el usuario recién creado
+                if ($ruta_foto && $id_usuario) {
+                    $pdo->prepare("UPDATE Usuarios SET ruta_foto = ? WHERE id_usuario = ?")->execute([$ruta_foto, $id_usuario]);
+                }
             } elseif (in_array($id_rol, [2, 3])) { // Si es Agente (2) o Agente Supervisor (3)
+                $id_usuario = self::create($id_rol, $nombre, $email, $password, $telefono, $ruta_foto);
                 self::createAgent($id_usuario, $puesto);
             }
 

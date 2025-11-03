@@ -1,43 +1,32 @@
 <?php
 namespace App\Controllers;
 
+use App\Models\Ticket; // Importar el nuevo modelo
+use App\Models\Client; // Client se sigue usando para buscar ID por email
+
+// Es necesario el modelo User para buscar el email del usuario en sesión
+use App\Models\User;
+
 class TicketController extends BaseController {
     // --- FORMULARIO CREAR TICKET ---
     public static function create() {
         self::checkAuth();
-        $pdo = \Flight::db();
 
         // Si es cliente, obtenemos su id_cliente automáticamente
         if ((int)$_SESSION['id_rol'] === 4 && empty($_SESSION['id_cliente'])) {
-            $stmt = $pdo->prepare("
-                SELECT c.id_cliente
-                FROM clientes c
-                INNER JOIN usuarios u ON u.email = c.email
-                WHERE u.id_usuario = ?
-                LIMIT 1
-            ");
-            $stmt->execute([ (int)$_SESSION['id_usuario'] ]);
-            $_SESSION['id_cliente'] = $stmt->fetchColumn() ?: null;
+            $userData = User::findEssentialById((int)$_SESSION['id_usuario']);
+            $userEmail = $userData['email'] ?? null;
+            if ($userEmail) {
+                $_SESSION['id_cliente'] = Client::findIdByEmail($userEmail) ?: null;
+            }
         }
 
-        // Solo admin ve listado completo de clientes
-        $clientes = [];
-        if ((int)$_SESSION['id_rol'] === 1) {
-            $clientes = $pdo->query("SELECT id_cliente, nombre FROM clientes ORDER BY nombre ASC")
-                            ->fetchAll(\PDO::FETCH_ASSOC);
-        }
-
-        // Tipos de caso
-        $tipos_de_caso = $pdo->query("
-            SELECT id_tipo_caso, nombre_tipo
-            FROM tiposdecaso
-            WHERE activo = 1
-            ORDER BY nombre_tipo ASC
-        ")->fetchAll(\PDO::FETCH_ASSOC);
+        // La lógica para obtener datos del formulario ahora está en el modelo
+        $formData = Ticket::getCreateFormData((int)$_SESSION['id_rol'], $_SESSION['id_usuario']);
 
         \Flight::render('crear_ticket.php', [
-            'clientes' => $clientes,
-            'tipos_de_caso' => $tipos_de_caso,
+            'clientes' => $formData['clientes'],
+            'tipos_de_caso' => $formData['tipos_de_caso'],
             'mensaje_error' => ''
         ]);
     }
@@ -111,65 +100,30 @@ class TicketController extends BaseController {
         $prioridad = (string)$request->data->prioridad;
         $descripcion = trim((string)$request->data->descripcion);
 
+        // Validación simple en el controlador
         if (!$id_cliente || !$id_tipo_caso || $asunto === '' || $descripcion === '') {
-            $tipos_de_caso = $pdo->query("SELECT id_tipo_caso, nombre_tipo FROM tiposdecaso WHERE activo = 1")->fetchAll(\PDO::FETCH_ASSOC);
+            $formData = Ticket::getCreateFormData((int)$_SESSION['id_rol'], $_SESSION['id_usuario']);
             \Flight::render('crear_ticket.php', [
-                'clientes' => ((int)$_SESSION['id_rol'] === 1)
-                    ? $pdo->query("SELECT id_cliente, nombre FROM clientes ORDER BY nombre ASC")->fetchAll(\PDO::FETCH_ASSOC)
-                    : [],
-                'tipos_de_caso' => $tipos_de_caso,
+                'clientes' => $formData['clientes'],
+                'tipos_de_caso' => $formData['tipos_de_caso'],
                 'mensaje_error' => 'Por favor, complete todos los campos obligatorios (*).'
             ]);
             return;
         }
 
-        if ($pdo->inTransaction()) $pdo->rollBack();
-        $pdo->beginTransaction();
-
         try {
-            // Insertar ticket
-            $stmt = $pdo->prepare("
-                INSERT INTO tickets 
-                (id_cliente, id_agente_asignado, id_tipo_caso, asunto, descripcion, prioridad, estado)
-                VALUES (:id_cliente, NULL, :id_tipo_caso, :asunto, :descripcion, :prioridad, 'Abierto')
-            ");
-            $stmt->execute([
-                ':id_cliente' => $id_cliente,
-                ':id_tipo_caso' => $id_tipo_caso,
-                ':asunto' => $asunto,
-                ':descripcion' => $descripcion,
-                ':prioridad' => $prioridad,
-            ]);
-            $id_ticket_nuevo = (int)$pdo->lastInsertId();
-
-            // Comentario inicial
-            $stmt_com = $pdo->prepare("
-                INSERT INTO comentarios (id_ticket, id_autor, tipo_autor, comentario, es_privado)
-                VALUES (:id_ticket, :id_autor, 'Cliente', :comentario, 0)
-            ");
-            $stmt_com->execute([
-                ':id_ticket' => $id_ticket_nuevo,
-                ':id_autor' => $id_cliente,
-                ':comentario' => "Ticket creado con la siguiente descripción:\n\n" . $descripcion,
-            ]);
-            $id_comentario_inicial = (int)$pdo->lastInsertId();
-
-            self::_handleAttachmentsUpload($pdo, $id_ticket_nuevo, $id_comentario_inicial);
-
-            $pdo->commit();
+            // Toda la lógica de creación está ahora en el modelo
+            $id_ticket_nuevo = Ticket::createTicket($id_cliente, $id_tipo_caso, $asunto, $prioridad, $descripcion);
 
             $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/tickets/ver/' . $id_ticket_nuevo . '?status=created';
             \Flight::redirect($url);
             exit;
 
         } catch (\Exception $e) {
-            $pdo->rollBack();
-            $tipos_de_caso = $pdo->query("SELECT id_tipo_caso, nombre_tipo FROM tiposdecaso WHERE activo = 1")->fetchAll(\PDO::FETCH_ASSOC);
+            $formData = Ticket::getCreateFormData((int)$_SESSION['id_rol'], $_SESSION['id_usuario']);
             \Flight::render('crear_ticket.php', [
-                'clientes' => ((int)$_SESSION['id_rol'] === 1)
-                    ? $pdo->query("SELECT id_cliente, nombre FROM clientes ORDER BY nombre ASC")->fetchAll(\PDO::FETCH_ASSOC)
-                    : [],
-                'tipos_de_caso' => $tipos_de_caso,
+                'clientes' => $formData['clientes'],
+                'tipos_de_caso' => $formData['tipos_de_caso'],
                 'mensaje_error' => 'Error al registrar el ticket: ' . $e->getMessage()
             ]);
         }
@@ -178,75 +132,29 @@ class TicketController extends BaseController {
     // --- MOSTRAR UN TICKET ---
     public static function show($id_ticket) {
         self::checkAuth();
-        $pdo = \Flight::db();
-
-        $stmt = $pdo->prepare("
-            SELECT t.*, c.nombre AS nombre_cliente, tc.nombre_tipo, u.nombre_completo AS nombre_agente
-            FROM tickets t
-            JOIN clientes c ON t.id_cliente = c.id_cliente
-            LEFT JOIN agentes a ON t.id_agente_asignado = a.id_agente
-            LEFT JOIN usuarios u ON a.id_usuario = u.id_usuario
-            LEFT JOIN tiposdecaso tc ON t.id_tipo_caso = tc.id_tipo_caso
-            WHERE t.id_ticket = ? LIMIT 1
-        ");
-        $stmt->execute([$id_ticket]);
-        $ticket = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $ticket = Ticket::getTicketDetails($id_ticket);
         if (!$ticket) { \Flight::halt(404, 'Ticket no encontrado'); return; }
 
         // Restringir acceso cliente
         if ((int)$_SESSION['id_rol'] === 4) {
-            $stmt_cliente = $pdo->prepare("
-                SELECT c.id_cliente FROM clientes c
-                INNER JOIN usuarios u ON u.email = c.email
-                WHERE u.id_usuario = ? LIMIT 1
-            ");
-            $stmt_cliente->execute([ (int)$_SESSION['id_usuario'] ]);
-            $id_cliente_sesion = $stmt_cliente->fetchColumn();
-            if ($ticket['id_cliente'] != $id_cliente_sesion) {
+            if (!Ticket::isClientOwner($id_ticket, $_SESSION['id_usuario'])) {
                 \Flight::halt(403, 'No tiene permiso para ver este ticket');
                 return;
             }
         }
 
-        // Comentarios
-        $stmt_com = $pdo->prepare("
-            SELECT com.*, 
-                CASE WHEN com.tipo_autor = 'Cliente' THEN c.nombre 
-                     WHEN com.tipo_autor = 'Agente' THEN u.nombre_completo 
-                     ELSE 'Sistema' END AS nombre_autor
-            FROM comentarios com
-            LEFT JOIN clientes c ON com.id_autor = c.id_cliente
-            LEFT JOIN usuarios u ON com.id_autor = u.id_usuario
-            WHERE com.id_ticket = ? ORDER BY com.fecha_creacion ASC
-        ");
-        $stmt_com->execute([$id_ticket]);
-        $comentarios = $stmt_com->fetchAll(\PDO::FETCH_ASSOC);
-
-        // Adjuntos (si los manejas)
-        $adjuntos_por_comentario = [];
-        if ($pdo->query("SHOW TABLES LIKE 'archivos_adjuntos'")->fetch()) {
-            $stmt_adj = $pdo->prepare("SELECT * FROM archivos_adjuntos WHERE id_ticket = ?");
-            $stmt_adj->execute([$id_ticket]);
-            foreach ($stmt_adj->fetchAll(\PDO::FETCH_ASSOC) as $a)
-                $adjuntos_por_comentario[$a['id_comentario']][] = $a;
-        }
-
         // Agentes disponibles
         $agentes_disponibles = [];
         if ((int)$_SESSION['id_rol'] === 1) {
-            $agentes_disponibles = $pdo->query("
-                SELECT a.id_agente, u.nombre_completo 
-                FROM agentes a JOIN usuarios u ON a.id_usuario = u.id_usuario
-                WHERE u.activo = 1 ORDER BY u.nombre_completo
-            ")->fetchAll(\PDO::FETCH_ASSOC);
+            $agentes_disponibles = Ticket::getAvailableAgents();
         }
 
         $costos_bloqueados = isset($ticket['estado_facturacion']) && $ticket['estado_facturacion'] === 'Pagado';
 
         \Flight::render('ver_ticket.php', [
             'ticket' => $ticket,
-            'comentarios' => $comentarios,
-            'adjuntos_por_comentario' => $adjuntos_por_comentario,
+            'comentarios' => $ticket['comentarios'],
+            'adjuntos_por_comentario' => $ticket['adjuntos_por_comentario'],
             'agentes_disponibles' => $agentes_disponibles,
             'costos_bloqueados' => $costos_bloqueados
         ]);
