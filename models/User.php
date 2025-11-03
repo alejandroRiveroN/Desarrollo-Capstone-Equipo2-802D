@@ -211,11 +211,23 @@ class User
         $pdo->beginTransaction();
         try {
             $userInfo = self::findEssentialById($id);
+            
+            // Primero, verificar si el usuario existe.
+            if ($userInfo) {
+                $userRole = $userInfo['id_rol'];
+                $userEmail = $userInfo['email'];
 
-            if ($userInfo && $userInfo['id_rol'] == 4) {
-                Client::deleteWithUser(Client::findIdByEmail($userInfo['email']));
-            } elseif ($userInfo && in_array($userInfo['id_rol'], [2, 3])) {
-                self::deleteAgent($id);
+                // lógica de borrado según el rol.
+                if ($userRole == 4 && $userEmail) { // Si es Cliente...
+                    // Primero, encontrar el ID del cliente.
+                    $idCliente = Client::findIdByEmail($userEmail);
+                    // Solo proceder si se encontró un ID de cliente válido.
+                    if ($idCliente !== null) {
+                        Client::deleteWithUser($idCliente);
+                    }
+                } elseif (in_array($userRole, [2, 3])) { // Si es Agente o Supervisor
+                    self::deleteAgent($id);
+                }
             }
 
             self::delete($id);
