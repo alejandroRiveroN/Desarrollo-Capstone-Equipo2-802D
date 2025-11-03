@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Models\Client;
+
 class ClientController extends BaseController {
 
     /**
@@ -9,8 +11,6 @@ class ClientController extends BaseController {
      * Centraliza la lógica de filtrado para reutilizarla.
      */
     private static function _getClientesConFiltros($request) {
-        $pdo = \Flight::db();
-
         $filtro_termino = $request->query['termino'] ?? '';
         $filtro_telefono = $request->query['telefono'] ?? '';
         $filtro_pais = $request->query['pais'] ?? '';
@@ -46,24 +46,14 @@ class ClientController extends BaseController {
     private static function _getClientesFiltrados($orderBy = 'nombre ASC') {
         $request = \Flight::request();
         $filtros = self::_getClientesConFiltros($request);
-
-        $sql = "SELECT id_cliente, nombre, empresa, email, telefono, pais, ciudad, activo FROM Clientes";
-
-        if (!empty($filtros['where_conditions'])) {
-            $sql .= " WHERE " . implode(' AND ', $filtros['where_conditions']);
-        }
-        $sql .= " ORDER BY " . $orderBy;
-
-        $pdo = \Flight::db();
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($filtros['params']);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        
+        return Client::getFiltered($filtros['where_conditions'], $filtros['params'], $orderBy);
     }
 
     public static function index() {
         self::checkAuth();
         $request = \Flight::request();
-        $clientes = self::_getClientesFiltrados('nombre ASC');
+        $clientes = self::_getClientesFiltrados();
 
         \Flight::render('gestionar_clientes.php', [
             'clientes' => $clientes,
@@ -80,7 +70,6 @@ class ClientController extends BaseController {
 
     public static function store() {
         self::checkAuth();
-        $pdo = \Flight::db();
         $request = \Flight::request();
         $data = $request->data;
 
@@ -98,7 +87,7 @@ class ClientController extends BaseController {
         }
 
         try {
-            self::createClientAndUser($nombre, $email, $telefono, $empresa, $pais, $ciudad, $activo);
+            Client::createWithUser($nombre, $email, $telefono, $empresa, $pais, $ciudad, $activo);
             
             $_SESSION['mensaje_exito'] = '¡Cliente creado con éxito!';
             $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes';
@@ -109,47 +98,9 @@ class ClientController extends BaseController {
         }
     }
 
-    /**
-     * Lógica centralizada para crear un cliente y su usuario asociado.
-     * Puede ser llamado desde otros controladores.
-     */
-    public static function createClientAndUser($nombre, $email, $telefono, $empresa, $pais, $ciudad, $activo = 1, $password = null) {
-        $pdo = \Flight::db();
-        try {
-            $pdo->beginTransaction();
-
-            $stmt = $pdo->prepare(
-                "INSERT INTO Clientes (nombre, empresa, email, telefono, pais, ciudad, activo) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)"
-            );
-            $stmt->execute([$nombre, $empresa, $email, $telefono, $pais, $ciudad, $activo]);
-
-            $password_to_hash = $password ?: bin2hex(random_bytes(8)); // Genera pass si no se provee
-            $password_hash = password_hash($password_to_hash, PASSWORD_DEFAULT);
-
-            $stmtUser = $pdo->prepare("INSERT INTO usuarios (id_rol, nombre_completo, email, password_hash) VALUES (?, ?, ?, ?)");
-            $stmtUser->execute([4, $nombre, $email, $password_hash]);
-
-            $pdo->commit();
-            return $pdo->lastInsertId(); // Devuelve el ID del nuevo usuario
-        } catch (\Exception $e) {
-            $pdo->rollBack();
-
-            if ($e instanceof \PDOException && $e->getCode() == '23000') {
-                $error_message = "El correo electrónico ya se encuentra registrado. Por favor, utiliza otro.";
-            } else {
-                $error_message = "Error al crear el cliente: " . $e->getMessage();
-            }
-            throw new \Exception($error_message);
-        }
-    }
-
     public static function edit($id) {
         self::checkAuth();
-        $pdo = \Flight::db();
-        $stmt = $pdo->prepare("SELECT * FROM Clientes WHERE id_cliente = ?");
-        $stmt->execute([$id]);
-        $cliente = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $cliente = Client::findById($id);
 
         if (!$cliente) {
             $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes';
@@ -165,7 +116,6 @@ class ClientController extends BaseController {
 
     public static function update($id) {
         self::checkAuth();
-        $pdo = \Flight::db();
         $request = \Flight::request();
         $data = $request->data;
 
@@ -178,25 +128,20 @@ class ClientController extends BaseController {
         $activo = isset($data->activo) ? 1 : 0;
 
         if (empty($nombre) || empty($email)) {
-            $stmt = $pdo->prepare("SELECT * FROM Clientes WHERE id_cliente = ?");
-            $stmt->execute([$id]);
-            $cliente = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $cliente = Client::findById($id);
             \Flight::render('editar_cliente.php', [
                 'cliente' => $cliente,
                 'mensaje_error' => "Los campos 'Nombre Completo' y 'Correo Electrónico' son obligatorios."
             ]);
         } else {
             try {
-                $stmt = $pdo->prepare(
-                    "UPDATE Clientes SET nombre = ?, empresa = ?, email = ?, telefono = ?, pais = ?, ciudad = ?, activo = ? WHERE id_cliente = ?"
-                );
-                $stmt->execute([$nombre, $empresa, $email, $telefono, $pais, $ciudad, $activo, $id]);
+                Client::update($id, $nombre, $empresa, $email, $telefono, $pais, $ciudad, $activo);
+
                 $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes?status=updated';
                 \Flight::redirect($url);
             } catch (\Exception $e) {
-                $stmt = $pdo->prepare("SELECT * FROM Clientes WHERE id_cliente = ?");
-                $stmt->execute([$id]);
-                $cliente = $stmt->fetch(\PDO::FETCH_ASSOC);
+                $cliente = Client::findById($id);
+
                 \Flight::render('editar_cliente.php', [
                     'cliente' => $cliente,
                     'mensaje_error' => "Error al actualizar el cliente: " . $e->getMessage()
@@ -207,11 +152,10 @@ class ClientController extends BaseController {
 
     public static function delete($id) {
         self::checkAdmin(); // Solo los administradores pueden eliminar
-        $pdo = \Flight::db();
 
         try {
-            self::deleteClientAndUser($id);
-            $_SESSION['mensaje_exito'] = '¡Cliente y su cuenta de usuario eliminados correctamente!';
+            Client::deleteWithUser($id);
+            $_SESSION['mensaje_exito'] = '¡Cliente y su cuenta de usuario asociados han sido eliminados correctamente!';
         } catch (\Exception $e) {
             $_SESSION['mensaje_error'] = $e->getMessage();
         }
@@ -219,32 +163,6 @@ class ClientController extends BaseController {
         $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes';
         \Flight::redirect($url);
         exit();
-    }
-
-    /**
-     * Lógica centralizada para eliminar un cliente y su usuario asociado.
-     */
-    public static function deleteClientAndUser($id_cliente) {
-        $pdo = \Flight::db();
-        $pdo->beginTransaction();
-        try {
-            $stmt_email = $pdo->prepare("SELECT email FROM Clientes WHERE id_cliente = ?");
-            $stmt_email->execute([$id_cliente]);
-            $email_cliente = $stmt_email->fetchColumn();
-
-            $stmt = $pdo->prepare("DELETE FROM Clientes WHERE id_cliente = ?");
-            $stmt->execute([$id_cliente]);
-
-            if ($email_cliente) {
-                $stmt_user = $pdo->prepare("DELETE FROM Usuarios WHERE email = ? AND id_rol = 4"); // Rol 4 = Cliente
-                $stmt_user->execute([$email_cliente]);
-            }
-
-            $pdo->commit();
-        } catch (\PDOException $e) {
-            $pdo->rollBack();
-            throw new \Exception('No se pudo eliminar el cliente. Es posible que tenga tickets asociados.');
-        }
     }
 
     public static function publicRegister() {
@@ -290,26 +208,7 @@ class ClientController extends BaseController {
         }
         
         try {
-            $pdo = \Flight::db();
-            $pdo->beginTransaction();
-
-            // Insertar en Clientes (usar columna email en la tabla Clientes)
-            $stmt = $pdo->prepare(
-                "INSERT INTO Clientes (nombre, empresa, email, telefono, pais, ciudad, activo) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)"
-            );
-            $stmt->execute([$nombre, $empresa, $email, $telefono, $pais, $ciudad, $activo]);
-
-            // Hash de la contraseña elegida por el usuario
-            $password_hash = password_hash($password, PASSWORD_DEFAULT);
-
-            // Insertar en Usuarios (rol Cliente = 4)
-            $stmtUser = $pdo->prepare(
-                "INSERT INTO usuarios (id_rol, nombre_completo, email, password_hash, activo) VALUES (?, ?, ?, ?, ?)"
-            );
-            $stmtUser->execute([4, $nombre, $email, $password_hash, 1]);
-
-            $pdo->commit();
+            Client::createWithUser($nombre, $email, $telefono, $empresa, $pais, $ciudad, $activo, $password);
 
             $_SESSION['mensaje_exito'] = "¡Registro exitoso! Ya puedes iniciar sesión.";
             $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/';
@@ -317,13 +216,7 @@ class ClientController extends BaseController {
             exit();
         } catch (\Exception $e) {
             $pdo->rollBack();
-            // Detectar email duplicado
-            if ($e instanceof \PDOException && $e->getCode() == '23000') {
-                $error_message = "El correo ya está registrado.";
-            } else {
-                $error_message = "Error al registrar: " . $e->getMessage();
-            }
-
+            $error_message = $e->getMessage();
             \Flight::render('registro_cliente.php', [
                 'mensaje_error' => $error_message,
                 'nombre' => $nombre,

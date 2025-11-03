@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Models\Client;
+
 class UserController extends BaseController {
 
     public static function index() {
@@ -177,7 +179,7 @@ class UserController extends BaseController {
                     $stmt_cliente_id = $pdo->prepare("SELECT id_cliente FROM Clientes WHERE email = ?");
                     $stmt_cliente_id->execute([$old_email]);
                     if ($cliente_id = $stmt_cliente_id->fetchColumn()) {
-                        ClientController::deleteClientAndUser($cliente_id);
+                        Client::deleteWithUser($cliente_id);
                     }
                 }
 
@@ -230,7 +232,7 @@ class UserController extends BaseController {
                 $stmt_cliente_id = $pdo->prepare("SELECT id_cliente FROM Clientes WHERE email = ?");
                 $stmt_cliente_id->execute([$userInfo['email']]);
                 if ($cliente_id = $stmt_cliente_id->fetchColumn()) {
-                    ClientController::deleteClientAndUser($cliente_id);
+                    Client::deleteWithUser($cliente_id);
                 }
             }
 
@@ -245,9 +247,9 @@ class UserController extends BaseController {
             $stmt->execute([$id]);
             $pdo->commit();
             $_SESSION['mensaje_exito'] = '¡Usuario eliminado correctamente!';
-        } catch (\PDOException $e) {
+        } catch (\Exception $e) { // Capturamos la excepción general para obtener el mensaje del modelo.
             $pdo->rollBack();
-            $_SESSION['mensaje_error'] = 'No se pudo eliminar el usuario. Es posible que tenga registros asociados que impiden su borrado.';
+            $_SESSION['mensaje_error'] = $e->getMessage();
         }
 
         $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/usuarios';
