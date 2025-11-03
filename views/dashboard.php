@@ -227,7 +227,14 @@
                                     <td><span class="badge bg-<?php echo $facturacion_classes[$ticket['estado_facturacion']] ?? 'light'; ?>"><?php echo htmlspecialchars($ticket['estado_facturacion'] ?? 'N/A'); ?></span></td>
                                 <?php endif; ?>
                                 <!-- Botón de acción para ver los detalles del ticket -->
-                                <td><a href="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>" class="btn btn-sm btn-primary">Ver</a></td>
+                                <td class="d-flex gap-1">
+                                    <a href="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>" class="btn btn-sm btn-primary" title="Ver Ticket"><i class="bi bi-eye-fill"></i></a>
+                                    <?php if ($_SESSION['id_rol'] == 1): /* Botón de eliminar solo para Admins */ ?>
+                                    <form action="<?php echo Flight::get('base_url'); ?>/tickets/eliminar/<?php echo $ticket['id_ticket']; ?>" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este ticket? Esta acción no se puede deshacer.');">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Eliminar Ticket"><i class="bi bi-trash-fill"></i></button>
+                                    </form>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>

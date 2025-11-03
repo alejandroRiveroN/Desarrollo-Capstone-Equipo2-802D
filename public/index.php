@@ -112,6 +112,7 @@ Flight::route('POST /tickets/ver/@id_ticket/estado', ['App\Controllers\TicketCon
 Flight::route('POST /tickets/ver/@id_ticket/asignar', ['App\Controllers\TicketController', 'assignAgent']);
 Flight::route('POST /tickets/ver/@id_ticket/costo', ['App\Controllers\TicketController', 'updateCost']);
 Flight::route('POST /tickets/ver/@id_ticket/anular', ['App\Controllers\TicketController', 'cancel']);
+Flight::route('POST /tickets/eliminar/@id', ['App\Controllers\TicketController', 'delete']);
 Flight::route('GET /tickets/imprimir', ['App\Controllers\TicketController', 'print']);
 Flight::route('GET /tickets/exportar/excel', ['App\Controllers\TicketController', 'exportExcel']);
 Flight::route('GET /tickets/exportar/pdf', ['App\Controllers\TicketController', 'exportPdf']);

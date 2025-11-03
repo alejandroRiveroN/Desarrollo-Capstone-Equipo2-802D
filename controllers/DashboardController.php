@@ -8,6 +8,10 @@ class DashboardController extends BaseController
     {
         self::checkAuth();
 
+        // Obtener y limpiar mensajes flash de la sesión para mostrarlos en la vista.
+        $mensaje_exito = self::getFlashMessage('mensaje_exito');
+        $mensaje_error = self::getFlashMessage('mensaje_error');
+
         /** @var \PDO $pdo */
         $pdo = \Flight::db();
 
@@ -252,10 +256,6 @@ class DashboardController extends BaseController
             ORDER BY nombre ASC
         ")->fetchAll(\PDO::FETCH_ASSOC);
 
-        // --------- Mensaje éxito ---------
-        $mensaje_exito = (isset($request->query['status']) && $request->query['status'] === 'created')
-            ? '<div class="alert alert-success">¡Ticket creado con éxito!</div>'
-            : '';
 
         // --------- Render ---------
         \Flight::render('dashboard.php', [
@@ -289,6 +289,7 @@ class DashboardController extends BaseController
             'agentes_disponibles'    => $agentes_disponibles,
             'clientes_disponibles'   => $clientes_disponibles,
             'mensaje_exito'          => $mensaje_exito,
+            'mensaje_error'          => $mensaje_error,
         ]);
     }
 }

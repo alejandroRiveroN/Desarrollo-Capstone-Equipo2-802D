@@ -36,4 +36,22 @@ abstract class BaseController {
             exit();
         }
     }
+
+    /**
+     * Obtiene un mensaje "flash" de la sesión.
+     * Un mensaje flash se muestra una vez y luego se elimina.
+     *
+     * @param string $key La clave del mensaje en la sesión (ej. 'mensaje_exito').
+     * @return string El mensaje HTML o una cadena vacía si no existe.
+     */
+    protected static function getFlashMessage(string $key): string
+    {
+        if (isset($_SESSION[$key])) {
+            $message = $_SESSION[$key];
+            unset($_SESSION[$key]); // Limpiar el mensaje para que no se muestre de nuevo
+            $alert_type = (strpos($key, 'error') !== false) ? 'danger' : 'success';
+            return "<div class='alert alert-{$alert_type} alert-dismissible fade show' role='alert'>{$message}<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
+        }
+        return '';
+    }
 }

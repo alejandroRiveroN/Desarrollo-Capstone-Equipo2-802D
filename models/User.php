@@ -93,6 +93,17 @@ class User
     }
 
     /**
+     * Obtiene el ID de agente a partir de un ID de usuario.
+     */
+    public static function getAgentIdByUserId(int $id_usuario): ?int
+    {
+        $pdo = \Flight::db();
+        $stmt = $pdo->prepare("SELECT id_agente FROM Agentes WHERE id_usuario = ?");
+        $stmt->execute([$id_usuario]);
+        return $stmt->fetchColumn() ?: null;
+    }
+
+    /**
      * Actualiza los datos de un usuario.
      */
     public static function update(int $id, string $nombre, string $email, int $id_rol, int $activo, ?string $telefono, ?string $ruta_foto): void
