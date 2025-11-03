@@ -95,10 +95,16 @@ class Client
     /**
      * Elimina un cliente y su usuario asociado en una transacción.
      */
-    public static function deleteWithUser(int $id_cliente): void
+    public static function deleteWithUser(int $id_cliente, ?\PDO $external_pdo = null): void
     {
-        $pdo = \Flight::db();
-        $pdo->beginTransaction();
+        $pdo = $external_pdo ?? \Flight::db();
+        $is_external_transaction = $external_pdo !== null;
+
+        // Iniciar una transacción solo si no estamos dentro de una externa.
+        if (!$is_external_transaction) {
+            $pdo->beginTransaction();
+        }
+
         try {
             // Obtener el email y el id_usuario asociado al cliente. El id_cliente en la tabla Clientes
             // se corresponde con el id_usuario en la tabla Usuarios para los clientes.
@@ -133,10 +139,14 @@ class Client
                 $stmt_user->execute([$email_cliente]);
             }
 
-            $pdo->commit();
+            if (!$is_external_transaction) {
+                $pdo->commit();
+            }
         } catch (\PDOException $e) {
-            // Relanzamos la excepción para que la transacción del controlador pueda hacer rollback.
-            $pdo->rollBack();
+            // Hacemos rollback solo si esta función inició la transacción.
+            if (!$is_external_transaction) {
+                $pdo->rollBack();
+            }
             throw new \Exception('Error en la base de datos durante la eliminación en cascada: ' . $e->getMessage());
         }
     }

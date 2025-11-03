@@ -14,10 +14,10 @@ abstract class BaseController {
     protected static function checkAuth() {
         if (!isset($_SESSION['id_usuario'])) {
             
-            
-            // Forzar la construcción de una URL absoluta completa (http://host/path) para eliminar cualquier ambigüedad.
-            // Esta es la solución más robusta para entornos como XAMPP.
-            $login_url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/login';
+            // Determinar el protocolo (http o https) para construir la URL de forma dinámica.
+            // Esto es crucial para que las redirecciones funcionen detrás de un proxy como ngrok (que usa https).
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https" : "http";
+            $login_url = $protocol . '://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/login';
             \Flight::redirect($login_url);
             exit();
         }
@@ -29,9 +29,9 @@ abstract class BaseController {
     protected static function checkAdmin() {
         if (!isset($_SESSION['id_usuario']) || $_SESSION['id_rol'] != 1) {
             
-    
-            // Reutilizamos la misma lógica
-            $login_url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/login';
+            // Reutilizamos la misma lógica de detección de protocolo para consistencia.
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER-['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https" : "http";
+            $login_url = $protocol . '://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/login';
             \Flight::redirect($login_url);
             exit();
         }

@@ -238,7 +238,7 @@ class User
                     $idCliente = Client::findIdByEmail($userEmail);
                     // Solo proceder si se encontró un ID de cliente válido.
                     if ($idCliente !== null) {
-                        Client::deleteWithUser($idCliente);
+                        Client::deleteWithUser($idCliente, $pdo); // Pasar el objeto PDO de la transacción actual
                     }
                 } elseif (in_array($userRole, [2, 3])) { // Si es Agente o Supervisor
                     self::deleteAgent($id);
