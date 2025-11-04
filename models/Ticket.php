@@ -91,12 +91,15 @@ class Ticket
         // Comentarios
         $stmt_com = $pdo->prepare("
             SELECT com.*, 
-                CASE WHEN com.tipo_autor = 'Cliente' THEN c.nombre 
-                     WHEN com.tipo_autor = 'Agente' THEN u.nombre_completo 
-                     ELSE 'Sistema' END AS nombre_autor
+                CASE 
+                    WHEN com.tipo_autor = 'Cliente' THEN c.nombre 
+                    WHEN com.tipo_autor = 'Agente' THEN CONCAT(u.nombre_completo, ' - ', r.nombre_rol)
+                    ELSE 'Sistema' 
+                END AS nombre_autor
             FROM comentarios com
-            LEFT JOIN clientes c ON com.id_autor = c.id_cliente
+            LEFT JOIN clientes c ON com.tipo_autor = 'Cliente' AND com.id_autor = c.id_cliente
             LEFT JOIN usuarios u ON com.id_autor = u.id_usuario
+            LEFT JOIN roles r ON u.id_rol = r.id_rol
             WHERE com.id_ticket = ? ORDER BY com.fecha_creacion ASC
         ");
         $stmt_com->execute([$id_ticket]);

@@ -133,10 +133,10 @@ class TicketController extends BaseController {
                 if (in_array((int)$_SESSION['id_rol'], [1, 2, 3])) { // Admin, Agente, Supervisor
                     $tipo_autor = 'Agente';
                     // Si es Admin (rol 1), usamos su id_usuario directamente.
-                    // Si es Agente/Supervisor (rol 2/3), buscamos su id_agente.
-                    if ((int)$_SESSION['id_rol'] === 1) {
+                    // Si es Agente (rol 2), buscamos su id_agente.
+                    if (in_array((int)$_SESSION['id_rol'], [1, 3])) { // Admin y Supervisor usan su id_usuario
                         $id_autor = $_SESSION['id_usuario'];
-                    } else {
+                    } else { // Agente usa id_agente
                         $id_autor = User::getAgentIdByUserId($_SESSION['id_usuario']);
                     }
                     $es_privado = isset($request->data->es_privado) ? 1 : 0;
@@ -167,11 +167,14 @@ class TicketController extends BaseController {
         $comentario_adicional = trim($request->data->comentario_adicional);
 
         try {
-            if (in_array((int)$_SESSION['id_rol'], [2, 3])) {
-                $id_agente_autor = User::getAgentIdByUserId($_SESSION['id_usuario']);
+            // Para Admin y Supervisor (roles 1 y 3), el autor es su id_usuario.
+            // Para Agente (rol 2), se busca su id_agente.
+            if (in_array((int)$_SESSION['id_rol'], [1, 3])) {
+                $id_agente_autor = (int)$_SESSION['id_usuario'];
+            } elseif ((int)$_SESSION['id_rol'] === 2) {
+                $id_agente_autor = User::getAgentIdByUserId((int)$_SESSION['id_usuario']);
             } else {
-                // Si no es agente o supervisor, pasamos 0 o null (depende de lo que permita la función)
-                $id_agente_autor = 0; // O null si la función lo permite
+                $id_agente_autor = 0; // Para otros roles (como Cliente), el autor no es un agente.
             }
             $nombre_agente_autor = $_SESSION['nombre_completo'] ?? 'Sistema';
 
@@ -384,7 +387,11 @@ class TicketController extends BaseController {
 /**
  * Clase PDF personalizada para este controlador.
  */
-class PDF extends \FPDF {
-    function Header() { $this->SetFont('Arial', 'B', 12); $this->Cell(0, 10, 'Reporte', 0, 1, 'C'); $this->Ln(5); }
-    function Footer() { $this->SetY(-15); $this->SetFont('Arial', 'I', 8); $this->Cell(0, 10, 'Pagina ' . $this->PageNo(), 0, 0, 'C'); }
+class PDF extends \FPDF
+{
+    function Header() {
+        $this->SetFont('Arial', 'B', 12); $this->Cell(0, 10, 'Reporte de Tickets', 0, 1, 'C'); $this->Ln(5);
+    }
+    function Footer() { $this->SetY(-15); $this->SetFont('Arial', 'I', 8); $this->Cell(0, 10, 'Pagina ' . $this->PageNo(), 0, 0, 'C');
+    }
 }
