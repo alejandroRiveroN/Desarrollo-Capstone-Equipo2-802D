@@ -166,7 +166,12 @@ class TicketController extends BaseController {
         $comentario_adicional = trim($request->data->comentario_adicional);
 
         try {
-            $id_agente_autor = User::getAgentIdByUserId($_SESSION['id_usuario']);
+            if (in_array((int)$_SESSION['id_rol'], [2, 3])) {
+                $id_agente_autor = User::getAgentIdByUserId($_SESSION['id_usuario']);
+            } else {
+                // Si no es agente o supervisor, pasamos 0 o null (depende de lo que permita la función)
+                $id_agente_autor = 0; // O null si la función lo permite
+            }
             $nombre_agente_autor = $_SESSION['nombre_completo'] ?? 'Sistema';
 
             Ticket::updateStatus($id_ticket, $nuevo_estado, $comentario_adicional, $id_agente_autor, $nombre_agente_autor);
@@ -210,7 +215,10 @@ class TicketController extends BaseController {
                 ? htmlspecialchars($request->data->medio_pago) 
                 : null;
 
-            $id_agente_autor = User::getAgentIdByUserId($_SESSION['id_usuario']);
+            // Corrección: Como esta acción es solo para admins (rol 1), no tienen un `id_agente`.
+            // Usamos directamente el `id_usuario` de la sesión, que es un entero y representa al autor de la acción.
+            // La función `updateCost` espera un ID de autor, y el ID de usuario del admin es perfecto para eso.
+            $id_agente_autor = (int)$_SESSION['id_usuario'];
             $nombre_agente_autor = $_SESSION['nombre_completo'] ?? 'Sistema';
 
             Ticket::updateCost($id_ticket, $nuevo_costo, $nueva_moneda, $nuevo_estado_facturacion, $nuevo_medio_pago, $id_agente_autor, $nombre_agente_autor);
