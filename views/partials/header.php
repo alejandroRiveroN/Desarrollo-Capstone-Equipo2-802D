@@ -84,6 +84,9 @@ $isActive = function(string $path) use ($uri) {
       <a class="nav-link <?php echo $isActive($base.'/backup'); ?>" href="<?php echo $base; ?>/backup">
         <i class="bi bi-database-down"></i> Copia de Seguridad
       </a>
+      <a class="nav-link <?php echo $isActive($base.'/admin/reports/ticket-ratings'); ?>" href="<?php echo $base; ?>/admin/reports/ticket-ratings">
+        <i class="bi bi-star-half"></i> Reporte de Calificaciones
+      </a>
     <?php endif; ?>
   </nav>
 </div>
@@ -111,4 +114,3 @@ $isActive = function(string $path) use ($uri) {
     </ul>
   </div>
 </div>
-

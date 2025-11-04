@@ -229,10 +229,23 @@
                                 <!-- Botón de acción para ver los detalles del ticket -->
                                 <td class="d-flex gap-1">
                                     <a href="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>" class="btn btn-sm btn-primary" title="Ver Ticket"><i class="bi bi-eye-fill"></i></a>
-                                    <?php if ($_SESSION['id_rol'] == 1): /* Botón de eliminar solo para Admins */ ?>
-                                    <form action="<?php echo Flight::get('base_url'); ?>/tickets/eliminar/<?php echo $ticket['id_ticket']; ?>" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este ticket? Esta acción no se puede deshacer.');">
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Eliminar Ticket"><i class="bi bi-trash-fill"></i></button>
-                                    </form>
+
+                                    <?php
+                                    // --- Lógica de botones de acción adicionales ---
+
+                                    // 1. Botón de Evaluar para Clientes
+                                    $es_cliente = (int)$_SESSION['id_rol'] === 4;
+                                    $ticket_finalizado = in_array($ticket['estado'], ['Resuelto', 'Cerrado']);
+                                    $no_evaluado = empty($ticket['ya_evaluado']);
+
+                                    if ($es_cliente && $ticket_finalizado && $no_evaluado):
+                                    ?>
+                                        <a href="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>#evaluacion-form" class="btn btn-sm btn-warning" title="Evaluar Ticket"><i class="bi bi-star-fill"></i></a>
+                                    
+                                    <?php elseif ((int)$_SESSION['id_rol'] === 1): // 2. Botón de Eliminar para Admins ?>
+                                        <form action="<?php echo Flight::get('base_url'); ?>/tickets/eliminar/<?php echo $ticket['id_ticket']; ?>" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este ticket? Esta acción no se puede deshacer.');">
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Eliminar Ticket"><i class="bi bi-trash-fill"></i></button>
+                                        </form>
                                     <?php endif; ?>
                                 </td>
                             </tr>

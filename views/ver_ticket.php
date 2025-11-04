@@ -21,6 +21,10 @@ if (isset($_SESSION['mensaje_exito'])) {
     echo '<div class="alert alert-success">' . htmlspecialchars($_SESSION['mensaje_exito']) . '</div>';
     unset($_SESSION['mensaje_exito']);
 }
+if (isset($_SESSION['mensaje_error'])) {
+    echo '<div class="alert alert-danger">' . htmlspecialchars($_SESSION['mensaje_error']) . '</div>';
+    unset($_SESSION['mensaje_error']);
+}
 ?>
 
 <div class="row g-4">
@@ -142,6 +146,67 @@ if (isset($_SESSION['mensaje_exito'])) {
             </div>
         </div>
 
+        <?php endif; ?>
+
+        <?php
+        // Lógica para mostrar la evaluación o el formulario para evaluar
+        $es_cliente = (int)$_SESSION['id_rol'] === 4;
+        $ticket_puede_ser_evaluado = in_array($ticket['estado'], ['Resuelto', 'Cerrado']);
+        $ya_evaluado = !empty($ticket['evaluacion']);
+
+        if ($es_cliente && $ticket_puede_ser_evaluado):
+        ?>
+            <div class="card mt-4" id="evaluacion-form">
+                <div class="card-header fw-bold"><i class="bi bi-star-half"></i> Evaluación del Servicio</div>
+                <div class="card-body">
+                    <?php if ($ya_evaluado): ?>
+                        <h5 class="card-title">¡Gracias por tu evaluación!</h5>
+                        <p>Tu calificación fue:</p>
+                        <div class="mb-2">
+                            <?php for ($i = 1; $i <= 5; $i++): ?>
+                                <i class="bi <?php echo $i <= $ticket['evaluacion']['calificacion'] ? 'bi-star-fill text-warning' : 'bi-star'; ?>"></i>
+                            <?php endfor; ?>
+                        </div>
+                        <?php if (!empty($ticket['evaluacion']['comentario'])): ?>
+                            <p class="mt-3"><strong>Tu comentario:</strong></p>
+                            <p class="text-bg-light p-2 rounded fst-italic">"<?php echo nl2br(htmlspecialchars($ticket['evaluacion']['comentario'])); ?>"</p>
+                        <?php endif; ?>
+                        <small class="text-muted">Evaluado el <?php echo date('d/m/Y', strtotime($ticket['evaluacion']['fecha_creacion'])); ?></small>
+                    <?php else: ?>
+                        <h5 class="card-title">¿Qué te pareció nuestro servicio?</h5>
+                        <p>Por favor, califica la atención recibida para este ticket.</p>
+                        <form action="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>/evaluar" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label">Calificación (de 1 a 5 estrellas):</label>
+                                <div class="rating">
+                                    <!-- Estrellas de radio buttons -->
+                                    <input type="radio" id="star1" name="calificacion" value="1" required /><label for="star1" title="1 estrella"></label>
+                                    <input type="radio" id="star2" name="calificacion" value="2" /><label for="star2" title="2 estrellas"></label>
+                                    <input type="radio" id="star3" name="calificacion" value="3" /><label for="star3" title="3 estrellas"></label>
+                                    <input type="radio" id="star4" name="calificacion" value="4" /><label for="star4" title="4 estrellas"></label>
+                                    <input type="radio" id="star5" name="calificacion" value="5" /><label for="star5" title="5 estrellas"></label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="comentario_evaluacion" class="form-label">Comentario (opcional):</label>
+                                <textarea name="comentario_evaluacion" id="comentario_evaluacion" class="form-control" rows="3" placeholder="Cuéntanos más sobre tu experiencia..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Enviar Evaluación</button>
+                        </form>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php elseif ($ya_evaluado): // Para que los agentes/admins vean la evaluación ?>
+            <div class="card mt-4">
+                <div class="card-header fw-bold"><i class="bi bi-star-fill"></i> Evaluación del Cliente</div>
+                <div class="card-body">
+                    <p>Calificación: 
+                        <?php for ($i = 1; $i <= 5; $i++): ?><i class="bi <?php echo $i <= $ticket['evaluacion']['calificacion'] ? 'bi-star-fill text-warning' : 'bi-star'; ?>"></i><?php endfor; ?>
+                    </p>
+                    <p><strong>Comentario:</strong> <?php echo !empty($ticket['evaluacion']['comentario']) ? nl2br(htmlspecialchars($ticket['evaluacion']['comentario'])) : '<em>Sin comentario.</em>'; ?></p>
+                    <small class="text-muted">Evaluado el <?php echo date('d/m/Y', strtotime($ticket['evaluacion']['fecha_creacion'])); ?></small>
+                </div>
+            </div>
         <?php endif; ?>
     </div>
 

@@ -264,6 +264,32 @@ class TicketController extends BaseController {
         exit();
     }
 
+    /**
+     * Procesa el formulario de evaluación de un ticket enviado por un cliente.
+     */
+    public static function evaluate($id_ticket)
+    {
+        self::checkAuth();
+        // Solo los clientes (rol 4) pueden evaluar
+        if ((int)$_SESSION['id_rol'] !== 4) {
+            \Flight::halt(403, 'Acción no permitida.');
+        }
+
+        $request = \Flight::request();
+        $calificacion = (int)($request->data->calificacion ?? 0);
+        $comentario = trim($request->data->comentario_evaluacion ?? '');
+
+        try {
+            Ticket::addEvaluation((int)$id_ticket, $calificacion, $comentario);
+            // Mensaje flash solicitado
+            $_SESSION['mensaje_exito'] = 'Muchas gracias por su comentario';
+        } catch (\Exception $e) {
+            $_SESSION['mensaje_error'] = 'Error al guardar la evaluación: ' . $e->getMessage();
+        }
+        
+        $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/tickets/ver/' . $id_ticket;
+        \Flight::redirect($url);
+    }
 
     /**
      * Método privado para obtener la lista de tickets aplicando los filtros de la solicitud.

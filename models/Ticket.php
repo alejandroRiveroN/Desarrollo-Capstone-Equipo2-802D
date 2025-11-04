@@ -113,6 +113,12 @@ class Ticket
         }
         $ticket['adjuntos_por_comentario'] = $adjuntos_por_comentario;
 
+        // Evaluación del ticket
+        $stmt_eval = $pdo->prepare("SELECT * FROM ticket_evaluacion WHERE id_ticket = ?");
+        $stmt_eval->execute([$id_ticket]);
+        $evaluacion = $stmt_eval->fetch(\PDO::FETCH_ASSOC);
+        $ticket['evaluacion'] = $evaluacion ?: null;
+
         return $ticket;
     }
 
@@ -165,6 +171,32 @@ class Ticket
         } catch (\Exception $e) {
             if ($pdo->inTransaction()) { $pdo->rollBack(); }
             throw $e;
+        }
+    }
+
+    /**
+     * Guarda la evaluación de un ticket por parte de un cliente.
+     */
+    public static function addEvaluation(int $id_ticket, int $calificacion, ?string $comentario): void
+    {
+        $pdo = \Flight::db();
+        
+        // Validar que la calificación esté en el rango correcto
+        if ($calificacion < 1 || $calificacion > 5) {
+            throw new \Exception("La calificación debe estar entre 1 y 5.");
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                "INSERT INTO ticket_evaluacion (id_ticket, calificacion, comentario) VALUES (?, ?, ?)"
+            );
+            $stmt->execute([$id_ticket, $calificacion, $comentario]);
+        } catch (\PDOException $e) {
+            // El código 23000 suele ser por violación de constraint (ej. UNIQUE)
+            if ($e->getCode() == '23000') {
+                throw new \Exception("Este ticket ya ha sido evaluado.");
+            }
+            throw $e; // Relanzar otras excepciones
         }
     }
 
@@ -432,5 +464,43 @@ class Ticket
             if ($pdo->inTransaction()) { $pdo->rollBack(); }
             throw $e;
         }
+    }
+
+    /**
+     * Obtiene todas las evaluaciones de tickets y el promedio general.
+     */
+    public static function getTicketRatingsReport(): array
+    {
+        $pdo = \Flight::db();
+
+        // Obtener el promedio general de calificaciones
+        $stmt_avg = $pdo->query("SELECT AVG(calificacion) AS average_rating FROM ticket_evaluacion");
+        $average_rating = $stmt_avg->fetchColumn();
+
+        // Obtener todas las evaluaciones individuales con detalles del ticket
+        $stmt_evaluations = $pdo->query("
+            SELECT
+                te.id_evaluacion,
+                te.id_ticket,
+                te.calificacion,
+                te.comentario,
+                te.fecha_creacion AS fecha_evaluacion,
+                t.asunto,
+                c.nombre AS nombre_cliente,
+                u.nombre_completo AS nombre_agente
+            FROM
+                ticket_evaluacion te
+            JOIN tickets t ON te.id_ticket = t.id_ticket
+            JOIN clientes c ON t.id_cliente = c.id_cliente
+            LEFT JOIN agentes ag ON t.id_agente_asignado = ag.id_agente
+            LEFT JOIN usuarios u ON ag.id_usuario = u.id_usuario
+            ORDER BY te.fecha_creacion DESC
+        ");
+        $evaluations = $stmt_evaluations->fetchAll(\PDO::FETCH_ASSOC);
+
+        return [
+            'average_rating' => (float)$average_rating,
+            'evaluations' => $evaluations
+        ];
     }
 }

@@ -92,6 +92,12 @@ Flight::route('GET /admin/mensajes/ver/@id', ['App\Controllers\AdminController',
 Flight::route('POST /admin/mensajes/responder/@id', ['App\Controllers\AdminController', 'replyToMessage']);
 Flight::route('POST /admin/mensajes/eliminar/@id', ['App\Controllers\AdminController', 'deleteMessage']);
 
+// --- RUTAS DE REPORTES ---
+Flight::route('GET /admin/reports/ticket-ratings', ['App\Controllers\ReportController', 'ticketRatings']);
+Flight::route('GET /admin/reports/ticket-ratings/excel', ['App\Controllers\ReportController', 'exportRatingsExcel']);
+Flight::route('GET /admin/reports/ticket-ratings/pdf', ['App\Controllers\ReportController', 'exportRatingsPdf']);
+Flight::route('GET /admin/reports/ticket-ratings/print', ['App\Controllers\ReportController', 'printRatings']);
+
 // COTIZACIONES CLIENTE 
 \Flight::route('GET /cotizaciones',        ['App\Controllers\CotizacionController', 'myIndex']);   
 \Flight::route('GET /cotizaciones/crear',  ['App\Controllers\CotizacionController', 'createForm']); 
@@ -112,6 +118,7 @@ Flight::route('POST /tickets/ver/@id_ticket/estado', ['App\Controllers\TicketCon
 Flight::route('POST /tickets/ver/@id_ticket/asignar', ['App\Controllers\TicketController', 'assignAgent']);
 Flight::route('POST /tickets/ver/@id_ticket/costo', ['App\Controllers\TicketController', 'updateCost']);
 Flight::route('POST /tickets/ver/@id_ticket/anular', ['App\Controllers\TicketController', 'cancel']);
+Flight::route('POST /tickets/ver/@id_ticket/evaluar', ['App\Controllers\TicketController', 'evaluate']);
 Flight::route('POST /tickets/eliminar/@id', ['App\Controllers\TicketController', 'delete']);
 Flight::route('GET /tickets/imprimir', ['App\Controllers\TicketController', 'print']);
 Flight::route('GET /tickets/exportar/excel', ['App\Controllers\TicketController', 'exportExcel']);

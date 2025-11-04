@@ -225,12 +225,14 @@ class DashboardController extends BaseController
                 c.nombre AS nombre_cliente,
                 u.nombre_completo AS nombre_agente,
                 tc.nombre_tipo,
-                t.fecha_vencimiento, t.costo, t.moneda, t.estado_facturacion
+                t.fecha_vencimiento, t.costo, t.moneda, t.estado_facturacion,
+                CASE WHEN te.id_evaluacion IS NOT NULL THEN 1 ELSE 0 END AS ya_evaluado
             FROM tickets AS t
             JOIN clientes AS c ON t.id_cliente = c.id_cliente
             LEFT JOIN agentes AS ag ON t.id_agente_asignado = ag.id_agente
             LEFT JOIN usuarios AS u ON ag.id_usuario = u.id_usuario
             LEFT JOIN tiposdecaso AS tc ON t.id_tipo_caso = tc.id_tipo_caso
+            LEFT JOIN ticket_evaluacion AS te ON t.id_ticket = te.id_ticket
         ";
         if ($where_conditions) {
             $sql_lista .= " WHERE " . implode(' AND ', $where_conditions);

@@ -38,6 +38,22 @@ abstract class BaseController {
     }
 
     /**
+     * Verifica si el usuario es un administrador o supervisor. Si no, redirige al login.
+     */
+    protected static function checkAdminOrSupervisor() {
+        if (!isset($_SESSION['id_usuario']) || !in_array($_SESSION['id_rol'], [1, 3])) { // Rol 1: Admin, Rol 3: Supervisor
+            
+            // Reutilizamos la misma lógica de detección de protocolo para consistencia.
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https" : "http";
+            $login_url = $protocol . '://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/login';
+            \Flight::redirect($login_url);
+            exit();
+        }
+    }
+
+
+
+    /**
      * Obtiene un mensaje "flash" de la sesión.
      * Un mensaje flash se muestra una vez y luego se elimina.
      *
