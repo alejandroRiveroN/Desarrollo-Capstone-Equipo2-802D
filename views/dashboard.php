@@ -8,7 +8,7 @@
 <h2 class="mb-4">Dashboard General</h2>
 
 <!-- Sección del Dashboard para Admins y Clientes -->
-<?php if ($_SESSION['id_rol'] == 1 || $_SESSION['id_rol'] == 4): ?>
+<?php if (in_array((int)$_SESSION['id_rol'], [1, 3, 4], true)): ?>
 
 
 <!-- Fila de Tarjetas de Resumen (KPIs) -->

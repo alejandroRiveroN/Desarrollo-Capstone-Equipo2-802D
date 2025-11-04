@@ -22,7 +22,8 @@ class TicketController extends BaseController {
         }
 
         // La lógica para obtener datos del formulario ahora está en el modelo
-        $formData = Ticket::getCreateFormData((int)$_SESSION['id_rol'], $_SESSION['id_usuario']);
+        $rol = (int)$_SESSION['id_rol'];
+        $formData = Ticket::getCreateFormData(in_array($rol, [1, 3], true) ? 1 : $rol, $_SESSION['id_usuario']);
 
         \Flight::render('crear_ticket.php', [
             'clientes' => $formData['clientes'],
@@ -37,15 +38,15 @@ class TicketController extends BaseController {
         $request = \Flight::request();
 
         // Determinar id_cliente
-        if ((int)$_SESSION['id_rol'] === 1) {
-            $id_cliente = (int)$request->data->id_cliente;
+        $rol = (int)$_SESSION['id_rol'];
+        if (in_array($rol, [1, 3], true)) {
+            // Admin y Supervisor seleccionan el cliente desde el formulario
+            $id_cliente = (int)($request->data->id_cliente ?? 0);
         } else {
+            // Cliente autenticado: usar su id_cliente de sesión
             $id_cliente = (int)($_SESSION['id_cliente'] ?? 0);
-            if (!$id_cliente && (int)$_SESSION['id_rol'] === 4) {
-                // La lógica para obtener el id_cliente ya está en el método `create`
-                // y se guarda en la sesión. Si no está, es un error de flujo.
-                // Para robustez, podemos volver a buscarlo.
-                $id_cliente = $_SESSION['id_cliente'];
+            if (!$id_cliente && $rol === 4) {
+                $id_cliente = $_SESSION['id_cliente'] ?? 0;
                 $_SESSION['id_cliente'] = $id_cliente ?: null;
             }
         }
@@ -100,7 +101,7 @@ class TicketController extends BaseController {
 
         // Agentes disponibles
         $agentes_disponibles = [];
-        if ((int)$_SESSION['id_rol'] === 1) {
+        if (in_array((int)$_SESSION['id_rol'], [1, 3], true)) {
             $agentes_disponibles = Ticket::getAvailableAgents();
         }
 
@@ -184,7 +185,11 @@ class TicketController extends BaseController {
     }
 
     public static function assignAgent($id_ticket) { 
-        self::checkAdmin();
+        self::checkAuth();
+        if (!in_array((int)$_SESSION['id_rol'], [1, 3], true)) {
+            \Flight::halt(403, 'Acción no permitida.');
+        }
+
         $request = \Flight::request();
         $id_nuevo_agente = $request->data->id_nuevo_agente;
 

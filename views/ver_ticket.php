@@ -62,7 +62,7 @@ if (isset($_SESSION['mensaje_error'])) {
                     <button type="submit" name="cambiar_estado" class="btn btn-info w-100">Guardar Estado</button>
                 </form>
                 
-                <?php if ($_SESSION['id_rol'] == 1): ?>
+                <?php if (in_array((int)$_SESSION['id_rol'], [1, 3], true)): ?>
                 <hr>
                 <form action="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>/asignar" method="POST" class="mb-3">
                     <label for="id_nuevo_agente" class="form-label fw-bold">Asignar a Agente:</label>

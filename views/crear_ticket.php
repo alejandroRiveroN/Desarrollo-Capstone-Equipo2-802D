@@ -16,8 +16,8 @@
     <div class="card-body p-4">
         <form action="<?php echo Flight::get('base_url'); ?>/tickets" method="POST">
             <div class="row g-4">
-                <?php if ($_SESSION['id_rol'] == 1): ?>
-                <!-- Solo admin puede seleccionar cliente -->
+                <?php if (in_array((int)($_SESSION['id_rol'] ?? 0), [1, 3], true)): ?>
+                <!-- Solo admin o supervisor puede seleccionar cliente -->
                 <div class="col-md-6">
                     <label for="id_cliente" class="form-label">Cliente *</label>
                     <select class="form-select" id="id_cliente" name="id_cliente" required>

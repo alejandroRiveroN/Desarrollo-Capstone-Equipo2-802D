@@ -153,7 +153,7 @@ class DashboardController extends BaseController
         $params = [];
 
         // Restricción por rol en listado (agente/supervisor/cliente)
-        if ((int)$_SESSION['id_rol'] === 2 || (int)$_SESSION['id_rol'] === 3) {
+        if ((int)$_SESSION['id_rol'] === 2) {
             $stmt_agente = $pdo->prepare("SELECT id_agente FROM agentes WHERE id_usuario = ?");
             $stmt_agente->execute([ (int)$_SESSION['id_usuario'] ]);
             $id_agente_actual = $stmt_agente->fetchColumn();
