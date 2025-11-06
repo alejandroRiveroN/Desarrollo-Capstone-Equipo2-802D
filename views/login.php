@@ -36,13 +36,13 @@
                 </div>
             </form>
 
-            <div class="text-center mb-2">
-                <a href="/contraseña_olvidada">¿Olvidaste tu contraseña?</a>
+            <div class="login-link mb-2">
+                <a href="<?php echo Flight::get('base_url'); ?>/contraseña_olvidada">¿Olvidaste tu contraseña?</a>
             </div>
 
             <!-- Botón para volver a la página principal -->
-            <div class="text-center">
-                <a href="/" class="btn btn-secondary">Volver a la página principal</a>
+            <div class="login-link">
+                <a href="<?php echo Flight::get('base_url'); ?>/">Volver a la página principal</a>
             </div>
         </div>
     </div>

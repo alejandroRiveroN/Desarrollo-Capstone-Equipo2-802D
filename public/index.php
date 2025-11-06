@@ -83,10 +83,6 @@ Flight::route('GET /backup', ['App\Controllers\BackupController', 'index']);
 Flight::route('POST /backup', ['App\Controllers\BackupController', 'generate']);
 
 // --- RUTAS DE ADMINISTRACIÓN ---
-Flight::route('GET /admin/limpieza', ['App\Controllers\AdminController', 'limpieza']);
-Flight::route('POST /admin/limpieza/test', ['App\Controllers\AdminController', 'limpiezaTest']);
-Flight::route('POST /admin/limpieza/total', ['App\Controllers\AdminController', 'limpiezaTotal']);
-Flight::route('POST /admin/limpieza/reset', ['App\Controllers\AdminController', 'limpiezaReset']);
 Flight::route('GET /admin/mensajes', ['App\Controllers\AdminController', 'viewMessages']);
 Flight::route('GET /admin/mensajes/ver/@id', ['App\Controllers\AdminController', 'viewMessage']);
 Flight::route('POST /admin/mensajes/responder/@id', ['App\Controllers\AdminController', 'replyToMessage']);

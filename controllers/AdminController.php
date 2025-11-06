@@ -206,4 +206,47 @@ class AdminController extends BaseController {
         \Flight::redirect($url);
         exit();
     }
+
+    /**
+     * Muestra el reporte de calificaciones de tickets.
+     */
+    public static function ticketRatingsReport()
+    {
+        self::checkAdminOrSupervisor();
+        $pdo = \Flight::db();
+        $request = \Flight::request();
+
+        // Filtros
+        $desde = $request->query['desde'] ?? '';
+        $hasta = $request->query['hasta'] ?? '';
+
+        $where = [];
+        $params = [];
+
+        if ($desde) {
+            $where[] = "te.fecha_evaluacion >= :desde";
+            $params[':desde'] = $desde;
+        }
+        if ($hasta) {
+            $where[] = "te.fecha_evaluacion <= :hasta";
+            $params[':hasta'] = $hasta;
+        }
+
+        $sql_where = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+        $stmt = $pdo->prepare("
+            SELECT te.*, t.asunto, u.nombre_completo as nombre_agente, c.nombre as nombre_cliente
+            FROM ticket_evaluacion te
+            JOIN tickets t ON te.id_ticket = t.id_ticket
+            LEFT JOIN agentes a ON t.id_agente_asignado = a.id_agente
+            LEFT JOIN usuarios u ON a.id_usuario = u.id_usuario
+            LEFT JOIN clientes c ON t.id_cliente = c.id_cliente
+            $sql_where
+            ORDER BY te.fecha_evaluacion DESC
+        ");
+        $stmt->execute($params);
+        $evaluaciones = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        \Flight::render('admin_ticket_ratings_report.php', compact('evaluaciones', 'desde', 'hasta'));
+    }
 }

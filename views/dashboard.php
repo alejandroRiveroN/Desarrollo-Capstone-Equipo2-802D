@@ -1,5 +1,8 @@
 <!-- 1. Inclusión del Header -->
-<?php require_once __DIR__ . '/partials/header.php'; ?>
+<?php 
+use App\Controllers\ViewHelper; // Importamos nuestra nueva clase
+require_once __DIR__ . '/partials/header.php'; 
+?>
 
 <!-- Contenedor principal con padding -->
 <div class="container-fluid p-4">
@@ -228,15 +231,9 @@
                         <?php foreach ($tickets as $ticket): ?>
                             <tr>
                                 <td class="text-center">
-                                    <!-- Lógica para mostrar un icono de estado del SLA (Vencido o Por Vencer) -->
-                                    <?php
-                                    $sla_status = ''; $sla_class = ''; $sla_icon = '';
-                                    if ($ticket['fecha_vencimiento'] && !in_array($ticket['estado'], ['Resuelto', 'Cerrado', 'Anulado'])) {
-                                        $ahora = new DateTime(); $vencimiento = new DateTime($ticket['fecha_vencimiento']); $diferencia = $ahora->diff($vencimiento);
-                                        if ($ahora > $vencimiento) { $sla_status = 'Vencido'; $sla_class = 'text-danger'; $sla_icon = 'bi-x-circle-fill'; } 
-                                        elseif ($diferencia->days < 2) { $sla_status = 'Por Vencer'; $sla_class = 'text-warning'; $sla_icon = 'bi-exclamation-triangle-fill'; }
-                                    }
-                                    if ($sla_status): ?><i class="bi <?php echo $sla_icon; ?> <?php echo $sla_class; ?>" title="<?php echo $sla_status; ?>"></i><?php endif; ?>
+                                    <?php if ($ticket['sla_status']): ?>
+                                        <i class="bi <?php echo $ticket['sla_icon']; ?> <?php echo $ticket['sla_class']; ?>" title="<?php echo $ticket['sla_status']; ?>"></i>
+                                    <?php endif; ?>
                                 </td>
                                 <!-- Datos del ticket -->
                                 <td><?php echo htmlspecialchars($ticket['id_ticket']); ?></td>
@@ -244,16 +241,13 @@
                                 <td><?php echo htmlspecialchars($ticket['nombre_cliente']); ?></td>
                                 <td><?php echo htmlspecialchars($ticket['nombre_agente'] ?? 'Sin asignar'); ?></td>
                                 <td><?php echo htmlspecialchars($ticket['nombre_tipo'] ?? 'N/A'); ?></td>
-                                <!-- Badge (etiqueta) con color dinámico para el estado -->
-                                <td><span class="badge bg-<?php echo $status_classes[$ticket['estado']] ?? 'light'; ?>"><?php echo htmlspecialchars($ticket['estado']); ?></span></td>
-                                <!-- Badge con color dinámico para la prioridad -->
-                                <td><span class="badge bg-<?php echo $priority_classes[$ticket['prioridad']] ?? 'light'; ?>"><?php echo htmlspecialchars($ticket['prioridad']); ?></span></td>
-                                <!-- Fecha formateada -->
+                                <td><span class="badge bg-<?php echo ViewHelper::getStatusClass($ticket['estado']); ?>"><?php echo htmlspecialchars($ticket['estado']); ?></span></td>
+                                <td><span class="badge bg-<?php echo ViewHelper::getPriorityClass($ticket['prioridad']); ?>"><?php echo htmlspecialchars($ticket['prioridad']); ?></span></td>
                                 <td><?php echo date('d/m/Y', strtotime($ticket['fecha_creacion'])); ?></td>
                                 <?php if ($_SESSION['id_rol'] == 1): /* Columnas de facturación solo para Admins */ ?>
                                     <td><?php echo $ticket['costo'] ? number_format($ticket['costo'], 2) : 'N/A'; ?></td>
                                     <td><?php echo htmlspecialchars($ticket['moneda'] ?? 'N/A'); ?></td>
-                                    <td><span class="badge bg-<?php echo $facturacion_classes[$ticket['estado_facturacion']] ?? 'light'; ?>"><?php echo htmlspecialchars($ticket['estado_facturacion'] ?? 'N/A'); ?></span></td>
+                                    <td><span class="badge bg-<?php echo ViewHelper::getFacturacionClass($ticket['estado_facturacion']); ?>"><?php echo htmlspecialchars($ticket['estado_facturacion'] ?? 'N/A'); ?></span></td>
                                 <?php endif; ?>
                                 <!-- Botón de acción para ver los detalles del ticket -->
                                 <td class="d-flex gap-1">
