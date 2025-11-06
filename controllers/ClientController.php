@@ -73,22 +73,35 @@ class ClientController extends BaseController {
         $request = \Flight::request();
         $data = $request->data;
 
-        $nombre = trim($data->nombre);
-        $email = trim($data->email);
+        $nombre  = trim($data->nombre);
+        $email   = trim($data->email);
         $telefono = trim($data->telefono) ?: null;
-        $empresa = trim($data->empresa) ?: null;
-        $pais = trim($data->pais) ?: null;
-        $ciudad = trim($data->ciudad) ?: null;
-        $activo = isset($data->activo) ? 1 : 0;
+        $empresa  = trim($data->empresa) ?: null;
+        $pais     = trim($data->pais) ?: null;
+        $ciudad   = trim($data->ciudad) ?: null;
+        $activo   = isset($data->activo) ? 1 : 0;
+        $password          = (string)($data->password ?? '');
+        $confirm_password  = (string)($data->confirmar_password ?? '');
 
         if (empty($nombre) || empty($email)) {
             \Flight::render('crear_cliente.php', ['mensaje_error' => "Los campos 'Nombre Completo' y 'Correo Electrónico' son obligatorios."]);
             return;
         }
 
+        // Validación mínima (mismo criterio base del público; puede endurecer si desea)
+        $errors = [];
+        if ($password === '' || $confirm_password === '') $errors[] = "Debe ingresar y confirmar la contraseña.";
+        if ($password !== $confirm_password) $errors[] = "Las contraseñas no coinciden.";
+        if (strlen($password) < 8) $errors[] = "La contraseña debe tener al menos 8 caracteres.";
+        if ($errors) {
+            \Flight::render('crear_cliente.php', ['mensaje_error' => implode(' ', $errors)]);
+            return;
+        }
+
         try {
-            Client::createWithUser($nombre, $email, $telefono, $empresa, $pais, $ciudad, $activo);
-            
+            // PASAR password como 8vo parámetro, igual que en publicRegister()
+            Client::createWithUser($nombre, $email, $telefono, $empresa, $pais, $ciudad, $activo, $password);
+
             $_SESSION['mensaje_exito'] = '¡Cliente creado con éxito!';
             $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes';
             \Flight::redirect($url);

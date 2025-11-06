@@ -35,6 +35,7 @@ if (isset($_SESSION['mensaje_error'])) {
                 <p><strong>Cliente:</strong> <?php echo htmlspecialchars($ticket['nombre_cliente']); ?></p>
                 <p><strong>Agente Asignado:</strong> <?php echo htmlspecialchars($ticket['nombre_agente'] ?? 'Sin asignar'); ?></p>
                 <p><strong>Tipo de Caso:</strong> <?php echo htmlspecialchars($ticket['nombre_tipo'] ?? 'No especificado'); ?></p>
+                <p><strong>Asunto:</strong> <?php echo htmlspecialchars($ticket['asunto']); ?></p>
                 <p><strong>Estado:</strong> <span class="badge bg-<?php echo $status_classes[$ticket['estado']] ?? 'light'; ?> fs-6"><?php echo htmlspecialchars($ticket['estado']); ?></span></p>
                 <p><strong>Prioridad:</strong> <span class="badge bg-<?php echo $priority_classes[$ticket['prioridad']] ?? 'light'; ?>"><?php echo htmlspecialchars($ticket['prioridad']); ?></span></p>
                 <p><strong>Creado:</strong> <?php echo date('d/m/Y H:i', strtotime($ticket['fecha_creacion'])); ?></p>

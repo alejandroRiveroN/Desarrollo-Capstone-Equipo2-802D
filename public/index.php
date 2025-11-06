@@ -109,6 +109,9 @@ Flight::route('GET /admin/reports/ticket-ratings/print', ['App\Controllers\Repor
 \Flight::route('GET /admin/cotizaciones/ver/@id',  ['App\Controllers\CotizacionController', 'showAdmin']);
 \Flight::route('POST /admin/cotizaciones/responder/@id', ['App\Controllers\CotizacionController', 'respond']);
 
+// --- RUTA DE ANALÍTICA DE AGENTES (Admin y Supervisor) ---
+Flight::route('GET /admin/analitica/agentes', ['App\Controllers\AnalyticsController', 'agentsPerformance']);
+
 // --- RUTAS DE TICKETS ---
 Flight::route('GET /tickets/crear', ['App\Controllers\TicketController', 'create']);
 Flight::route('POST /tickets', ['App\Controllers\TicketController', 'store']);
