@@ -67,6 +67,10 @@ $isActive = function(string $path) use ($uri) {
         href="<?php echo $base; ?>/admin/analitica/agentes">
         <i class="bi bi-bar-chart-line"></i> Rendimiento de Agentes
       </a>
+      </a>
+      <a class="nav-link <?php echo $isActive($base.'/admin/reports/ticket-ratings'); ?>" href="<?php echo $base; ?>/admin/reports/ticket-ratings">
+        <i class="bi bi-star-half"></i> Reporte de Calificaciones
+      </a>
     <?php endif; ?>
 
     <!-- Solo Admin -->
@@ -88,9 +92,7 @@ $isActive = function(string $path) use ($uri) {
       <a class="nav-link <?php echo $isActive($base.'/backup'); ?>" href="<?php echo $base; ?>/backup">
         <i class="bi bi-database-down"></i> Copia de Seguridad
       </a>
-      <a class="nav-link <?php echo $isActive($base.'/admin/reports/ticket-ratings'); ?>" href="<?php echo $base; ?>/admin/reports/ticket-ratings">
-        <i class="bi bi-star-half"></i> Reporte de Calificaciones
-      </a>
+      
     <?php endif; ?>
   </nav>
 </div>

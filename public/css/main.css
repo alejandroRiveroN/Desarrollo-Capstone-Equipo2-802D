@@ -27,18 +27,16 @@
  * =================================================================
  */
 
-body.page-login, body.page-registro {
+body.page-login, body.page-registro, body.page-reset {
     background-color: var(--color-fondo);
     display: flex;
     justify-content: center;
     min-height: 100vh;
     font-family: "Segoe UI", sans-serif;
-    align-items: center;
+    align-items: center; /* Centra verticalmente por defecto */
 }
 
-body.page-registro {
-    align-items: flex-start;
-}
+body.page-registro { align-items: flex-start; /* Anula para la página de registro que es más larga */ }
 
 .login-card {
     width: 100%;
@@ -69,11 +67,20 @@ body.page-registro {
 }
 
 .login-body {
-    padding: 1rem;
+    padding: 1.5rem;
 }
 
 .form-label {
     font-weight: 500;
+}
+
+/* Mejora de UX: Transición suave en los campos de formulario */
+.form-control:focus {
+    border-color: var(--color-acento);
+    box-shadow: 0 0 0 0.25rem rgba(0, 184, 148, 0.25);
+}
+.form-control {
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
 }
 
 .btn-acceder {
@@ -82,43 +89,17 @@ body.page-registro {
     border: none;
     border-radius: 6px;
     padding: 0.6rem;
+    width: 100%;
     font-weight: 600;
     transition: background-color 0.3s;
+    text-decoration: none; /* Para los casos en que se use en una etiqueta <a> */
+    display: inline-block; /* Para que el padding y width funcionen bien en <a> */
+    text-align: center;
 }
 
 .btn-acceder:hover {
     background-color: var(--color-acento-hover);
-}
-
-.forgot-password {
-    text-align: center;
-    margin-top: 1rem;
-}
-
-.forgot-password a {
-    color: var(--color-texto-oscuro);
-    font-size: 0.9rem;
-    text-decoration: none;
-}
-
-.forgot-password a:hover {
-    text-decoration: underline;
-}
-
-/* Estilos adicionales para reset_password (ahora unificados) */
-.btn-send {
-    background-color: var(--color-acento);
     color: var(--color-texto-claro);
-    border: none;
-    border-radius: 6px;
-    padding: 0.6rem;
-    font-weight: 600;
-    width: 100%;
-    transition: background-color 0.3s;
-}
-
-.btn-send:hover {
-    background-color: var(--color-acento-hover);
 }
 
 .login-link {
@@ -126,7 +107,13 @@ body.page-registro {
     margin-top: 1rem;
 }
 
-.login-link a { color: var(--color-texto-oscuro); text-decoration: none; }
+.login-link a {
+    color: var(--color-texto-oscuro);
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+}
+
+.login-link a:hover { color: var(--color-acento); }
 
 /*
  * =================================================================

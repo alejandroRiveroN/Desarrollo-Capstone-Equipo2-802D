@@ -26,7 +26,7 @@
                 <!-- Formulario para pedir enlace de recuperación -->
                 <form action="<?= Flight::get('base_url') ?>/contraseña_olvidada" method="POST">
                     <input type="email" name="email" class="form-control" placeholder="Correo electrónico" required>
-                    <button type="submit" class="btn-send">Enviar enlace</button>
+                    <button type="submit" class="btn-acceder mt-3">Enviar enlace</button>
                 </form>
             <?php else: ?>
                 <!-- Formulario para restablecer contraseña -->
@@ -44,7 +44,7 @@
                         </ul>
                     </div>
                     <input type="password" name="confirmar_password" class="form-control" placeholder="Confirmar contraseña" required>
-                    <button type="submit" class="btn-send">Restablecer Contraseña</button>
+                    <button type="submit" class="btn-acceder mt-3">Restablecer Contraseña</button>
                 </form>
             <?php endif; ?>
 

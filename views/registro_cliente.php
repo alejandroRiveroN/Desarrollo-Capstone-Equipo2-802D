@@ -80,8 +80,8 @@
                 </div>
             </form>
 
-            <div class="text-center">
-                <a href="/" class="btn-acceder" style="background-color:#555;">Volver a la página principal</a>
+            <div class="login-link">
+                <a href="<?php echo Flight::get('base_url'); ?>/">Volver a la página principal</a>
             </div>
         </div>
     </div>
