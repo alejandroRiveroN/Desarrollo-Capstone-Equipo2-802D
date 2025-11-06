@@ -89,11 +89,15 @@ if (isset($_SESSION['mensaje_error'])) {
         </div>
         <?php endif; ?>
 
-        <?php if ($_SESSION['id_rol'] == 1): ?>
+        <?php 
+        // El panel de costos es visible para Admin (1) y Supervisor (3)
+        if (in_array((int)$_SESSION['id_rol'], [1, 3], true)): 
+            $es_solo_lectura = ((int)$_SESSION['id_rol'] !== 1) || $costos_bloqueados;
+        ?>
         <div class="card">
             <div class="card-header fw-bold"><i class="bi bi-currency-dollar"></i> Gestión de Costos</div>
             <div class="card-body">
-                <?php if ($costos_bloqueados): ?>
+                <?php if ($costos_bloqueados && (int)$_SESSION['id_rol'] === 1): ?>
                     <div class="alert alert-success" role="alert">
                         <i class="bi bi-check-circle-fill"></i> Este ticket ya ha sido pagado. No se permiten más cambios.
                     </div>
@@ -105,7 +109,7 @@ if (isset($_SESSION['mensaje_error'])) {
                         <label for="costo" class="form-label">Costo</label>
                         <input type="text" class="form-control" id="costo" name="costo"
                             value="<?php echo isset($ticket['costo']) ? number_format($ticket['costo'], 0, ',', '.') : ''; ?>"
-                            <?php if ($costos_bloqueados) echo 'disabled'; ?>>
+                            <?php if ($es_solo_lectura) echo 'disabled'; ?>>
                     </div>
 
                     <!-- Moneda -->
@@ -117,7 +121,7 @@ if (isset($_SESSION['mensaje_error'])) {
                     <!-- Estado de Facturación -->
                     <div class="mb-3">
                         <label for="estado_facturacion" class="form-label">Estado de Facturación</label>
-                        <select class="form-select" id="estado_facturacion" name="estado_facturacion" <?php if ($costos_bloqueados) echo 'disabled'; ?>>
+                        <select class="form-select" id="estado_facturacion" name="estado_facturacion" <?php if ($es_solo_lectura) echo 'disabled'; ?>>
                             <option value="Pendiente" <?php echo ($ticket['estado_facturacion'] == 'Pendiente') ? 'selected' : ''; ?>>Pendiente</option>
                             <option value="Facturado" <?php echo ($ticket['estado_facturacion'] == 'Facturado') ? 'selected' : ''; ?>>Facturado</option>
                             <option value="Pagado" <?php echo ($ticket['estado_facturacion'] == 'Pagado') ? 'selected' : ''; ?>>Pagado</option>
@@ -128,7 +132,7 @@ if (isset($_SESSION['mensaje_error'])) {
                     <!-- Medio de Pago -->
                     <div class="mb-3" id="medio_pago_container">
                         <label for="medio_pago" class="form-label">Medio de Pago</label>
-                        <select class="form-select" id="medio_pago" name="medio_pago" <?php if ($costos_bloqueados) echo 'disabled'; ?>>
+                        <select class="form-select" id="medio_pago" name="medio_pago" <?php if ($es_solo_lectura) echo 'disabled'; ?>>
                             <option value="">Seleccione...</option>
                             <option value="Efectivo" <?php echo ($ticket['medio_pago'] == 'Efectivo') ? 'selected' : ''; ?>>Efectivo</option>
                             <option value="Tarjeta de Crédito/Débito" <?php echo ($ticket['medio_pago'] == 'Tarjeta de Crédito/Débito') ? 'selected' : ''; ?>>Tarjeta de Crédito/Débito</option>
@@ -139,7 +143,7 @@ if (isset($_SESSION['mensaje_error'])) {
 
                     <!-- Botón Guardar -->
                     <div class="d-grid">
-                        <button type="submit" name="guardar_costo" class="btn btn-success" <?php if ($costos_bloqueados) echo 'disabled'; ?>>
+                        <button type="submit" name="guardar_costo" class="btn btn-success" <?php if ($es_solo_lectura) echo 'disabled'; ?>>
                             <i class="bi bi-save"></i> Guardar Costo
                         </button>
                     </div>

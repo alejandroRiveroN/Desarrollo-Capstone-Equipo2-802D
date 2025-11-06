@@ -41,7 +41,7 @@ abstract class BaseController {
      * Verifica si el usuario es un administrador o supervisor. Si no, redirige al login.
      */
     protected static function checkAdminOrSupervisor() {
-        if (!isset($_SESSION['id_usuario']) || !in_array($_SESSION['id_rol'], [1, 3])) { // Rol 1: Admin, Rol 3: Supervisor
+        if (!isset($_SESSION['id_usuario']) || !in_array((int)$_SESSION['id_rol'], [1, 3], true)) { // Rol 1: Admin, Rol 3: Supervisor
             
             // Reutilizamos la misma lógica de detección de protocolo para consistencia.
             $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https" : "http";
