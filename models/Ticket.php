@@ -506,4 +506,40 @@ class Ticket
             'evaluations' => $evaluations
         ];
     }
+    
+    public static function getAverageTTRByCaseTypeGlobal(?string $desde = null, ?string $hasta = null): array
+    {
+        $pdo = \Flight::db();
+
+        // Usamos ultima_actualizacion como proxy de fecha_resolucion
+        $where = "t.estado IN ('Resuelto','Cerrado')";
+        $params = [];
+
+        if (!empty($desde)) {
+            $where .= " AND DATE(t.ultima_actualizacion) >= :desde";
+            $params[':desde'] = $desde;
+        }
+        if (!empty($hasta)) {
+            $where .= " AND DATE(t.ultima_actualizacion) <= :hasta";
+            $params[':hasta'] = $hasta;
+        }
+
+        $sql = "
+            SELECT 
+                tc.nombre_tipo AS tipo_caso,
+                COUNT(t.id_ticket) AS total_resueltos,
+                ROUND(AVG(TIMESTAMPDIFF(MINUTE, t.fecha_creacion, t.ultima_actualizacion)) / 60, 2) AS ttr_promedio_horas
+            FROM tickets t
+            JOIN tiposdecaso tc ON t.id_tipo_caso = tc.id_tipo_caso
+            WHERE $where
+            GROUP BY tc.nombre_tipo
+            ORDER BY ttr_promedio_horas ASC
+        ";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+
 }
