@@ -57,15 +57,29 @@ $isActive = function(string $path) use ($uri) {
       </a>
     <?php endif; ?>
 
-    <!-- Admin / Supervisor: Cotizaciones -->
+    <!-- Admin / Supervisor: Gestión -->
     <?php if (in_array($role, [1,3], true)): ?>
       <div class="nav-heading">Gestión</div>
       <a class="nav-link <?php echo $isActive($base.'/admin/cotizaciones'); ?>" href="<?php echo $base; ?>/admin/cotizaciones">
         <i class="bi bi-cash-coin"></i> Ver Cotizaciones
       </a>
       <a class="nav-link <?php echo $isActive($base.'/admin/analitica/agentes'); ?>" 
-        href="<?php echo $base; ?>/admin/analitica/agentes">
+         href="<?php echo $base; ?>/admin/analitica/agentes">
         <i class="bi bi-bar-chart-line"></i> Rendimiento de Agentes
+      </a>
+      <!-- Nueva función: Rendimiento por Tipo de Caso dentro de Gestión -->
+      <a class="nav-link <?php echo $isActive($base.'/analitica/tipos-caso'); ?>" 
+         href="<?php echo $base; ?>/analitica/tipos-caso">
+        <i class="bi bi-graph-up"></i> Rendimiento por Tipo de Caso
+      </a>
+    <?php endif; ?>
+
+    <!-- Cliente: Rendimiento propio -->
+    <?php if ($role === 4): ?>
+      <div class="nav-heading">Rendimiento</div>
+      <a class="nav-link <?php echo $isActive($base.'/analitica/tipos-caso'); ?>" 
+         href="<?php echo $base; ?>/analitica/tipos-caso">
+        <i class="bi bi-graph-up"></i> Rendimiento por Tipo de Caso
       </a>
     <?php endif; ?>
 

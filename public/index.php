@@ -113,6 +113,9 @@ Flight::route('GET /admin/reports/ticket-ratings/print', ['App\Controllers\Repor
 // --- RUTA DE ANALÍTICA DE AGENTES (Admin y Supervisor) ---
 Flight::route('GET /admin/analitica/agentes', ['App\Controllers\AnalyticsController', 'agentsPerformance']);
 
+// --- RUTA DE ANALÍTICA DE TIPOS DE CASO ---
+Flight::route('/analitica/tipos-caso', ['App\\Controllers\\TicketController', 'analiticaTiposCaso']);
+
 // --- RUTAS DE TICKETS ---
 Flight::route('GET /tickets/crear', ['App\Controllers\TicketController', 'create']);
 Flight::route('POST /tickets', ['App\Controllers\TicketController', 'store']);

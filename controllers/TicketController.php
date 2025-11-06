@@ -323,6 +323,39 @@ class TicketController extends BaseController {
         return Ticket::getFilteredTickets($filters, $orderBy);
     }
 
+    public static function analiticaTiposCaso()
+    {
+        self::checkAuth();
+
+        $request = \Flight::request();
+        $isClient     = ((int)$_SESSION['id_rol'] === 4);
+        $canSeeTotals = in_array((int)$_SESSION['id_rol'], [1,3], true);
+        $showFilters  = !$isClient;
+
+        $desde = $request->query['desde'] ?? null;
+        $hasta = $request->query['hasta'] ?? null;
+
+        // Opcional: impedir que el cliente modifique rangos por URL
+        if ($isClient) { $desde = null; $hasta = null; }
+
+        $data = \App\Models\Ticket::getAverageTTRByCaseTypeGlobal($desde, $hasta);
+
+        $labels   = array_column($data, 'tipo_caso');
+        $ttrHoras = array_column($data, 'ttr_promedio_horas');
+        $totales  = array_column($data, 'total_resueltos');
+
+        \Flight::render('analitica_tipos_caso.php', [
+            'desde' => $desde,
+            'hasta' => $hasta,
+            'rows'  => $data,
+            'chart_labels'  => json_encode($labels, JSON_UNESCAPED_UNICODE),
+            'chart_ttr'     => json_encode($ttrHoras, JSON_NUMERIC_CHECK),
+            'chart_totales' => json_encode($totales, JSON_NUMERIC_CHECK),
+            'canSeeTotals'  => $canSeeTotals,
+            'showFilters'   => $showFilters,
+        ]);
+    }
+
     public static function print() {
         self::checkAuth();
         $tickets = self::_getTicketsFiltrados();
