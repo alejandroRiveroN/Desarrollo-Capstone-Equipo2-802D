@@ -258,6 +258,26 @@ class DashboardController extends BaseController
         $stmt_lista->execute($params);
         $tickets = $stmt_lista->fetchAll(\PDO::FETCH_ASSOC);
 
+        // Procesar tickets para añadir lógica de presentación (SLA)
+        foreach ($tickets as &$ticket) {
+            $ticket['sla_status'] = '';
+            $ticket['sla_class'] = '';
+            $ticket['sla_icon'] = '';
+
+            if ($ticket['fecha_vencimiento'] && !in_array($ticket['estado'], ['Resuelto', 'Cerrado', 'Anulado'])) {
+                $ahora = new \DateTime();
+                $vencimiento = new \DateTime($ticket['fecha_vencimiento']);
+                $diferencia = $ahora->diff($vencimiento);
+
+                if ($ahora > $vencimiento) {
+                    $ticket['sla_status'] = 'Vencido'; $ticket['sla_class'] = 'text-danger'; $ticket['sla_icon'] = 'bi-x-circle-fill';
+                } elseif ($diferencia->days < 2) {
+                    $ticket['sla_status'] = 'Por Vencer'; $ticket['sla_class'] = 'text-warning'; $ticket['sla_icon'] = 'bi-exclamation-triangle-fill';
+                }
+            }
+        }
+        unset($ticket); // Romper la referencia del último elemento
+
         // --------- Datos para combos ---------
         $agentes_disponibles = $pdo->query("
             SELECT a.id_agente, u.nombre_completo
