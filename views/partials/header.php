@@ -63,6 +63,9 @@ $isActive = function(string $path) use ($uri) {
       <a class="nav-link <?php echo $isActive($base.'/admin/cotizaciones'); ?>" href="<?php echo $base; ?>/admin/cotizaciones">
         <i class="bi bi-cash-coin"></i> Ver Cotizaciones
       </a>
+      <a class="nav-link <?php echo $isActive($base.'/admin/agentes'); ?>" href="<?php echo $base; ?>/admin/agentes">
+        <i class="bi bi-people-fill"></i> Reporte Agentes
+      </a>
     <?php endif; ?>
 
     <!-- Solo Admin -->

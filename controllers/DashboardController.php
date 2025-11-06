@@ -25,6 +25,21 @@ class DashboardController extends BaseController
         $chart_labels_donut_json = $chart_values_donut_json = '[]';
         $chart_labels_bar_json   = $chart_values_bar_json   = '[]';
 
+        // --------- Métricas específicas para el Supervisor (rol 3) ---------
+        $supervisor_metrics = [];
+        if ((int)($_SESSION['id_rol'] ?? 0) === 3) {
+            // Tickets abiertos por agente
+            $stmt_agentes = $pdo->query("
+                SELECT u.nombre_completo, COUNT(t.id_ticket) as total_abiertos
+                FROM tickets t
+                JOIN agentes a ON t.id_agente_asignado = a.id_agente
+                JOIN usuarios u ON a.id_usuario = u.id_usuario
+                WHERE t.estado IN ('Abierto', 'En Progreso', 'En Espera')
+                GROUP BY u.nombre_completo ORDER BY total_abiertos DESC
+            ");
+            $supervisor_metrics['tickets_por_agente'] = $stmt_agentes->fetchAll(\PDO::FETCH_ASSOC);
+        }
+
         // --------- Condiciones por rol (para estadísticas y gráficos) ---------
         $where_parts_rol = [];
         $params_rol = [];
@@ -292,6 +307,7 @@ class DashboardController extends BaseController
             'clientes_disponibles'   => $clientes_disponibles,
             'mensaje_exito'          => $mensaje_exito,
             'mensaje_error'          => $mensaje_error,
+            'supervisor_metrics'     => $supervisor_metrics, // Pasar las nuevas métricas a la vista
         ]);
     }
 }

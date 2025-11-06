@@ -210,7 +210,12 @@ class TicketController extends BaseController {
     }
 
     public static function updateCost($id_ticket) {
-        self::checkAdmin();
+        // Solo los administradores (rol 1) pueden ejecutar esta acción.
+        if ((int)$_SESSION['id_rol'] !== 1) {
+            $_SESSION['mensaje_error'] = "No tienes permiso para modificar los costos.";
+            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/tickets/ver/' . $id_ticket;
+            \Flight::redirect($url);
+        }
         $request = \Flight::request();
 
         try {

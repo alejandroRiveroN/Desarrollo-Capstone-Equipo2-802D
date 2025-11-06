@@ -97,6 +97,7 @@ Flight::route('GET /admin/reports/ticket-ratings', ['App\Controllers\ReportContr
 Flight::route('GET /admin/reports/ticket-ratings/excel', ['App\Controllers\ReportController', 'exportRatingsExcel']);
 Flight::route('GET /admin/reports/ticket-ratings/pdf', ['App\Controllers\ReportController', 'exportRatingsPdf']);
 Flight::route('GET /admin/reports/ticket-ratings/print', ['App\Controllers\ReportController', 'printRatings']);
+Flight::route('/admin/agentes', ['App\Controllers\AgentAdminController', 'index']); // Vista del Admin agente
 
 // COTIZACIONES CLIENTE 
 \Flight::route('GET /cotizaciones',        ['App\Controllers\CotizacionController', 'myIndex']);   
@@ -123,6 +124,7 @@ Flight::route('POST /tickets/eliminar/@id', ['App\Controllers\TicketController',
 Flight::route('GET /tickets/imprimir', ['App\Controllers\TicketController', 'print']);
 Flight::route('GET /tickets/exportar/excel', ['App\Controllers\TicketController', 'exportExcel']);
 Flight::route('GET /tickets/exportar/pdf', ['App\Controllers\TicketController', 'exportPdf']);
+
 
 // --- INICIAR FLIGHT ---
 Flight::start();

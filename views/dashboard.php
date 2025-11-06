@@ -11,6 +11,35 @@
 <?php if (in_array((int)$_SESSION['id_rol'], [1, 3, 4], true)): ?>
 
 
+<!-- Panel Exclusivo para Supervisores -->
+<?php if ((int)$_SESSION['id_rol'] === 3): ?>
+<div class="card mb-4">
+    <div class="card-header fw-bold bg-info text-white">
+        <i class="bi bi-person-video3"></i> Panel de Supervisión de Equipo
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-12">
+                <h5><i class="bi bi-person-check-fill"></i> Tickets Abiertos por Agente</h5>
+                <?php if (empty($supervisor_metrics['tickets_por_agente'])): ?>
+                    <p class="text-muted">No hay tickets abiertos asignados a agentes actualmente.</p>
+                <?php else: ?>
+                    <ul class="list-group">
+                        <?php foreach ($supervisor_metrics['tickets_por_agente'] as $agente_stat): ?>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <?php echo htmlspecialchars($agente_stat['nombre_completo']); ?>
+                                <span class="badge bg-primary rounded-pill"><?php echo $agente_stat['total_abiertos']; ?></span>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+
 <!-- Fila de Tarjetas de Resumen (KPIs) -->
 <h3 class="mb-4">
   <?php echo ($_SESSION['id_rol'] == 4) ? 'Resumen de Mis Tickets' : 'Estadísticas Generales'; ?>
