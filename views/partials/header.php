@@ -73,17 +73,18 @@ $isActive = function(string $path) use ($uri) {
         <i class="bi bi-graph-up"></i> Rendimiento por Tipo de Caso
       </a>
     <?php endif; ?>
-
+    <?php if (in_array($role, [1,3], true)): ?>
+      <div class="nav-heading">Calificaciones</div>
+      <a class="nav-link <?php echo $isActive($base.'/admin/reports/ticket-ratings'); ?>" href="<?php echo $base; ?>/admin/reports/ticket-ratings">
+        <i class="bi bi-star-half"></i> Reporte de Calificaciones
+      </a>
+    <?php endif; ?>
     <!-- Cliente: Rendimiento propio -->
     <?php if ($role === 4): ?>
       <div class="nav-heading">Rendimiento</div>
       <a class="nav-link <?php echo $isActive($base.'/analitica/tipos-caso'); ?>" 
          href="<?php echo $base; ?>/analitica/tipos-caso">
         <i class="bi bi-graph-up"></i> Rendimiento por Tipo de Caso
-      </a>
-      </a>
-      <a class="nav-link <?php echo $isActive($base.'/admin/reports/ticket-ratings'); ?>" href="<?php echo $base; ?>/admin/reports/ticket-ratings">
-        <i class="bi bi-star-half"></i> Reporte de Calificaciones
       </a>
     <?php endif; ?>
 
