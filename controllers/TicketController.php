@@ -210,31 +210,46 @@ class TicketController extends BaseController {
     }
 
     public static function updateCost($id_ticket) {
-        // Solo los administradores (rol 1) pueden ejecutar esta acción.
-        if ((int)$_SESSION['id_rol'] !== 1) {
+        self::checkAuth();
+
+        // Permitir Admin (1) y Supervisor (3)
+        if (!in_array((int)$_SESSION['id_rol'], [1, 3], true)) {
             $_SESSION['mensaje_error'] = "No tienes permiso para modificar los costos.";
             $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/tickets/ver/' . $id_ticket;
             \Flight::redirect($url);
         }
+
         $request = \Flight::request();
 
         try {
-            $nuevo_costo = isset($request->data->costo) && $request->data->costo !== '' 
-                ? (float) str_replace(',', '.', $request->data->costo) 
-                : null;
-            $nueva_moneda = 'CLP';
-            $nuevo_estado_facturacion = htmlspecialchars($request->data->estado_facturacion);
-            $nuevo_medio_pago = ($nuevo_estado_facturacion === 'Pagado') 
-                ? htmlspecialchars($request->data->medio_pago) 
+            // Parser robusto para CLP: "10.000,50" -> 10000.50 ; "10.000" -> 10000
+            $rawCosto = (string)($request->data->costo ?? '');
+            $rawCosto = trim($rawCosto);
+            $nuevo_costo = ($rawCosto !== '')
+                ? (float) str_replace(',', '.', str_replace('.', '', $rawCosto))
                 : null;
 
-            // Corrección: Como esta acción es solo para admins (rol 1), no tienen un `id_agente`.
-            // Usamos directamente el `id_usuario` de la sesión, que es un entero y representa al autor de la acción.
-            // La función `updateCost` espera un ID de autor, y el ID de usuario del admin es perfecto para eso.
+            $nueva_moneda = 'CLP';
+            $nuevo_estado_facturacion = htmlspecialchars($request->data->estado_facturacion ?? 'Pendiente');
+
+            // Solo guardar medio de pago si queda en "Pagado"
+            $nuevo_medio_pago = ($nuevo_estado_facturacion === 'Pagado')
+                ? htmlspecialchars($request->data->medio_pago ?? '')
+                : null;
+
+            // Tanto Admin como Supervisor usan su id_usuario como autor del cambio
             $id_agente_autor = (int)$_SESSION['id_usuario'];
             $nombre_agente_autor = $_SESSION['nombre_completo'] ?? 'Sistema';
 
-            Ticket::updateCost($id_ticket, $nuevo_costo, $nueva_moneda, $nuevo_estado_facturacion, $nuevo_medio_pago, $id_agente_autor, $nombre_agente_autor);
+            Ticket::updateCost(
+                (int)$id_ticket,
+                $nuevo_costo,
+                $nueva_moneda,
+                $nuevo_estado_facturacion,
+                $nuevo_medio_pago,
+                $id_agente_autor,
+                $nombre_agente_autor
+            );
 
         } catch (\Exception $e) {
             $_SESSION['mensaje_error'] = "Error al actualizar costo: " . $e->getMessage();

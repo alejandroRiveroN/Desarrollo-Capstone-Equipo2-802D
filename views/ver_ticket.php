@@ -92,15 +92,15 @@ if (isset($_SESSION['mensaje_error'])) {
         <?php 
         // El panel de costos es visible para Admin (1) y Supervisor (3)
         if (in_array((int)$_SESSION['id_rol'], [1, 3], true)): 
-            $es_solo_lectura = ((int)$_SESSION['id_rol'] !== 1) || $costos_bloqueados;
+            $es_solo_lectura = $costos_bloqueados ? true : !in_array((int)$_SESSION['id_rol'], [1, 3], true);
         ?>
         <div class="card">
             <div class="card-header fw-bold"><i class="bi bi-currency-dollar"></i> Gestión de Costos</div>
             <div class="card-body">
-                <?php if ($costos_bloqueados && (int)$_SESSION['id_rol'] === 1): ?>
-                    <div class="alert alert-success" role="alert">
-                        <i class="bi bi-check-circle-fill"></i> Este ticket ya ha sido pagado. No se permiten más cambios.
-                    </div>
+                <?php if ($costos_bloqueados): ?>
+                <div class="alert alert-success" role="alert">
+                    <i class="bi bi-check-circle-fill"></i> Este ticket ya ha sido pagado. No se permiten más cambios.
+                </div>
                 <?php endif; ?>
 
                 <form action="<?php echo Flight::get('base_url'); ?>/tickets/ver/<?php echo $ticket['id_ticket']; ?>/costo" method="POST">
