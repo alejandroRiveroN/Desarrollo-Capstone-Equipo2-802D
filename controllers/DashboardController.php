@@ -68,7 +68,7 @@ class DashboardController extends BaseController
         $where_sql_rol = $where_parts_rol ? ('WHERE ' . implode(' AND ', $where_parts_rol)) : '';
 
         // --------- Estadísticas y Gráficos (solo admin y cliente) ---------
-        if ((int)$_SESSION['id_rol'] === 1 || (int)$_SESSION['id_rol'] === 4) {
+        if (in_array((int)$_SESSION['id_rol'], [1, 3, 4], true)) {
             // --- Estadísticas generales ---
             $stats_query = "
                 SELECT 
