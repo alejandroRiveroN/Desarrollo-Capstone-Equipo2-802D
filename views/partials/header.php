@@ -135,3 +135,6 @@ $isActive = function(string $path) use ($uri) {
     </ul>
   </div>
 </div>
+
+<!-- Contenido principal que será empujado por el sidebar -->
+<div class="main-content">

@@ -1,4 +1,4 @@
-</div> <!-- Cierre del .main-content -->
+</div> <!-- Cierre del .main-content añadido en el header -->
 
 </div> <!-- Cierre del contenedor que envuelve sidebar y main-content -->
 

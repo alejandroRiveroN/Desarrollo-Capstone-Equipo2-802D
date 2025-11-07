@@ -1,12 +1,19 @@
 /* Ancho del menú lateral */
 :root {
     --sidebar-width: 240px;
+    --main-content-padding: 2rem;
 }
 
 body {
     background-color: #f8f9fa;
-    position: relative;
+    /* Se elimina 'position: relative' para evitar conflictos de apilamiento.
+       El padding-left se gestionará con media queries para un control más preciso. */
 }
+
+/* Estilos para la barra de desplazamiento (scrollbar) en navegadores WebKit */
+.sidebar::-webkit-scrollbar { width: 6px; }
+.sidebar::-webkit-scrollbar-thumb { background-color: #495057; border-radius: 3px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
 
 /* Estilos para el menú lateral (Sidebar) */
 .sidebar {
@@ -68,7 +75,7 @@ body {
 /* Contenido Principal */
 .main-content {
     margin-left: var(--sidebar-width);
-    padding: 2rem;
+    padding: var(--main-content-padding);
     transition: margin-left 0.3s ease;
 }
 
@@ -77,7 +84,7 @@ body {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    padding: 0.75rem 2rem;
+    padding: 0.75rem var(--main-content-padding);
     background-color: #fff;
     border-bottom: 1px solid #dee2e6;
     transition: margin-left 0.3s ease;
@@ -94,23 +101,35 @@ body {
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 1020;
 }
+
+/* --- ESTILOS RESPONSIVOS --- */
+
+/* Para pantallas grandes (desktops) */
 @media (min-width: 992px) {
-  body { padding-left: var(--sidebar-width); }
+    /* El sidebar es visible y el contenido principal tiene un margen a la izquierda */
+    .main-content, .user-bar {
+        margin-left: var(--sidebar-width);
+    }
 }
-/* --- ESTILOS RESPONSIVE PARA MÓVILES --- */
+
+/* Para pantallas pequeñas (tablets y móviles) */
 @media (max-width: 991.98px) {
+    /* El sidebar se oculta fuera de la pantalla por defecto */
     .sidebar {
         transform: translateX(calc(-1 * var(--sidebar-width)));
     }
 
+    /* Cuando el sidebar está activo (toggled), se desliza para mostrarse */
     .sidebar.toggled {
         transform: translateX(0);
     }
     
+    /* El contenido principal y la barra de usuario ocupan todo el ancho */
     .main-content, .user-bar {
         margin-left: 0;
     }
 
+    /* El overlay se muestra para oscurecer el contenido cuando el menú está abierto */
     .sidebar-overlay.active {
         display: block;
     }
