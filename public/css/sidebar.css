@@ -17,6 +17,7 @@ body {
     height: 100%;
     background-color: #212529; /* Color oscuro */
     padding-top: 20px;
+    padding-bottom: 20px; /* Espacio extra en la parte inferior */
     z-index: 1030;
     transition: transform 0.3s ease;
 }

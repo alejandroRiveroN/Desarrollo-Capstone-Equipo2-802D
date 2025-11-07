@@ -1,0 +1,110 @@
+/* Estilos base para el sidebar */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 250px; /* Ancho del sidebar */
+    z-index: 1000;
+    background-color: #212529; /* Color de fondo oscuro */
+    padding-top: 56px; /* Espacio para el navbar superior si existe */
+    transition: transform 0.3s ease-in-out;
+    overflow-y: auto; /* Permite scroll si el contenido es muy largo */
+}
+
+/* Estilos para el contenido principal */
+.main-content {
+    transition: margin-left 0.3s ease-in-out;
+    margin-left: 250px; /* Mismo ancho que el sidebar */
+    padding: 20px;
+}
+
+/* Estilos para el toggle del sidebar */
+#sidebar-toggle {
+    color: white;
+    font-size: 1.5rem;
+}
+
+/* --- ESTILOS RESPONSIVOS --- */
+
+/* Para pantallas de tamaño mediano y más pequeñas (tablets y móviles) */
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%); /* Oculta el sidebar fuera de la pantalla */
+    }
+
+    .sidebar.active {
+        transform: translateX(0); /* Muestra el sidebar cuando tiene la clase 'active' */
+    }
+
+    .main-content {
+        margin-left: 0; /* El contenido principal ocupa todo el ancho */
+    }
+
+    /* Estilos para el overlay que oscurece el contenido cuando el sidebar está abierto */
+    .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999; /* Detrás del sidebar pero sobre el contenido */
+        display: none; /* Oculto por defecto */
+    }
+
+    .sidebar-overlay.active {
+        display: block; /* Se muestra cuando el sidebar está activo */
+    }
+}
+
+/* Ajustes para pantallas muy pequeñas */
+@media (max-width: 576px) {
+    .sidebar {
+        width: 80%; /* El sidebar ocupa más porcentaje en pantallas muy pequeñas */
+    }
+}
+
+/* --- Estilos para los enlaces del Sidebar --- */
+.sidebar .nav-link {
+    color: rgba(255, 255, 255, 0.7);
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.sidebar .nav-link .bi {
+    margin-right: 10px;
+    font-size: 1.1rem;
+}
+
+.sidebar .nav-link:hover {
+    background-color: #343a40;
+    color: #fff;
+}
+
+.sidebar .nav-link.active {
+    background-color: #0d6efd; /* Color primario de Bootstrap */
+    color: #fff;
+    font-weight: bold;
+}
+
+/* Estilo para el dropdown de usuario */
+.sidebar .dropdown-toggle::after {
+    margin-left: auto;
+}
+
+.sidebar .dropdown-menu {
+    background-color: #343a40;
+    border: none;
+}
+
+.sidebar .dropdown-item {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.sidebar .dropdown-item:hover {
+    background-color: #495057;
+    color: #fff;
+}
