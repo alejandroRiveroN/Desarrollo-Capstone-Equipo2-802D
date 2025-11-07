@@ -20,6 +20,7 @@ body {
     padding-bottom: 20px; /* Espacio extra en la parte inferior */
     z-index: 1030;
     transition: transform 0.3s ease;
+    overflow-y: auto; /* Permite el scroll vertical si el contenido es muy largo */
 }
 
 .sidebar .sidebar-header {
