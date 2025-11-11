@@ -120,7 +120,7 @@ body {
     }
 
     /* Cuando el sidebar está activo (toggled), se desliza para mostrarse */
-    .sidebar.toggled {
+    .sidebar.active {
         transform: translateX(0);
     }
     

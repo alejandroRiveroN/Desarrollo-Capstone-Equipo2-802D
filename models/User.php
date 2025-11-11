@@ -10,7 +10,7 @@ class User
     public static function getAllWithRoles(): array
     {
         $pdo = \Flight::db();
-        $stmt = $pdo->query("SELECT u.id_usuario, u.nombre_completo, u.email, u.activo, u.telefono, u.ruta_foto, r.nombre_rol FROM Usuarios u JOIN Roles r ON u.id_rol = r.id_rol ORDER BY u.nombre_completo");
+        $stmt = $pdo->query("SELECT u.id_usuario, u.nombre_completo, u.email, u.activo, u.telefono, u.ruta_foto, r.nombre_rol FROM usuario u JOIN rol r ON u.id_rol = r.id_rol ORDER BY u.nombre_completo");
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
@@ -20,7 +20,7 @@ class User
     public static function getRoles(): array
     {
         $pdo = \Flight::db();
-        return $pdo->query("SELECT * FROM Roles")->fetchAll(\PDO::FETCH_ASSOC);
+        return $pdo->query("SELECT * FROM rol")->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     /**
@@ -30,7 +30,7 @@ class User
     {
         $pdo = \Flight::db();
         $password_hash = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("INSERT INTO Usuarios (id_rol, nombre_completo, email, password_hash, telefono, ruta_foto) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO usuario (id_rol, nombre_completo, email, password_hash, telefono, ruta_foto) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([$id_rol, $nombre, $email, $password_hash, $telefono, $ruta_foto]);
         return (int)$pdo->lastInsertId();
     }
@@ -41,7 +41,7 @@ class User
     public static function createAgent(int $id_usuario, ?string $puesto): void
     {
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("INSERT INTO Agentes (id_usuario, puesto, fecha_contratacion) VALUES (?, ?, CURDATE())");
+        $stmt = $pdo->prepare("INSERT INTO agente (id_usuario, puesto, fecha_contratacion) VALUES (?, ?, CURDATE())");
         $stmt->execute([$id_usuario, $puesto]);
     }
 
@@ -51,7 +51,7 @@ class User
     public static function findById(int $id): ?array
     {
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("SELECT * FROM Usuarios WHERE id_usuario = ?");
+        $stmt = $pdo->prepare("SELECT * FROM usuario WHERE id_usuario = ?");
         $stmt->execute([$id]);
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $result ?: null;
@@ -63,7 +63,7 @@ class User
     public static function findByEmail(string $email): ?array
     {
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("SELECT * FROM Usuarios WHERE email = ?");
+        $stmt = $pdo->prepare("SELECT * FROM usuario WHERE email = ?");
         $stmt->execute([$email]);
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $result ?: null;
@@ -75,7 +75,7 @@ class User
     public static function findEssentialById(int $id): ?array
     {
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("SELECT id_rol, email, ruta_foto FROM Usuarios WHERE id_usuario = ?");
+        $stmt = $pdo->prepare("SELECT id_rol, email, ruta_foto FROM usuario WHERE id_usuario = ?");
         $stmt->execute([$id]);
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $result ?: null;
@@ -87,7 +87,7 @@ class User
     public static function getAgentPosition(int $id_usuario): ?string
     {
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("SELECT puesto FROM Agentes WHERE id_usuario = ?");
+        $stmt = $pdo->prepare("SELECT puesto FROM agente WHERE id_usuario = ?");
         $stmt->execute([$id_usuario]);
         return $stmt->fetchColumn() ?: null;
     }
@@ -98,7 +98,7 @@ class User
     public static function getAgentIdByUserId(int $id_usuario): ?int
     {
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("SELECT id_agente FROM Agentes WHERE id_usuario = ?");
+        $stmt = $pdo->prepare("SELECT id_agente FROM agente WHERE id_usuario = ?");
         $stmt->execute([$id_usuario]);
         return $stmt->fetchColumn() ?: null;
     }
@@ -109,7 +109,7 @@ class User
     public static function update(int $id, string $nombre, string $email, int $id_rol, int $activo, ?string $telefono, ?string $ruta_foto): void
     {
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("UPDATE Usuarios SET nombre_completo = ?, email = ?, id_rol = ?, activo = ?, telefono = ?, ruta_foto = ? WHERE id_usuario = ?");
+        $stmt = $pdo->prepare("UPDATE usuario SET nombre_completo = ?, email = ?, id_rol = ?, activo = ?, telefono = ?, ruta_foto = ? WHERE id_usuario = ?");
         $stmt->execute([$nombre, $email, $id_rol, $activo, $telefono, $ruta_foto, $id]);
     }
 
@@ -120,7 +120,7 @@ class User
     {
         $pdo = \Flight::db();
         $new_hash = password_hash($new_password, PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("UPDATE Usuarios SET password_hash = ? WHERE email = ?");
+        $stmt = $pdo->prepare("UPDATE usuario SET password_hash = ? WHERE email = ?");
         $stmt->execute([$new_hash, $email]);
     }
 
@@ -130,7 +130,7 @@ class User
     public static function delete(int $id): void
     {
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("DELETE FROM Usuarios WHERE id_usuario = ?");
+        $stmt = $pdo->prepare("DELETE FROM usuario WHERE id_usuario = ?");
         $stmt->execute([$id]);
     }
 
@@ -140,7 +140,7 @@ class User
     public static function deleteAgent(int $id_usuario): void
     {
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("DELETE FROM Agentes WHERE id_usuario = ?");
+        $stmt = $pdo->prepare("DELETE FROM agente WHERE id_usuario = ?");
         $stmt->execute([$id_usuario]);
     }
 
@@ -157,7 +157,7 @@ class User
                 $id_usuario = Client::createWithUser($nombre, $email, $telefono, null, null, null, 1, $password);
                 // Si se subió una foto, la actualizamos en el usuario recién creado
                 if ($ruta_foto && $id_usuario) {
-                    $pdo->prepare("UPDATE Usuarios SET ruta_foto = ? WHERE id_usuario = ?")->execute([$ruta_foto, $id_usuario]);
+                    $pdo->prepare("UPDATE usuario SET ruta_foto = ? WHERE id_usuario = ?")->execute([$ruta_foto, $id_usuario]);
                 }
             } elseif (in_array($id_rol, [2, 3])) { // Si es Agente (2) o Agente Supervisor (3)
                 $id_usuario = self::create($id_rol, $nombre, $email, $password, $telefono, $ruta_foto);

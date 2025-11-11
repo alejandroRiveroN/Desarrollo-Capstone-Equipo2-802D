@@ -52,13 +52,13 @@ class PasswordController {
 
         } else {
             // Verificar contraseña actual
-            $stmt = $pdo->prepare("SELECT password_hash FROM Usuarios WHERE id_usuario = ?");
+            $stmt = $pdo->prepare("SELECT password_hash FROM usuario WHERE id_usuario = ?");
             $stmt->execute([$id_usuario]);
             $usuario = $stmt->fetch();
 
             if ($usuario && password_verify($password_actual, $usuario['password_hash'])) {
                 $nuevo_password_hash = password_hash($nueva_password, PASSWORD_DEFAULT);
-                $stmt_update = $pdo->prepare("UPDATE Usuarios SET password_hash = ? WHERE id_usuario = ?");
+                $stmt_update = $pdo->prepare("UPDATE usuario SET password_hash = ? WHERE id_usuario = ?");
 
                 if ($stmt_update->execute([$nuevo_password_hash, $id_usuario])) {
                     $mensaje = '¡Contraseña actualizada con éxito!';

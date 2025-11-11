@@ -9,7 +9,7 @@ class Cotizacion
         $pdo = \Flight::db();
         return $pdo->query("
             SELECT id_tipo_caso, nombre_tipo
-            FROM tiposdecaso
+            FROM tipodecaso
             WHERE activo = 1
             ORDER BY nombre_tipo ASC
         ")->fetchAll(\PDO::FETCH_ASSOC);
@@ -18,7 +18,7 @@ class Cotizacion
     public static function findActiveTipoDeCasoById(int $id): ?array
     {
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("SELECT nombre_tipo FROM tiposdecaso WHERE id_tipo_caso = ? AND activo = 1");
+        $stmt = $pdo->prepare("SELECT nombre_tipo FROM tipodecaso WHERE id_tipo_caso = ? AND activo = 1");
         $stmt->execute([$id]);
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $result ?: null;
@@ -28,7 +28,7 @@ class Cotizacion
     {
         $pdo = \Flight::db();
         $stmt = $pdo->prepare("
-            INSERT INTO cotizaciones (id_cliente, tipo_caso, prioridad, descripcion, estado)
+            INSERT INTO cotizacion (id_cliente, tipo_caso, prioridad, descripcion, estado)
             VALUES (?, ?, ?, ?, 'Nueva')
         ");
         $stmt->execute([$idCliente, $tipoCaso, $prioridad, $descripcion]);
@@ -38,7 +38,7 @@ class Cotizacion
     {
         $pdo = \Flight::db();
         $stmt = $pdo->prepare("
-            SELECT * FROM cotizaciones
+            SELECT * FROM cotizacion
             WHERE id_cliente=? AND estado=?
             ORDER BY $orderBy
         ");
@@ -51,8 +51,8 @@ class Cotizacion
         $pdo = \Flight::db();
         $stmt = $pdo->prepare("
           SELECT c.*, u.nombre_completo AS nombre_responsable
-          FROM cotizaciones c
-          LEFT JOIN usuarios u ON u.id_usuario = c.id_responsable_respuesta
+          FROM cotizacion c
+          LEFT JOIN usuario u ON u.id_usuario = c.id_responsable_respuesta
           WHERE c.id = ? AND c.id_cliente = ?
         ");
         $stmt->execute([$id, $idCliente]);
@@ -65,8 +65,8 @@ class Cotizacion
         $pdo = \Flight::db();
         return $pdo->query("
           SELECT c.*, u.nombre_completo AS nombre_cliente, u.email AS email_cliente
-          FROM cotizaciones c
-          JOIN usuarios u ON u.id_usuario = c.id_cliente
+          FROM cotizacion c
+          JOIN usuario u ON u.id_usuario = c.id_cliente
           ORDER BY c.fecha_creacion DESC
         ")->fetchAll(\PDO::FETCH_ASSOC);
     }
@@ -77,9 +77,9 @@ class Cotizacion
         $stmt = $pdo->prepare("
           SELECT c.*, u.nombre_completo AS nombre_cliente, u.email AS email_cliente,
                  r.nombre_completo AS nombre_responsable
-          FROM cotizaciones c
-          JOIN usuarios u ON u.id_usuario = c.id_cliente
-          LEFT JOIN usuarios r ON r.id_usuario = c.id_responsable_respuesta
+          FROM cotizacion c
+          JOIN usuario u ON u.id_usuario = c.id_cliente
+          LEFT JOIN usuario r ON r.id_usuario = c.id_responsable_respuesta
           WHERE c.id = ?
         ");
         $stmt->execute([$id]);
@@ -90,7 +90,7 @@ class Cotizacion
     public static function findById(int $id): ?array
     {
         $pdo = \Flight::db();
-        $chk = $pdo->prepare("SELECT * FROM cotizaciones WHERE id=?");
+        $chk = $pdo->prepare("SELECT * FROM cotizacion WHERE id=?");
         $chk->execute([$id]);
         $result = $chk->fetch(\PDO::FETCH_ASSOC);
         return $result ?: null;
@@ -100,7 +100,7 @@ class Cotizacion
     {
         $pdo = \Flight::db();
         $stmt = $pdo->prepare("
-          UPDATE cotizaciones
+          UPDATE cotizacion
           SET precio_estimado = ?, 
               respuesta = ?, 
               id_responsable_respuesta = ?, 

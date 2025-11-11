@@ -25,7 +25,7 @@ class AuthController {
         if (empty($email) || empty($password)) {
             $error_message = 'Por favor, introduce tu email y contraseña.';
         } else {
-            $stmt = $db->prepare('SELECT * FROM Usuarios WHERE email = ? AND activo = 1');
+            $stmt = $db->prepare('SELECT * FROM usuario WHERE email = ? AND activo = 1');
             $stmt->execute([$email]);
             $usuario = $stmt->fetch(\PDO::FETCH_ASSOC);
 

@@ -19,7 +19,7 @@ class AdminController extends BaseController {
         
         try {
             $sql = "SELECT id_ticket, asunto, estado, fecha_creacion 
-                    FROM Tickets 
+                    FROM ticket 
                     WHERE estado IN ('Resuelto', 'Cerrado', 'Anulado') 
                     AND fecha_creacion < ?";            
             $tickets_a_borrar = $pdo->fetchAll($sql, [$fecha_corte]);
@@ -51,7 +51,7 @@ class AdminController extends BaseController {
 
         if (isset($_POST['confirmar_limpieza'])) {
             try {
-                $tablesToTruncate = ['Archivos_Adjuntos', 'Comentarios', 'Tickets', 'Clientes'];
+                $tablesToTruncate = ['archivo_adjunto', 'comentario', 'ticket', 'cliente'];
                 self::truncateTables($tablesToTruncate);
                 $mensaje = "¡Limpieza total completada con éxito! Las tablas de Tickets, Comentarios, Archivos Adjuntos y Clientes han sido vaciadas.";
             } catch (\Exception $e) {
@@ -69,9 +69,9 @@ class AdminController extends BaseController {
 
         if (isset($_POST['confirmar_reseteo'])) {
             try {
-                $tablesToTruncate = ['Archivos_Adjuntos', 'Comentarios', 'Tickets', 'Clientes', 'Agentes', 'TiposDeCaso'];
+                $tablesToTruncate = ['archivo_adjunto', 'comentario', 'ticket', 'cliente', 'agente', 'tipodecaso'];
                 self::truncateTables($tablesToTruncate);
-                $mensaje = "¡Reseteo completado con éxito! Todas las tablas han sido vaciadas, excepto la tabla de Usuarios.";
+                $mensaje = "¡Reseteo completado con éxito! Todas las tablas han sido vaciadas, excepto la tabla de usuario.";
             } catch (\Exception $e) {
                 $error = "Ocurrió un error fatal durante el reseteo: " . $e->getMessage();
             }
@@ -87,7 +87,7 @@ class AdminController extends BaseController {
     {
         self::checkAdmin();
         $pdo = \Flight::db();
-        $stmt = $pdo->query("SELECT * FROM Formulario_contacto ORDER BY fecha_creacion DESC");
+        $stmt = $pdo->query("SELECT * FROM formulario_contacto ORDER BY fecha_creacion DESC");
         $mensajes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         \Flight::render('admin_mensajes.php', ['mensajes' => $mensajes]);
@@ -100,7 +100,7 @@ class AdminController extends BaseController {
     {
         self::checkAdmin();
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("SELECT cm.*, u.nombre_completo as nombre_admin FROM Formulario_contacto cm LEFT JOIN usuarios u ON cm.id_admin_respuesta = u.id_usuario WHERE cm.id = ?");
+        $stmt = $pdo->prepare("SELECT cm.*, u.nombre_completo as nombre_admin FROM formulario_contacto cm LEFT JOIN usuario u ON cm.id_admin_respuesta = u.id_usuario WHERE cm.id = ?");
         $stmt->execute([$id]);
         $mensaje = $stmt->fetch(\PDO::FETCH_ASSOC);
 
@@ -131,7 +131,7 @@ class AdminController extends BaseController {
         }
 
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("SELECT * FROM Formulario_contacto WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT * FROM formulario_contacto WHERE id = ?");
         $stmt->execute([$id]);
         $mensaje_original = $stmt->fetch(\PDO::FETCH_ASSOC);
 
@@ -171,7 +171,7 @@ class AdminController extends BaseController {
             // Actualizar la base de datos si el correo se envió correctamente.
             // Se registra la respuesta, el admin que respondió, la fecha y se cambia el estado.
             $stmt_update = $pdo->prepare(
-                "UPDATE Formulario_contacto SET respuesta = ?, id_admin_respuesta = ?, fecha_respuesta = NOW(), estado = 'Respondido' WHERE id = ?"
+                "UPDATE formulario_contacto SET respuesta = ?, id_admin_respuesta = ?, fecha_respuesta = NOW(), estado = 'Respondido' WHERE id = ?"
             );
             $stmt_update->execute([$respuesta, $_SESSION['id_usuario'], $id]);
 
@@ -194,7 +194,7 @@ class AdminController extends BaseController {
         $pdo = \Flight::db();
 
         try {
-            $stmt = $pdo->prepare("DELETE FROM Formulario_contacto WHERE id = ?");
+            $stmt = $pdo->prepare("DELETE FROM formulario_contacto WHERE id = ?");
             $stmt->execute([$id]);
             $_SESSION['mensaje_exito'] = '¡Mensaje eliminado correctamente!';
         } catch (\Exception $e) {
@@ -237,10 +237,10 @@ class AdminController extends BaseController {
         $stmt = $pdo->prepare("
             SELECT te.*, t.asunto, u.nombre_completo as nombre_agente, c.nombre as nombre_cliente
             FROM ticket_evaluacion te
-            JOIN tickets t ON te.id_ticket = t.id_ticket
-            LEFT JOIN agentes a ON t.id_agente_asignado = a.id_agente
-            LEFT JOIN usuarios u ON a.id_usuario = u.id_usuario
-            LEFT JOIN clientes c ON t.id_cliente = c.id_cliente
+            JOIN ticket t ON te.id_ticket = t.id_ticket
+            LEFT JOIN agente a ON t.id_agente_asignado = a.id_agente
+            LEFT JOIN usuario u ON a.id_usuario = u.id_usuario
+            LEFT JOIN cliente c ON t.id_cliente = c.id_cliente
             $sql_where
             ORDER BY te.fecha_evaluacion DESC
         ");

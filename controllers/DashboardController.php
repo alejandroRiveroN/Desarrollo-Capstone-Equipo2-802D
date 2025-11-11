@@ -31,9 +31,9 @@ class DashboardController extends BaseController
             // Tickets abiertos por agente
             $stmt_agentes = $pdo->query("
                 SELECT u.nombre_completo, COUNT(t.id_ticket) as total_abiertos
-                FROM tickets t
-                JOIN agentes a ON t.id_agente_asignado = a.id_agente
-                JOIN usuarios u ON a.id_usuario = u.id_usuario
+                FROM ticket t
+                JOIN agente a ON t.id_agente_asignado = a.id_agente
+                JOIN usuario u ON a.id_usuario = u.id_usuario
                 WHERE t.estado IN ('Abierto', 'En Progreso', 'En Espera')
                 GROUP BY u.nombre_completo ORDER BY total_abiertos DESC
             ");
@@ -48,8 +48,8 @@ class DashboardController extends BaseController
             // Cliente: obtener su id_cliente por email vinculado
             $stmt_cliente = $pdo->prepare("
                 SELECT c.id_cliente
-                FROM clientes c
-                INNER JOIN usuarios u ON u.email = c.email
+                FROM cliente c
+                INNER JOIN usuario u ON u.email = c.email
                 WHERE u.id_usuario = ?
                 LIMIT 1
             ");
@@ -76,7 +76,7 @@ class DashboardController extends BaseController
                     COUNT(CASE WHEN t.estado IN ('En Progreso','En Espera') THEN 1 END)          AS total_pendientes,
                     COUNT(CASE WHEN t.estado IN ('Resuelto','Cerrado') THEN 1 END)               AS total_resueltos,
                     COUNT(CASE WHEN t.estado <> 'Anulado' THEN 1 END)                            AS total_tickets
-                FROM tickets t
+                FROM ticket t
                 $where_sql_rol
             ";
             // Importante: solo pasar params si hay placeholders en el SQL
@@ -90,7 +90,7 @@ class DashboardController extends BaseController
             // --- Donut por estado ---
             $query_donut = "
                 SELECT t.estado, COUNT(*) AS total
-                FROM tickets t
+                FROM ticket t
                 $where_sql_rol
                 GROUP BY t.estado
                 ORDER BY t.estado
@@ -134,7 +134,7 @@ class DashboardController extends BaseController
 
             $query_bar = "
                 SELECT YEAR(t.fecha_creacion) AS anio, MONTH(t.fecha_creacion) AS mes, COUNT(*) AS total
-                FROM tickets t
+                FROM ticket t
                 $where_sql_bar
                 GROUP BY anio, mes
                 ORDER BY anio, mes
@@ -169,7 +169,7 @@ class DashboardController extends BaseController
 
         // Restricción por rol en listado (agente/supervisor/cliente)
         if ((int)$_SESSION['id_rol'] === 2) {
-            $stmt_agente = $pdo->prepare("SELECT id_agente FROM agentes WHERE id_usuario = ?");
+            $stmt_agente = $pdo->prepare("SELECT id_agente FROM agente WHERE id_usuario = ?");
             $stmt_agente->execute([ (int)$_SESSION['id_usuario'] ]);
             $id_agente_actual = $stmt_agente->fetchColumn();
             if ($id_agente_actual) {
@@ -182,8 +182,8 @@ class DashboardController extends BaseController
             // Cliente: solo sus tickets (vinculo por email)
             $stmt_cliente = $pdo->prepare("
                 SELECT c.id_cliente
-                FROM clientes c
-                INNER JOIN usuarios u ON u.email = c.email
+                FROM cliente c
+                INNER JOIN usuario u ON u.email = c.email
                 WHERE u.id_usuario = ?
                 LIMIT 1
             ");
@@ -242,11 +242,11 @@ class DashboardController extends BaseController
                 tc.nombre_tipo,
                 t.fecha_vencimiento, t.costo, t.moneda, t.estado_facturacion,
                 CASE WHEN te.id_evaluacion IS NOT NULL THEN 1 ELSE 0 END AS ya_evaluado
-            FROM tickets AS t
-            JOIN clientes AS c ON t.id_cliente = c.id_cliente
-            LEFT JOIN agentes AS ag ON t.id_agente_asignado = ag.id_agente
-            LEFT JOIN usuarios AS u ON ag.id_usuario = u.id_usuario
-            LEFT JOIN tiposdecaso AS tc ON t.id_tipo_caso = tc.id_tipo_caso
+            FROM ticket AS t
+            JOIN cliente AS c ON t.id_cliente = c.id_cliente
+            LEFT JOIN agente AS ag ON t.id_agente_asignado = ag.id_agente
+            LEFT JOIN usuario AS u ON ag.id_usuario = u.id_usuario
+            LEFT JOIN tipodecaso AS tc ON t.id_tipo_caso = tc.id_tipo_caso
             LEFT JOIN ticket_evaluacion AS te ON t.id_ticket = te.id_ticket
         ";
         if ($where_conditions) {
@@ -281,15 +281,15 @@ class DashboardController extends BaseController
         // --------- Datos para combos ---------
         $agentes_disponibles = $pdo->query("
             SELECT a.id_agente, u.nombre_completo
-            FROM agentes a 
-            JOIN usuarios u ON a.id_usuario = u.id_usuario
+            FROM agente a 
+            JOIN usuario u ON a.id_usuario = u.id_usuario
             WHERE u.activo = 1
             ORDER BY u.nombre_completo
         ")->fetchAll(\PDO::FETCH_ASSOC);
 
         $clientes_disponibles = $pdo->query("
             SELECT id_cliente, nombre 
-            FROM clientes 
+            FROM cliente 
             ORDER BY nombre ASC
         ")->fetchAll(\PDO::FETCH_ASSOC);
 

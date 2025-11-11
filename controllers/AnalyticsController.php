@@ -64,9 +64,9 @@ class AnalyticsController extends BaseController
                     ELSE 0 END
                 ), 2) AS total_pagado
 
-            FROM agentes a
-            INNER JOIN usuarios u ON u.id_usuario = a.id_usuario
-            LEFT JOIN tickets t   ON t.id_agente_asignado = a.id_agente
+            FROM agente a
+            INNER JOIN usuario u ON u.id_usuario = a.id_usuario
+            LEFT JOIN ticket t   ON t.id_agente_asignado = a.id_agente
             LEFT JOIN ticket_evaluacion te ON te.id_ticket = t.id_ticket
             WHERE 1=1
               $where_sql

@@ -10,7 +10,7 @@ class Client
     public static function getFiltered(array $where_conditions, array $params, string $orderBy = 'nombre ASC'): array
     {
         $pdo = \Flight::db();
-        $sql = "SELECT id_cliente, nombre, empresa, email, telefono, pais, ciudad, activo FROM Clientes";
+        $sql = "SELECT id_cliente, nombre, empresa, email, telefono, pais, ciudad, activo FROM cliente";
 
         if (!empty($where_conditions)) {
             $sql .= " WHERE " . implode(' AND ', $where_conditions);
@@ -28,7 +28,7 @@ class Client
     public static function findById(int $id): ?array
     {
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("SELECT * FROM Clientes WHERE id_cliente = ?");
+        $stmt = $pdo->prepare("SELECT * FROM cliente WHERE id_cliente = ?");
         $stmt->execute([$id]);
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $result ?: null;
@@ -40,7 +40,7 @@ class Client
     public static function findIdByEmail(string $email): ?int
     {
         $pdo = \Flight::db();
-        $stmt = $pdo->prepare("SELECT id_cliente FROM Clientes WHERE email = ?");
+        $stmt = $pdo->prepare("SELECT id_cliente FROM cliente WHERE email = ?");
         $stmt->execute([$email]);
         $result = $stmt->fetchColumn();
         return $result ? (int)$result : null;
@@ -56,7 +56,7 @@ class Client
             $pdo->beginTransaction();
 
             $stmt = $pdo->prepare(
-                "INSERT INTO Clientes (nombre, empresa, email, telefono, pais, ciudad, activo) 
+                "INSERT INTO cliente (nombre, empresa, email, telefono, pais, ciudad, activo) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)"
             );
             $stmt->execute([$nombre, $empresa, $email, $telefono, $pais, $ciudad, $activo]);
@@ -64,7 +64,7 @@ class Client
             $password_to_hash = $password ?: bin2hex(random_bytes(8));
             $password_hash = password_hash($password_to_hash, PASSWORD_DEFAULT);
 
-            $stmtUser = $pdo->prepare("INSERT INTO usuarios (id_rol, nombre_completo, email, password_hash, activo) VALUES (?, ?, ?, ?, ?)");
+            $stmtUser = $pdo->prepare("INSERT INTO usuario (id_rol, nombre_completo, email, password_hash, activo) VALUES (?, ?, ?, ?, ?)");
             $stmtUser->execute([4, $nombre, $email, $password_hash, $activo]);
 
             $id_usuario_nuevo = (int)$pdo->lastInsertId();
@@ -87,7 +87,7 @@ class Client
     {
         $pdo = \Flight::db();
         $stmt = $pdo->prepare(
-            "UPDATE Clientes SET nombre = ?, empresa = ?, email = ?, telefono = ?, pais = ?, ciudad = ?, activo = ? WHERE id_cliente = ?"
+            "UPDATE cliente SET nombre = ?, empresa = ?, email = ?, telefono = ?, pais = ?, ciudad = ?, activo = ? WHERE id_cliente = ?"
         );
         $stmt->execute([$nombre, $empresa, $email, $telefono, $pais, $ciudad, $activo, $id]);
     }
@@ -108,34 +108,34 @@ class Client
         try {
             // Obtener el email y el id_usuario asociado al cliente. El id_cliente en la tabla Clientes
             // se corresponde con el id_usuario en la tabla Usuarios para los clientes.
-            $stmt_info = $pdo->prepare("SELECT email FROM Clientes WHERE id_cliente = ?");
+            $stmt_info = $pdo->prepare("SELECT email FROM cliente WHERE id_cliente = ?");
             $stmt_info->execute([$id_cliente]);
             $email_cliente = $stmt_info->fetchColumn();
             $id_usuario_cliente = $id_cliente; // Asumimos que el id_cliente es el id_usuario
 
             // 1. Obtener todos los IDs de los tickets asociados a este cliente.
-            $stmt_tickets = $pdo->prepare("SELECT id_ticket FROM Tickets WHERE id_cliente = ?");
+            $stmt_tickets = $pdo->prepare("SELECT id_ticket FROM ticket WHERE id_cliente = ?");
             $stmt_tickets->execute([$id_usuario_cliente]);
             $ticket_ids = $stmt_tickets->fetchAll(\PDO::FETCH_COLUMN);
 
             if (!empty($ticket_ids)) {
                 // 2. Eliminar registros dependientes de los tickets (comentarios y archivos).
                 $placeholders = implode(',', array_fill(0, count($ticket_ids), '?'));
-                $pdo->prepare("DELETE FROM Comentarios WHERE id_ticket IN ($placeholders)")->execute($ticket_ids);
-                $pdo->prepare("DELETE FROM Archivos_Adjuntos WHERE id_ticket IN ($placeholders)")->execute($ticket_ids);
+                $pdo->prepare("DELETE FROM comentario WHERE id_ticket IN ($placeholders)")->execute($ticket_ids);
+                $pdo->prepare("DELETE FROM archivo_adjunto WHERE id_ticket IN ($placeholders)")->execute($ticket_ids);
             }
 
             // 3. Eliminar los tickets y cotizaciones del cliente.
-            $pdo->prepare("DELETE FROM Tickets WHERE id_cliente = ?")->execute([$id_usuario_cliente]);
-            $pdo->prepare("DELETE FROM Cotizaciones WHERE id_cliente = ?")->execute([$id_usuario_cliente]);
+            $pdo->prepare("DELETE FROM ticket WHERE id_cliente = ?")->execute([$id_usuario_cliente]);
+            $pdo->prepare("DELETE FROM cotizacion WHERE id_cliente = ?")->execute([$id_usuario_cliente]);
 
             // 4. Eliminar el registro de la tabla Clientes.
-            $stmt = $pdo->prepare("DELETE FROM Clientes WHERE id_cliente = ?");
+            $stmt = $pdo->prepare("DELETE FROM cliente WHERE id_cliente = ?");
             $stmt->execute([$id_cliente]);
 
             // 5. Si se encontró un email, eliminar el usuario correspondiente de la tabla Usuarios.
             if ($email_cliente) {
-                $stmt_user = $pdo->prepare("DELETE FROM Usuarios WHERE email = ? AND id_rol = 4"); // Rol 4 = Cliente
+                $stmt_user = $pdo->prepare("DELETE FROM usuario WHERE email = ? AND id_rol = 4"); // Rol 4 = Cliente
                 $stmt_user->execute([$email_cliente]);
             }
 

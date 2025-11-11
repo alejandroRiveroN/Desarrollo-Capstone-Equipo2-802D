@@ -22,7 +22,7 @@ class TipoCasoController extends BaseController
             'activo' => 1
         ];
 
-        $stmt = $pdo->query("SELECT * FROM TiposDeCaso ORDER BY nombre_tipo ASC");
+        $stmt = $pdo->query("SELECT * FROM tipodecaso ORDER BY nombre_tipo ASC");
         $tipos_de_caso = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         Flight::render('gestionar_tipos_caso.php', [
@@ -46,7 +46,7 @@ class TipoCasoController extends BaseController
         $activo = isset($data->activo) ? 1 : 0;
 
         try {
-            $stmt = $pdo->prepare("INSERT INTO TiposDeCaso (nombre_tipo, descripcion, activo) VALUES (?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO tipodecaso (nombre_tipo, descripcion, activo) VALUES (?, ?, ?)");
             $stmt->execute([$nombre_tipo, $descripcion, $activo]);
             $_SESSION['mensaje_exito'] = '¡Tipo de caso creado correctamente!';
         } catch (\Exception $e) {
@@ -66,7 +66,7 @@ class TipoCasoController extends BaseController
         self::checkAdmin();
         $pdo = Flight::db();
 
-        $stmt = $pdo->prepare("SELECT * FROM TiposDeCaso WHERE id_tipo_caso = ?");
+        $stmt = $pdo->prepare("SELECT * FROM tipodecaso WHERE id_tipo_caso = ?");
         $stmt->execute([$id]);
         $tipo_caso_actual = $stmt->fetch(\PDO::FETCH_ASSOC);
 
@@ -76,7 +76,7 @@ class TipoCasoController extends BaseController
             exit();
         }
 
-        $stmt_all = $pdo->query("SELECT * FROM TiposDeCaso ORDER BY nombre_tipo ASC");
+        $stmt_all = $pdo->query("SELECT * FROM tipodecaso ORDER BY nombre_tipo ASC");
         $tipos_de_caso = $stmt_all->fetchAll(\PDO::FETCH_ASSOC);
 
         Flight::render('gestionar_tipos_caso.php', [
@@ -100,7 +100,7 @@ class TipoCasoController extends BaseController
         $activo = isset($data->activo) ? 1 : 0;
 
         try {
-            $stmt = $pdo->prepare("UPDATE TiposDeCaso SET nombre_tipo = ?, descripcion = ?, activo = ? WHERE id_tipo_caso = ?");
+            $stmt = $pdo->prepare("UPDATE tipodecaso SET nombre_tipo = ?, descripcion = ?, activo = ? WHERE id_tipo_caso = ?");
             $stmt->execute([$nombre_tipo, $descripcion, $activo, $id]);
             $_SESSION['mensaje_exito'] = '¡Tipo de caso actualizado correctamente!';
         } catch (\Exception $e) {
@@ -121,7 +121,7 @@ class TipoCasoController extends BaseController
         $pdo = Flight::db();
 
         try {
-            $stmt = $pdo->prepare("DELETE FROM TiposDeCaso WHERE id_tipo_caso = ?");
+            $stmt = $pdo->prepare("DELETE FROM tipodecaso WHERE id_tipo_caso = ?");
             $stmt->execute([$id]);
             $_SESSION['mensaje_exito'] = '¡Tipo de caso eliminado correctamente!';
         } catch (\PDOException $e) {
