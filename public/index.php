@@ -36,6 +36,11 @@ Flight::route('GET /', function () {
 Flight::route('POST /contact', ['App\Controllers\ContactController', 'send']);
 Flight::route('GET /dashboard', ['App\Controllers\DashboardController', 'index']);
 
+// --- RUTA DE FACTURACIÓN DEL CLIENTE --- (Corregido)
+Flight::route('GET /facturacion', ['App\Controllers\ClientController', 'facturacion']);
+Flight::route('GET /factura/pdf/@id_ticket:[0-9]+', ['App\Controllers\ClientController', 'generarFacturaPdf']);
+Flight::route('GET /factura/preview/@id_ticket:[0-9]+', ['App\Controllers\ClientController', 'previsualizarFacturaPdf']);
+
 // --- RUTAS DE CLIENTES ---
 Flight::route('GET /clientes', ['App\Controllers\ClientController', 'index']);
 Flight::route('GET /clientes/crear', ['App\Controllers\ClientController', 'create']);
@@ -108,6 +113,11 @@ Flight::route('GET /admin/reports/ticket-ratings/print', ['App\Controllers\Repor
 
 // --- RUTA DE ANALÍTICA DE AGENTES (Admin y Supervisor) ---
 Flight::route('GET /admin/analitica/agentes', ['App\Controllers\AnalyticsController', 'agentsPerformance']);
+
+// --- RUTAS DE EXPORTACIÓN DE ANALÍTICA DE AGENTES ---
+Flight::route('GET /admin/analitica/agentes/exportar/excel', ['App\Controllers\AnalyticsController', 'exportAgentsExcel']);
+Flight::route('GET /admin/analitica/agentes/exportar/pdf', ['App\Controllers\AnalyticsController', 'exportAgentsPdf']);
+Flight::route('GET /admin/analitica/agentes/exportar/imprimir', ['App\Controllers\AnalyticsController', 'printAgents']);
 
 // --- RUTA DE ANALÍTICA DE TIPOS DE CASO ---
 Flight::route('/analitica/tipos-caso', ['App\\Controllers\\TicketController', 'analiticaTiposCaso']);

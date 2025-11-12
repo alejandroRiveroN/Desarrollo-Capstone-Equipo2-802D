@@ -150,4 +150,61 @@ class Client
             throw new \Exception('Error en la base de datos durante la eliminación en cascada: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Obtiene el historial de facturación de un cliente.
+     * Devuelve todos los tickets asociados al cliente que tienen un costo definido.
+     *
+     * @param int $id_cliente El ID del cliente.
+     * @return array Lista de tickets facturables.
+     */
+    public static function getBillingHistory(int $id_cliente): array
+    {
+        if ($id_cliente <= 0) {
+            return [];
+        }
+
+        $pdo = \Flight::db();
+        $stmt = $pdo->prepare("
+            SELECT
+                t.id_ticket,
+                t.asunto,
+                t.costo,
+                t.moneda,
+                t.estado_facturacion,
+                t.fecha_creacion
+            FROM ticket t
+            WHERE t.id_cliente = :id_cliente AND t.costo IS NOT NULL AND t.costo > 0
+            ORDER BY t.fecha_creacion DESC
+        ");
+        $stmt->execute([':id_cliente' => $id_cliente]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Obtiene el historial de facturación de TODOS los clientes.
+     * para la vista de Administrador/Supervisor.
+     *
+     * @return array Lista de todos los tickets facturables.
+     */
+    public static function getAllBillingHistory(): array
+    {
+        $pdo = \Flight::db();
+        $stmt = $pdo->prepare("
+            SELECT
+                t.id_ticket,
+                t.asunto,
+                t.costo,
+                t.moneda,
+                t.estado_facturacion,
+                t.fecha_creacion,
+                c.nombre AS nombre_cliente
+            FROM ticket t
+            JOIN cliente c ON t.id_cliente = c.id_cliente
+            WHERE t.costo IS NOT NULL AND t.costo > 0
+            ORDER BY t.fecha_creacion DESC
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }

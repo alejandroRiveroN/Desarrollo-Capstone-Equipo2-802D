@@ -76,7 +76,15 @@ class Ticket
     {
         $pdo = \Flight::db();
         $stmt = $pdo->prepare("
-            SELECT t.*, c.nombre AS nombre_cliente, tc.nombre_tipo, u.nombre_completo AS nombre_agente
+            SELECT 
+                t.*, 
+                c.id_cliente,               -- ID del cliente, necesario para validaciones
+                c.nombre AS nombre_cliente, -- Alias original por compatibilidad
+                c.nombre AS cliente,        -- Alias para la factura PDF
+                c.email AS email_cliente,   -- Email del cliente para la factura
+                c.empresa AS empresa_cliente, -- Empresa del cliente para la factura
+                tc.nombre_tipo, 
+                u.nombre_completo AS nombre_agente
             FROM ticket t
             JOIN cliente c ON t.id_cliente = c.id_cliente
             LEFT JOIN agente a ON t.id_agente_asignado = a.id_agente
@@ -435,6 +443,35 @@ class Ticket
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
+            throw $e;
+        }
+    }
+
+    /**
+     * Actualiza solo el estado de facturación de un ticket y añade un comentario de log.
+     */
+    public static function updateBillingStatus(int $id_ticket, string $nuevo_estado, int $id_autor, string $nombre_autor): void
+    {
+        $pdo = \Flight::db();
+        $pdo->beginTransaction();
+        try {
+            // 1. Actualizar el estado de facturación en el ticket.
+            $stmt_update = $pdo->prepare(
+                "UPDATE ticket SET estado_facturacion = ? WHERE id_ticket = ?"
+            );
+            $stmt_update->execute([$nuevo_estado, $id_ticket]);
+
+            // 2. Añadir un comentario privado para registrar la acción.
+            $comentario_log = "El estado de facturación cambió a '{$nuevo_estado}' automáticamente por descarga de PDF realizada por {$nombre_autor}.";
+            $stmt_comentario = $pdo->prepare(
+                "INSERT INTO comentario (id_ticket, id_autor, tipo_autor, comentario, es_privado)
+                VALUES (?, ?, 'Agente', ?, 1)"
+            );
+            $stmt_comentario->execute([$id_ticket, $id_autor, $comentario_log]);
+
+            $pdo->commit();
+        } catch (\Exception $e) {
+            if ($pdo->inTransaction()) { $pdo->rollBack(); }
             throw $e;
         }
     }

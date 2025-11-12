@@ -62,8 +62,15 @@ require_once __DIR__ . '/partials/header.php';
 <div class="row g-4 mb-4">
     <!-- Gráfico de Dona: Resumen por Estado -->
     <div class="col-lg-5"><div class="card h-100"><div class="card-header fw-bold"><i class="bi bi-pie-chart-fill"></i> Resumen por Estado</div><div class="card-body d-flex justify-content-center align-items-center"><canvas id="ticketsChartDonut" style="max-height: 300px;"></canvas></div></div></div>
-    <!-- Gráfico de Barras: Tickets por Mes -->
-    <div class="col-lg-7"><div class="card h-100"><div class="card-header fw-bold"><i class="bi bi-bar-chart-line-fill"></i> Tickets Creados (Últimos 3 Meses)</div><div class="card-body"><canvas id="ticketsChartBar" style="max-height: 300px;"></canvas></div></div></div>
+
+    <?php if ((int)$_SESSION['id_rol'] === 4 && isset($chart_labels_tipos_caso_json)): // Gráfico específico para clientes ?>
+        <!-- Gráfico de Barras Horizontales: Tickets por Tipo de Caso -->
+        <div class="col-lg-7"><div class="card h-100"><div class="card-header fw-bold"><i class="bi bi-tags-fill"></i> Mis Tickets por Tipo de Caso</div><div class="card-body"><canvas id="ticketsChartHorizontalBar" style="max-height: 300px;"></canvas></div></div></div>
+    <?php else: // Gráfico original para otros roles ?>
+        <!-- Gráfico de Barras: Tickets por Mes -->
+        <div class="col-lg-7"><div class="card h-100"><div class="card-header fw-bold"><i class="bi bi-bar-chart-line-fill"></i> Tickets Creados (Últimos 3 Meses)</div><div class="card-body"><canvas id="ticketsChartBar" style="max-height: 300px;"></canvas></div></div></div>
+    <?php endif; ?>
+
 </div>
 <?php endif; ?>
 
@@ -186,7 +193,6 @@ require_once __DIR__ . '/partials/header.php';
 </div>
 <?php endif; ?>
 
-
 <!-- 4. Sección de la Lista de Tickets -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <!-- Título dinámico: cambia si hay filtros aplicados -->
@@ -285,6 +291,10 @@ require_once __DIR__ . '/partials/header.php';
     // Pasamos los datos de PHP a variables globales de JavaScript para que el script externo pueda usarlos.
     var chartDataDonut = { labels: <?php echo $chart_labels_donut_json; ?>, datasets: [{ label: 'Tickets', data: <?php echo $chart_values_donut_json; ?>, backgroundColor: ['#0d6efd', '#ffc107', '#198754', '#6c757d', '#0dcaf0', '#fd7e14'], hoverOffset: 4 }] };
     var chartDataBar = { labels: <?php echo $chart_labels_bar_json; ?>, datasets: [{ label: 'Tickets Creados', data: <?php echo $chart_values_bar_json; ?>, backgroundColor: 'rgba(54, 162, 235, 0.6)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 }] };
+
+    <?php if ((int)$_SESSION['id_rol'] === 4 && isset($chart_labels_tipos_caso_json)): // Datos para el nuevo gráfico del cliente ?>
+    var chartDataHorizontalBar = { labels: <?php echo $chart_labels_tipos_caso_json; ?>, datasets: [{ label: 'Total de Tickets', data: <?php echo $chart_values_tipos_caso_json; ?>, backgroundColor: 'rgba(255, 159, 64, 0.6)', borderColor: 'rgba(255, 159, 64, 1)', borderWidth: 1 }] };
+    <?php endif; ?>
 </script>
 <script src="<?php echo Flight::get('base_url'); ?>/js/dashboard.js"></script>
 

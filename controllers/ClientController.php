@@ -343,6 +343,134 @@ class ClientController extends BaseController {
 
         \Flight::render('imprimir_clientes.php', ['clientes' => $clientes]);
     }
+
+    /**
+     * Muestra el historial de facturación para el cliente autenticado.
+     * Esta es la función que faltaba y causaba el error 500.
+     */
+    public static function facturacion() {
+        self::checkAuth();
+        $rol = (int)$_SESSION['id_rol'];
+        $historial = [];
+        $is_admin_view = false;
+
+        if (in_array($rol, [1, 3])) { // Admin o Supervisor
+            // Obtienen el historial de todos los clientes.
+            $historial = Client::getAllBillingHistory();
+            $is_admin_view = true;
+        } elseif ($rol === 4) { // Cliente
+            // Obtiene solo su propio historial.
+            // Se busca el id_cliente a partir del id_usuario en sesión,
+            // para asegurar que siempre se obtenga el ID correcto.
+            $userData = \App\Models\User::findEssentialById((int)$_SESSION['id_usuario']);
+            $userEmail = $userData['email'] ?? null;
+            $id_cliente = 0;
+            if ($userEmail) {
+                $id_cliente = Client::findIdByEmail($userEmail) ?: 0;
+            }
+            $historial = Client::getBillingHistory((int)$id_cliente);
+        } else {
+            // Otros roles no tienen acceso.
+            \Flight::redirect('/dashboard'); // O mostrar un error 403
+        }
+
+        \Flight::render('facturacion.php', [
+            'historial_facturacion' => $historial,
+            'is_admin_view' => $is_admin_view
+        ]);
+    }
+
+    /**
+     * Genera una factura en PDF para un ticket específico.
+     */
+    public static function generarFacturaPdf($id_ticket) {
+        self::checkAuth();
+        
+        // 1. Obtener los detalles completos del ticket.
+        $ticket = \App\Models\Ticket::getTicketDetails($id_ticket);
+
+        if (!$ticket || !$ticket['costo']) {
+            \Flight::halt(404, 'El ticket no se puede facturar o no existe.');
+            return;
+        }
+
+        // 2. Verificar permisos: Solo el cliente dueño, admin o supervisor pueden ver la factura.
+        $rol = (int)$_SESSION['id_rol'];
+        if ($rol === 4) {
+            // --- CORRECCIÓN ---
+            // Aseguramos que $_SESSION['id_cliente'] exista antes de comparar.
+            if (!isset($_SESSION['id_cliente'])) {
+                $userData = \App\Models\User::findEssentialById((int)$_SESSION['id_usuario']);
+                $_SESSION['id_cliente'] = $userData ? \App\Models\Client::findIdByEmail($userData['email']) : null;
+            }
+
+            if ($ticket['id_cliente'] != $_SESSION['id_cliente']) {
+            \Flight::halt(403, 'No tienes permiso para acceder a esta factura.');
+            return;
+        }
+        }
+
+        // 3. (NUEVO) Actualizar estado a "Facturado" si está "Pendiente"
+        if ($ticket['estado_facturacion'] === 'Pendiente') {
+            \App\Models\Ticket::updateBillingStatus(
+                (int)$id_ticket,
+                'Facturado',
+                (int)$_SESSION['id_usuario'],
+                $_SESSION['nombre_completo']
+            );
+        }
+
+        // 3. Crear la instancia del PDF y pasarle los datos.
+        $pdf = new FacturaPDF('P', 'mm', 'A4');
+        $pdf->setDatos($ticket); // Pasamos todos los datos del ticket a la clase del PDF.
+        $pdf->AddPage();
+        $pdf->generar(); // Método que dibuja la factura.
+
+        // 4. Enviar el PDF al navegador para descarga.
+        $nombre_archivo = 'Factura-Ticket-' . $ticket['id_ticket'] . '.pdf';
+        $pdf->Output('D', $nombre_archivo);
+        exit;
+    }
+
+    /**
+     * Genera una previsualización de la factura en PDF en el navegador.
+     * No fuerza la descarga ni cambia el estado de facturación.
+     */
+    public static function previsualizarFacturaPdf($id_ticket) {
+        self::checkAuth();
+        
+        // 1. Obtener los detalles completos del ticket.
+        $ticket = \App\Models\Ticket::getTicketDetails($id_ticket);
+
+        if (!$ticket || !$ticket['costo']) {
+            \Flight::halt(404, 'El ticket no se puede facturar o no existe.');
+            return;
+        }
+
+        // 2. Verificar permisos (misma lógica que en la descarga).
+        $rol = (int)$_SESSION['id_rol'];
+        if ($rol === 4) {
+            if (!isset($_SESSION['id_cliente'])) {
+                $userData = \App\Models\User::findEssentialById((int)$_SESSION['id_usuario']);
+                $_SESSION['id_cliente'] = $userData ? \App\Models\Client::findIdByEmail($userData['email']) : null;
+            }
+            if ($ticket['id_cliente'] != $_SESSION['id_cliente']) {
+                \Flight::halt(403, 'No tienes permiso para acceder a esta factura.');
+                return;
+            }
+        }
+
+        // 3. Crear la instancia del PDF y generarlo.
+        $pdf = new FacturaPDF('P', 'mm', 'A4');
+        $pdf->setDatos($ticket);
+        $pdf->AddPage();
+        $pdf->generar();
+
+        // 4. Enviar el PDF al navegador para visualización en línea (Inline).
+        $nombre_archivo = 'Factura-Ticket-' . $ticket['id_ticket'] . '.pdf';
+        $pdf->Output('I', $nombre_archivo);
+        exit;
+    }
 }
 
 /**
@@ -351,4 +479,101 @@ class ClientController extends BaseController {
 class PDF extends \FPDF {
     function Header() { $this->SetFont('Arial', 'B', 12); $this->Cell(0, 10, 'Reporte', 0, 1, 'C'); $this->Ln(5); }
     function Footer() { $this->SetY(-15); $this->SetFont('Arial', 'I', 8); $this->Cell(0, 10, 'Pagina ' . $this->PageNo(), 0, 0, 'C'); }
+}
+
+/**
+ * Clase especializada para generar la Factura en PDF.
+ */
+class FacturaPDF extends \FPDF {
+    private $datos = [];
+
+    public function setDatos(array $datos) {
+        $this->datos = $datos;
+    }
+
+    function Header() {
+        // Logo (opcional, si tienes uno)
+        // $this->Image('path/to/logo.png', 10, 6, 30);
+        
+        $this->SetFont('Arial', 'B', 20);
+        $this->Cell(80);
+        $this->Cell(30, 10, 'FACTURA', 0, 0, 'C');
+        $this->Ln(20);
+
+        // Información de la empresa
+        $this->SetFont('Arial', 'B', 10);
+        $this->Cell(0, 5, 'MCE-Mantenimientos Computacionales Especializados', 0, 1, 'L');
+        $this->SetFont('Arial', '', 10);
+        $this->Cell(0, 5, 'Torre Bioceanica, San Antonio,Chile', 0, 1, 'L');
+        $this->Cell(0, 5, 'Email: contacto@tuempresa.com', 0, 1, 'L');
+        $this->Cell(0, 5, 'Telefono: +56 9 1234 5678', 0, 1, 'L');
+        $this->Ln(10);
+    }
+
+    function generar() {
+        // Datos del cliente
+        $this->SetFont('Arial', 'B', 10);
+        $this->Cell(100, 7, 'Facturar a:', 0, 0);
+        $this->SetFont('Arial', 'B', 10);
+        $this->Cell(0, 7, 'Detalles de la Factura:', 0, 1);
+
+        $this->SetFont('Arial', '', 10);
+        $this->Cell(100, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $this->datos['cliente']), 0, 0);
+        $this->Cell(40, 7, 'Factura #: ', 0, 0);
+        $this->Cell(0, 7, 'T-' . $this->datos['id_ticket'], 0, 1);
+
+        $this->Cell(100, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $this->datos['empresa_cliente'] ?? 'N/A'), 0, 0);
+        $this->Cell(40, 7, 'Fecha de Emision: ', 0, 0);
+        $this->Cell(0, 7, date('d/m/Y', strtotime($this->datos['fecha_creacion'])), 0, 1);
+
+        $this->Cell(100, 7, $this->datos['email_cliente'], 0, 0);
+        $this->Cell(40, 7, 'Estado: ', 0, 0);
+        $this->Cell(0, 7, $this->datos['estado_facturacion'], 0, 1);
+        $this->Ln(15);
+
+        // Tabla de detalles
+        $this->SetFillColor(230, 230, 230);
+        $this->SetFont('Arial', 'B', 10);
+        $this->Cell(130, 10, 'Descripcion', 1, 0, 'C', true);
+        $this->Cell(30, 10, 'Cantidad', 1, 0, 'C', true);
+        $this->Cell(30, 10, 'Total', 1, 1, 'C', true);
+
+        $this->SetFont('Arial', '', 10);
+        $descripcion = 'Soporte Ticket #' . $this->datos['id_ticket'] . ': ' . iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $this->datos['asunto']);
+        $this->MultiCell(130, 10, $descripcion, 1);
+        $y_pos = $this->GetY();
+        $this->SetXY(140, $y_pos - 10); // Ajustar posición para las siguientes celdas
+        $this->Cell(30, 10, '1', 1, 0, 'C');
+        $this->Cell(30, 10, number_format($this->datos['costo'], 2, ',', '.') . ' ' . $this->datos['moneda'], 1, 1, 'R');
+        $this->Ln(10);
+
+        // Totales
+        $costo = (float)$this->datos['costo'];
+        $iva = $costo * 0.19;
+        $total = $costo + $iva;
+
+        $this->SetFont('Arial', '', 10);
+        $this->Cell(130, 7, '', 0, 0);
+        $this->Cell(30, 7, 'Subtotal:', 0, 0, 'R');
+        $this->Cell(30, 7, number_format($costo, 2, ',', '.') . ' ' . $this->datos['moneda'], 0, 1, 'R');
+
+        $this->Cell(130, 7, '', 0, 0);
+        $this->Cell(30, 7, 'IVA (19%):', 0, 0, 'R');
+        $this->Cell(30, 7, number_format($iva, 2, ',', '.') . ' ' . $this->datos['moneda'], 0, 1, 'R');
+
+        $this->SetFont('Arial', 'B', 12);
+        $this->Cell(130, 10, '', 0, 0);
+        $this->Cell(30, 10, 'TOTAL:', 0, 0, 'R');
+        $this->Cell(30, 10, number_format($total, 2, ',', '.') . ' ' . $this->datos['moneda'], 0, 1, 'R');
+    }
+
+    function Footer() {
+        $this->SetY(-30);
+        $this->SetFont('Arial', 'I', 8);
+        $this->Cell(0, 5, 'Gracias por su preferencia.', 0, 1, 'C');
+        $this->Cell(0, 5, 'Si tiene alguna pregunta sobre esta factura, por favor contactenos.', 0, 1, 'C');
+        $this->SetY(-15);
+        $this->SetFont('Arial', 'I', 8);
+        $this->Cell(0, 10, 'Pagina ' . $this->PageNo(), 0, 0, 'C');
+    }
 }

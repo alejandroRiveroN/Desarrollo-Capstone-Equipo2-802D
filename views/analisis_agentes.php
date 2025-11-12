@@ -8,8 +8,8 @@ include __DIR__ . '/partials/header.php';
   <div class="d-flex align-items-center justify-content-between mb-4">
     <h2 class="mb-0"><i class="bi bi-person-workspace"></i> Rendimiento de Agentes</h2>
   </div>
-
-  <!-- Filtros y Reportes -->
+<!-- Filtros y Reportes -->
+  <?php if (empty($is_print_view)): // Ocultar en la vista de impresión ?>
   <div class="card mb-4 no-print">
     <div class="card-header fw-bold">
       <a class="text-decoration-none text-dark" data-bs-toggle="collapse" href="#collapseFilters" role="button" aria-expanded="true">
@@ -49,14 +49,17 @@ include __DIR__ . '/partials/header.php';
       </div>
     </div>
   </div>
+  <?php endif; ?>
 
   <!-- Gráfico comparativo -->
+  <?php if (empty($is_print_view)): // Ocultar en la vista de impresión ?>
   <div class="card mb-4">
     <div class="card-header fw-bold"><i class="bi bi-bar-chart-line-fill"></i> Comparativo por Agente</div>
     <div class="card-body">
       <canvas id="chartAgentes" height="120"></canvas>
     </div>
   </div>
+  <?php endif; ?>
 
   <!-- Tabla detallada -->
   <div class="card">
@@ -106,6 +109,7 @@ include __DIR__ . '/partials/header.php';
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<?php if (empty($is_print_view)): // No cargar scripts de gráficos en la vista de impresión ?>
 <script>
   const labels   = <?php echo $chart_labels ?? '[]'; ?>;
   const cerrados = <?php echo $chart_cerrados ?? '[]'; ?>;
@@ -155,5 +159,12 @@ include __DIR__ . '/partials/header.php';
     }
   }
 </script>
+<?php else: // Si es vista de impresión, ejecutar JS para imprimir automáticamente ?>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    window.print();
+  });
+</script>
+<?php endif; ?>
 
 <?php include __DIR__ . '/partials/footer.php';
