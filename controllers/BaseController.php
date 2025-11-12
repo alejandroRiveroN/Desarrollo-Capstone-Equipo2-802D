@@ -13,13 +13,7 @@ abstract class BaseController {
      */
     protected static function checkAuth() {
         if (!isset($_SESSION['id_usuario'])) {
-            
-            // Determinar el protocolo (http o https) para construir la URL de forma dinámica.
-            // Esto es crucial para que las redirecciones funcionen detrás de un proxy como ngrok (que usa https).
-            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https" : "http";
-            $login_url = $protocol . '://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/login';
-            \Flight::redirect($login_url);
-            exit();
+            self::redirectToLogin();
         }
     }
 
@@ -28,12 +22,7 @@ abstract class BaseController {
      */
     protected static function checkAdmin() {
         if (!isset($_SESSION['id_usuario']) || $_SESSION['id_rol'] != 1) {
-            
-            // Reutilizamos la misma lógica de detección de protocolo para consistencia.
-            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER-['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https" : "http";
-            $login_url = $protocol . '://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/login';
-            \Flight::redirect($login_url);
-            exit();
+            self::redirectToLogin();
         }
     }
 
@@ -42,12 +31,7 @@ abstract class BaseController {
      */
     protected static function checkAdminOrSupervisor() {
         if (!isset($_SESSION['id_usuario']) || !in_array((int)$_SESSION['id_rol'], [1, 3], true)) { // Rol 1: Admin, Rol 3: Supervisor
-            
-            // Reutilizamos la misma lógica de detección de protocolo para consistencia.
-            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https" : "http";
-            $login_url = $protocol . '://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/login';
-            \Flight::redirect($login_url);
-            exit();
+            self::redirectToLogin();
         }
     }
 
@@ -69,5 +53,19 @@ abstract class BaseController {
             return "<div class='alert alert-{$alert_type} alert-dismissible fade show' role='alert'>{$message}<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>";
         }
         return '';
+    }
+
+    /**
+     * Redirige al usuario a la página de login.
+     * Construye una URL absoluta para funcionar correctamente detrás de proxies inversos.
+     */
+    private static function redirectToLogin(): void
+    {
+        // Determinar el protocolo (http o https) para construir la URL de forma dinámica.
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443 ? "https" : "http";
+        $login_url = $protocol . '://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/login';
+        
+        \Flight::redirect($login_url);
+        exit();
     }
 }

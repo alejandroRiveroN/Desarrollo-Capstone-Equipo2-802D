@@ -30,9 +30,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const alertsToHide = document.querySelectorAll('.alert-exito, .alert-error, .alert-success, .alert-danger');
     alertsToHide.forEach(function(alert) {
         setTimeout(function() {
+            // Escuchar el final de la transición de opacidad
+            alert.addEventListener('transitionend', () => {
+                alert.style.display = 'none';
+            }, { once: true }); // { once: true } asegura que el listener se ejecute solo una vez
+
             alert.style.transition = 'opacity 0.5s ease-out';
             alert.style.opacity = '0';
-            setTimeout(() => { alert.style.display = 'none'; }, 500);
         }, 5000); // Ocultar después de 5 segundos
     });
 });
