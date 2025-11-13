@@ -60,6 +60,10 @@ Flight::route('GET /registro_cliente', function(){
 // Procesar registro público
 Flight::route('POST /registro_cliente', ['App\Controllers\ClientController', 'publicRegister']);
 
+// --- RUTAS DE VERIFICACIÓN DE CORREO ---
+Flight::route('GET /verificar-correo', ['App\Controllers\VerificationController', 'verify']);
+Flight::route('GET /reenviar-verificacion', ['App\Controllers\VerificationController', 'resend']);
+
 // --- RUTAS DE USUARIOS ---
 Flight::route('GET /usuarios', ['App\Controllers\UserController', 'index']);
 Flight::route('GET /usuarios/crear', ['App\Controllers\UserController', 'create']);

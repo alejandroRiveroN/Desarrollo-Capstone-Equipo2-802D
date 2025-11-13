@@ -10,24 +10,45 @@
  *
  */
 
-body {
-    font-family: Arial, sans-serif;
-    margin: 15mm; /* Márgenes para impresión */
-}
+@media print {
+    body {
+        font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+        margin: 10mm; /* Márgenes estándar para impresión */
+        background-color: #fff; /* Fondo blanco para ahorrar tinta */
+        color: #000; /* Texto negro para máxima legibilidad */
+    }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
+    /* Oculta elementos no necesarios en la impresión */
+    .no-print, .sidebar, .user-bar, .btn, form {
+        display: none !important;
+    }
 
-th, td {
-    border: 1px solid #ddd;
-    padding: 6px;
-    text-align: left;
-    font-size: 9pt; /* Tamaño de fuente legible para impresión */
-}
+    /* Asegura que el contenido principal ocupe todo el ancho */
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
 
-th {
-    background-color: #f2f2f2;
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    th, td {
+        border: 1px solid #ccc; /* Borde más suave que #ddd */
+        padding: 8px;
+        text-align: left;
+        font-size: 9pt; /* Tamaño de fuente legible para impresión */
+    }
+
+    th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+
+    a {
+        text-decoration: none;
+        color: #000;
+    }
 }

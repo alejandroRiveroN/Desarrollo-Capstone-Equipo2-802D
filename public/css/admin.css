@@ -11,15 +11,3 @@
 .test-results-container {
     display: none;
 }
-
-/**
- * =================================================================
- * Estilos de Impresión
- * =================================================================
- * Oculta elementos no deseados al imprimir una página.
- */
-@media print {
-    .no-print {
-        display: none !important;
-    }
-}

@@ -20,8 +20,15 @@ $isActive = function(string $path) use ($uri) {
   <title>Sistema de Gestión de Soporte</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-  <link rel="stylesheet" href="<?php echo $base; ?>/css/sidebar.css?v=1.1" />
-  <link rel="stylesheet" href="<?php echo $base; ?>/css/admin.css?v=1.0" />
+
+  <!-- 1. Estilos Principales y Variables Globales -->
+  <link rel="stylesheet" href="<?php echo $base; ?>/css/main.css?v=1.1" />
+
+  <!-- 2. Estilos de Componentes (dependen de main.css) -->
+  <link rel="stylesheet" href="<?php echo $base; ?>/css/dashboard.css?v=1.0" />
+  <link rel="stylesheet" href="<?php echo $base; ?>/css/mensaje.css?v=1.1" />
+  <link rel="stylesheet" href="<?php echo $base; ?>/css/admin.css?v=1.1" />
+  <link rel="stylesheet" href="<?php echo $base; ?>/css/print.css?v=1.1" media="print" />
 </head>
 <body data-base-url="<?php echo $base; ?>">
 

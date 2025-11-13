@@ -12,12 +12,13 @@
  * =================================================================
  */
 :root {
+    /* Paleta Principal (Login, Landing) */
     --color-primario: #133C55;
     --color-acento: #00b894;
     --color-acento-hover: #019875;
-    --color-fondo: #f2f4f7;
     --color-texto-claro: #fff;
     --color-texto-oscuro: #555;
+    /* Estilos Comunes */
     --radio-borde: 12px;
 }
 
@@ -28,7 +29,7 @@
  */
 
 body.page-login, body.page-registro, body.page-reset {
-    background-color: var(--color-fondo);
+    background-color: #f2f4f7; /* Se mantiene un fondo ligeramente distinto para estas páginas */
     display: flex;
     justify-content: center;
     min-height: 100vh;
