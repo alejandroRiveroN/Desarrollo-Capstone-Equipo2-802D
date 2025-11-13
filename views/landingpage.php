@@ -74,7 +74,7 @@ if (isset($_SESSION['mensaje_exito'])) {
                     <a href="#" class="text-white hover:text-mce-secondary px-3 py-2 rounded-md text-base font-medium transition duration-150 ease-in-out">Inicio</a>
                     <a href="#services" class="text-white hover:text-mce-secondary px-3 py-2 rounded-md text-base font-medium transition duration-150 ease-in-out">Servicios</a>
                     <a href="#contact" class="text-white hover:text-mce-secondary px-3 py-2 rounded-md text-base font-medium transition duration-150 ease-in-out">Contacto</a>
-                    <!-- Botón de Registrarse (sin funcionalidad de momento) -->
+                    <!-- Botón de Registrarse -->
                     <?php if (!isset($_SESSION['id_usuario'])): ?>
                         <!-- Si NO está logueado -->
                         <a href="<?php echo Flight::get('base_url'); ?>/registro_cliente" 
@@ -147,7 +147,7 @@ if (isset($_SESSION['mensaje_exito'])) {
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     <!-- Tarjetas de servicio (4) -->
                     <?php
-                    // Ejemplo de cómo podrías generar dinámicamente las tarjetas 
+                    //generación de tarjetas dinámicamente. 
                     $servicios = [
                         ['icon' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.28 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z', 'titulo' => 'Mantenimiento Preventivo', 'desc' => 'Optimiza el rendimiento y prolonga la vida útil de tus equipos.'],
                         ['icon' => 'M9.75 17L9 20l-1 1h8l-1-1v-3.25m-7.25 0h14.5c.345 0 .625-.28.625-.625v-8.75c0-.345-.28-.625-.625-.625h-14.5c-.345 0-.625.28-.625.625v8.75c0 .345.28.625.625.625zM12 9h.01', 'titulo' => 'Soporte Remoto', 'desc' => 'Asistencia inmediata y eficiente a distancia.'],
@@ -356,9 +356,9 @@ if (isset($_SESSION['mensaje_exito'])) {
                 <p class="text-xl text-gray-600 mb-12">Empresas que confían en nuestra tecnología y soporte.</p>
                 <div class="flex justify-center items-center flex-wrap gap-x-12 gap-y-8">
                     <!-- Logos de ejemplo. Reemplaza con los de tus clientes. -->
-                    <img src="https://www.limchile.cl/wp-content/uploads/2022/12/Foto-portada.png" alt="Logo Cliente Transistor" class="h-10 w-auto grayscale hover:grayscale-0 transition duration-300">
-                    <img src="https://landportal.org/sites/default/files/2024-03/Coca-Cola-Logo-2.jpg" alt="Logo Cliente Reform" class="h-10 w-auto grayscale hover:grayscale-0 transition duration-300">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnEZqpd0Yv6O06ZDxo0YHST2XezQ2Gf6eeBw&s" alt="Logo Cliente Tuple" class="h-10 w-auto grayscale hover:grayscale-0 transition duration-300">
+                    <img src="https://www.limchile.cl/wp-content/uploads/2022/12/Foto-portada.png" alt="Logo Cliente Transistor" class="h-20 w-auto grayscale hover:grayscale-0 transition duration-300 transform hover:scale-110">
+                    <img src="https://landportal.org/sites/default/files/2024-03/Coca-Cola-Logo-2.jpg" alt="Logo Cliente Reform" class="h-20 w-auto grayscale hover:grayscale-0 transition duration-300 transform hover:scale-110">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnEZqpd0Yv6O06ZDxo0YHST2XezQ2Gf6eeBw&s" alt="Logo Cliente Tuple" class="h-20 w-auto grayscale hover:grayscale-0 transition duration-300 transform hover:scale-110">
                 </div>
             </div>
         </section>
