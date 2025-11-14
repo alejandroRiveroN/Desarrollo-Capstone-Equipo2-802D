@@ -148,7 +148,7 @@ class ClientController extends BaseController {
             ]);
         } else {
             try {
-                Client::update($id, $nombre, $empresa, $email, $telefono, $pais, $ciudad, $activo);
+                Client::update($id, $nombre, $email, $telefono, $empresa, $pais, $ciudad, $activo);
 
                 $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/clientes?status=updated';
                 \Flight::redirect($url);

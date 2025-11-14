@@ -129,9 +129,26 @@ class CotizacionController extends BaseController
             \Flight::redirect(self::abs('/'));
         }
 
+        // Traemos todo como antes
         $items = Cotizacion::findAllForAdmin();
 
-        \Flight::render('admin_cotizaciones.php', ['items' => $items]);
+        // Separamos en dos listas: en curso vs respondidas
+        $pendientes  = [];
+        $respondidas = [];
+
+        foreach ($items as $c) {
+            if ($c['estado'] === 'Respondida') {
+                $respondidas[] = $c;
+            } else {
+                // Aquí entran 'Nueva' (y cualquier otro estado distinto de Respondida)
+                $pendientes[] = $c;
+            }
+        }
+
+        \Flight::render('admin_cotizaciones.php', [
+            'pendientes'  => $pendientes,
+            'respondidas' => $respondidas,
+        ]);
     }
 
     /** Ver y responder */
