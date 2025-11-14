@@ -36,6 +36,9 @@ Flight::route('GET /', function () {
 Flight::route('POST /contact', ['App\Controllers\ContactController', 'send']);
 Flight::route('GET /dashboard', ['App\Controllers\DashboardController', 'index']);
 
+// --- RUTA DE EXPORTACIÓN DEL DASHBOARD ---
+Flight::route('GET /dashboard/exportar/@formato', ['App\Controllers\DashboardController', 'exportar']);
+
 // --- RUTA DE FACTURACIÓN DEL CLIENTE --- (Corregido)
 Flight::route('GET /facturacion', ['App\Controllers\ClientController', 'facturacion']);
 Flight::route('GET /factura/pdf/@id_ticket:[0-9]+', ['App\Controllers\ClientController', 'generarFacturaPdf']);

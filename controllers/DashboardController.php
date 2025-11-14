@@ -330,4 +330,71 @@ class DashboardController extends BaseController
             'supervisor_metrics'     => $supervisor_metrics, // Pasar las nuevas métricas a la vista
         ]);
     }
+
+    /**
+     * Método privado para obtener los tickets filtrados para exportación.
+     * Reutiliza la lógica de filtrado del dashboard.
+     */
+    private static function _getTicketsParaExportar() {
+        $pdo = \Flight::db();
+        $request = \Flight::request();
+
+        // Obtener filtros de la URL
+        $filtro_cliente       = $request->query['cliente']       ?? '';
+        $filtro_agente        = $request->query['agente']        ?? '';
+        $filtro_prioridad     = $request->query['prioridad']     ?? '';
+        $filtro_estado_tabla  = $request->query['estado_tabla']  ?? '';
+        $filtro_facturacion   = $request->query['facturacion']   ?? '';
+        $filtro_fecha_inicio  = $request->query['fecha_inicio']  ?? '';
+        $filtro_fecha_fin     = $request->query['fecha_fin']     ?? '';
+
+        $where_conditions = [];
+        $params = [];
+
+        // Construir condiciones y parámetros
+        if ($filtro_cliente) { $where_conditions[] = "t.id_cliente = :cliente"; $params[':cliente'] = (int)$filtro_cliente; }
+        if ($filtro_agente) { $where_conditions[] = "t.id_agente_asignado = :agente"; $params[':agente'] = (int)$filtro_agente; }
+        if ($filtro_prioridad) { $where_conditions[] = "t.prioridad = :prioridad"; $params[':prioridad'] = $filtro_prioridad; }
+        if ($filtro_estado_tabla) { $where_conditions[] = "t.estado = :estado_tabla"; $params[':estado_tabla'] = $filtro_estado_tabla; }
+        if ($filtro_facturacion) { $where_conditions[] = "t.estado_facturacion = :facturacion"; $params[':facturacion'] = $filtro_facturacion; }
+        if ($filtro_fecha_inicio) { $where_conditions[] = "DATE(t.fecha_creacion) >= :fecha_inicio"; $params[':fecha_inicio'] = $filtro_fecha_inicio; }
+        if ($filtro_fecha_fin) { $where_conditions[] = "DATE(t.fecha_creacion) <= :fecha_fin"; $params[':fecha_fin'] = $filtro_fecha_fin; }
+
+        $sql = "
+            SELECT t.*, c.nombre as cliente, u.nombre_completo as agente, tc.nombre_tipo
+            FROM ticket t
+            JOIN cliente c ON t.id_cliente = c.id_cliente
+            LEFT JOIN agente ag ON t.id_agente_asignado = ag.id_agente
+            LEFT JOIN usuario u ON ag.id_usuario = u.id_usuario
+            LEFT JOIN tipodecaso tc ON t.id_tipo_caso = tc.id_tipo_caso
+        ";
+        if ($where_conditions) {
+            $sql .= " WHERE " . implode(' AND ', $where_conditions);
+        }
+        $sql .= " ORDER BY t.id_ticket DESC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public static function exportar($formato) {
+        self::checkAdmin();
+        $tickets = self::_getTicketsParaExportar();
+
+        switch ($formato) {
+            case 'excel':
+                \App\Controllers\TicketController::exportExcel($tickets);
+                break;
+            case 'pdf':
+                \App\Controllers\TicketController::exportPdf($tickets);
+                break;
+            case 'imprimir':
+                \Flight::render('imprimir_tickets.php', ['tickets' => $tickets]);
+                break;
+            default:
+                \Flight::redirect('/dashboard');
+                break;
+        }
+    }
 }

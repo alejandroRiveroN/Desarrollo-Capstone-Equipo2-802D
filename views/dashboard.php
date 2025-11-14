@@ -288,15 +288,73 @@ require_once __DIR__ . '/partials/header.php';
 <!-- 5. Scripts de JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Pasamos los datos de PHP a variables globales de JavaScript para que el script externo pueda usarlos.
-    var chartDataDonut = { labels: <?php echo $chart_labels_donut_json; ?>, datasets: [{ label: 'Tickets', data: <?php echo $chart_values_donut_json; ?>, backgroundColor: ['#0d6efd', '#ffc107', '#198754', '#6c757d', '#0dcaf0', '#fd7e14'], hoverOffset: 4 }] };
-    var chartDataBar = { labels: <?php echo $chart_labels_bar_json; ?>, datasets: [{ label: 'Tickets Creados', data: <?php echo $chart_values_bar_json; ?>, backgroundColor: 'rgba(54, 162, 235, 0.6)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 }] };
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Gráfico de Dona: Resumen por Estado
+    const donutCtx = document.getElementById('ticketsChartDonut');
+    if (donutCtx) {
+        new Chart(donutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: <?php echo $chart_labels_donut_json; ?>,
+                datasets: [{
+                    label: 'Tickets',
+                    data: <?php echo $chart_values_donut_json; ?>,
+                    backgroundColor: ['#0d6efd', '#ffc107', '#198754', '#6c757d', '#0dcaf0', '#fd7e14'],
+                    hoverOffset: 4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
 
-    <?php if ((int)$_SESSION['id_rol'] === 4 && isset($chart_labels_tipos_caso_json)): // Datos para el nuevo gráfico del cliente ?>
-    var chartDataHorizontalBar = { labels: <?php echo $chart_labels_tipos_caso_json; ?>, datasets: [{ label: 'Total de Tickets', data: <?php echo $chart_values_tipos_caso_json; ?>, backgroundColor: 'rgba(255, 159, 64, 0.6)', borderColor: 'rgba(255, 159, 64, 1)', borderWidth: 1 }] };
+    <?php if ((int)$_SESSION['id_rol'] === 4 && isset($chart_labels_tipos_caso_json)): ?>
+        // 2. Gráfico de Barras Horizontales para Clientes
+        const horizontalBarCtx = document.getElementById('ticketsChartHorizontalBar');
+        if (horizontalBarCtx) {
+            new Chart(horizontalBarCtx, {
+                type: 'bar',
+                data: {
+                    labels: <?php echo $chart_labels_tipos_caso_json; ?>,
+                    datasets: [{
+                        label: 'Total de Tickets',
+                        data: <?php echo $chart_values_tipos_caso_json; ?>,
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false }
+            });
+        }
+    <?php else: ?>
+        // 3. Gráfico de Barras para Admin/Agentes
+        const barCtx = document.getElementById('ticketsChartBar');
+        if (barCtx) {
+            new Chart(barCtx, {
+                type: 'bar',
+                data: { labels: <?php echo $chart_labels_bar_json; ?>, datasets: [{ label: 'Tickets Creados', data: <?php echo $chart_values_bar_json; ?>, backgroundColor: 'rgba(54, 162, 235, 0.6)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            });
+        }
     <?php endif; ?>
+});
+
+function exportar(formato) {
+    const form = document.getElementById('formFiltros');
+    const formData = new FormData(form);
+    const params = new URLSearchParams();
+
+    // Iteramos sobre los datos del formulario y añadimos solo los que tienen valor
+    for (const [key, value] of formData.entries()) {
+        if (value) { // Solo añade el parámetro si no está vacío
+            params.append(key, value);
+        }
+    }
+
+    // Construimos la URL final y redirigimos
+    window.location.href = `<?php echo Flight::get('base_url'); ?>/dashboard/exportar/${formato}?${params.toString()}`;
+}
 </script>
-<script src="<?php echo Flight::get('base_url'); ?>/js/dashboard.js"></script>
 
 <!-- 6. Inclusión del pie de página -->
 <?php require_once __DIR__ . '/partials/footer.php'; ?>
