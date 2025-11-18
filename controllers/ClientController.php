@@ -351,32 +351,54 @@ class ClientController extends BaseController {
     public static function facturacion() {
         self::checkAuth();
         $rol = (int)$_SESSION['id_rol'];
+        $is_admin_view = in_array($rol, [1, 3]);
         $historial = [];
-        $is_admin_view = false;
+        $lista_clientes = [];
 
-        if (in_array($rol, [1, 3])) { // Admin o Supervisor
-            // Obtienen el historial de todos los clientes.
-            $historial = Client::getAllBillingHistory();
-            $is_admin_view = true;
-        } elseif ($rol === 4) { // Cliente
-            // Obtiene solo su propio historial.
-            // Se busca el id_cliente a partir del id_usuario en sesión,
-            // para asegurar que siempre se obtenga el ID correcto.
-            $userData = \App\Models\User::findEssentialById((int)$_SESSION['id_usuario']);
-            $userEmail = $userData['email'] ?? null;
-            $id_cliente = 0;
-            if ($userEmail) {
-                $id_cliente = Client::findIdByEmail($userEmail) ?: 0;
+        // Obtener filtros del query string
+        $request = \Flight::request();
+        $filtros = [];
+        $params = [];
+
+        if ($is_admin_view) {
+            $lista_clientes = Client::getAllBasic();
+        }
+
+        if ($is_admin_view) {
+            if (!empty($request->query['cliente'])) {
+                $filtros[] = "c.id_cliente = :cliente";
+                $params[':cliente'] = $request->query['cliente'];
             }
-            $historial = Client::getBillingHistory((int)$id_cliente);
-        } else {
-            // Otros roles no tienen acceso.
-            \Flight::redirect('/dashboard'); // O mostrar un error 403
+        }
+
+        if (!empty($request->query['estado'])) {
+            $filtros[] = "t.estado_facturacion = :estado";
+            $params[':estado'] = $request->query['estado'];
+        }
+
+        if (!empty($request->query['fecha_desde'])) {
+            $filtros[] = "t.fecha_creacion >= :fecha_desde";
+            $params[':fecha_desde'] = $request->query['fecha_desde'];
+        }
+
+        if (!empty($request->query['fecha_hasta'])) {
+            $filtros[] = "t.fecha_creacion <= :fecha_hasta";
+            $params[':fecha_hasta'] = $request->query['fecha_hasta'];
+        }
+
+        if ($is_admin_view) {
+            $historial = Client::getAllBillingHistoryFiltered($filtros, $params);
+        } elseif ($rol === 4) { // Cliente
+            $userData = \App\Models\User::findEssentialById((int)$_SESSION['id_usuario']);
+            $id_cliente = Client::findIdByEmail($userData['email']) ?? 0;
+
+            $historial = Client::getBillingHistoryFiltered($id_cliente, $filtros, $params);
         }
 
         \Flight::render('facturacion.php', [
             'historial_facturacion' => $historial,
-            'is_admin_view' => $is_admin_view
+            'is_admin_view' => $is_admin_view,
+            'lista_clientes' => $lista_clientes
         ]);
     }
 
@@ -471,6 +493,39 @@ class ClientController extends BaseController {
         $pdf->Output('I', $nombre_archivo);
         exit;
     }
+    private static function _getFacturacionConFiltros() {
+        $request = \Flight::request();
+        $cliente = $request->query['cliente'] ?? '';
+        $estado = $request->query['estado'] ?? '';
+        $fecha_desde = $request->query['fecha_desde'] ?? '';
+        $fecha_hasta = $request->query['fecha_hasta'] ?? '';
+
+        $where = [];
+        $params = [];
+
+        if (!empty($cliente)) {
+            $where[] = "nombre_cliente LIKE :cliente";
+            $params[':cliente'] = '%' . $cliente . '%';
+        }
+
+        if (!empty($estado)) {
+            $where[] = "estado_facturacion = :estado";
+            $params[':estado'] = $estado;
+        }
+
+        if (!empty($fecha_desde)) {
+            $where[] = "fecha_creacion >= :fecha_desde";
+            $params[':fecha_desde'] = $fecha_desde;
+        }
+
+        if (!empty($fecha_hasta)) {
+            $where[] = "fecha_creacion <= :fecha_hasta";
+            $params[':fecha_hasta'] = $fecha_hasta;
+        }
+
+        return ['where' => $where, 'params' => $params];
+    }
+
 }
 
 /**

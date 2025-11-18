@@ -207,4 +207,66 @@ class Client
         $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
+    public static function getAllBillingHistoryFiltered(array $where = [], array $params = []): array
+    {
+        $pdo = \Flight::db();
+        $sql = "
+            SELECT
+                t.id_ticket,
+                t.asunto,
+                t.costo,
+                t.moneda,
+                t.estado_facturacion,
+                t.fecha_creacion,
+                c.nombre AS nombre_cliente
+            FROM ticket t
+            JOIN cliente c ON t.id_cliente = c.id_cliente
+            WHERE t.costo IS NOT NULL AND t.costo > 0
+        ";
+
+        if (!empty($where)) {
+            $sql .= " AND " . implode(" AND ", $where);
+        }
+
+        $sql .= " ORDER BY t.fecha_creacion DESC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+    public static function getBillingHistoryFiltered(int $id_cliente, array $where = [], array $params = []): array
+    {
+        $pdo = \Flight::db();
+        $sql = "
+            SELECT
+                t.id_ticket,
+                t.asunto,
+                t.costo,
+                t.moneda,
+                t.estado_facturacion,
+                t.fecha_creacion
+            FROM ticket t
+            WHERE t.id_cliente = :id_cliente AND t.costo IS NOT NULL AND t.costo > 0
+        ";
+
+        $params[':id_cliente'] = $id_cliente;
+
+        if (!empty($where)) {
+            $sql .= " AND " . implode(" AND ", $where);
+        }
+
+        $sql .= " ORDER BY t.fecha_creacion DESC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+    public static function getAllBasic(): array
+    {
+        $pdo = \Flight::db();
+        $stmt = $pdo->query("SELECT id_cliente, nombre FROM cliente ORDER BY nombre ASC");
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }

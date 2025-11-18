@@ -82,7 +82,7 @@ $isActive = function(string $path) use ($uri) {
       <!-- Historial de Facturación para Admin/Supervisor -->
       <a class="nav-link <?php echo $isActive($base.'/facturacion'); ?>" href="<?php echo $base; ?>/facturacion">
         <i class="bi bi-receipt-cutoff"></i>
-        <span>Historial de Facturación</span>
+        <span>Historial de Pagos</span>
       </a>
     <?php endif; ?>
     <?php if (in_array($role, [1,3], true)): ?>
@@ -99,9 +99,10 @@ $isActive = function(string $path) use ($uri) {
         <i class="bi bi-graph-up"></i> Rendimiento por Tipo de Caso
       </a>
       <!-- Historial de Facturación para Cliente -->
+      <div class="nav-heading">Historial de pago</div>
       <a class="nav-link <?php echo $isActive($base.'/facturacion'); ?>" href="<?php echo $base; ?>/facturacion">
         <i class="bi bi-receipt-cutoff"></i>
-        <span>Historial de Facturación</span>
+        <span>Historial de Pago</span>
       </a>
     <?php endif; ?>
 
