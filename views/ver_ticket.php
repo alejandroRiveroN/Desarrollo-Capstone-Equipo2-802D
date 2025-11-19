@@ -137,7 +137,6 @@ if (isset($_SESSION['mensaje_error'])) {
                             <option value="Efectivo" <?php echo ($ticket['medio_pago'] == 'Efectivo') ? 'selected' : ''; ?>>Efectivo</option>
                             <option value="Tarjeta de Crédito/Débito" <?php echo ($ticket['medio_pago'] == 'Tarjeta de Crédito/Débito') ? 'selected' : ''; ?>>Tarjeta de Crédito/Débito</option>
                             <option value="Transferencia Bancaria" <?php echo ($ticket['medio_pago'] == 'Transferencia Bancaria') ? 'selected' : ''; ?>>Transferencia Bancaria</option>
-                            <option value="Yape/Plin" <?php echo ($ticket['medio_pago'] == 'Yape/Plin') ? 'selected' : ''; ?>>Yape/Plin</option>
                         </select>
                     </div>
 
