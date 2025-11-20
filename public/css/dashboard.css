@@ -133,3 +133,15 @@ body {
     .main-content { padding: calc(var(--main-content-padding) / 2); } /* Menos padding en móvil */
     .sidebar-overlay.active { display: block; }
 }
+
+/* --- Estilos para Tablas (Tickets, Usuarios, etc.) --- */
+
+/* Estilo para filas intercaladas (Zebra-striping) */
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.05); /* Gris muy sutil */
+}
+
+/* Hover para resaltar la fila sobre la que está el cursor */
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.075);
+}
