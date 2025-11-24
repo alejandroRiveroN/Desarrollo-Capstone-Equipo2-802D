@@ -449,8 +449,8 @@ class ClientController extends BaseController {
         $pdf->generar(); // Método que dibuja la factura.
 
         // 4. Enviar el PDF al navegador para descarga.
-        $nombre_archivo = 'Factura-Ticket-' . $ticket['id_ticket'] . '.pdf';
-        $pdf->Output('D', $nombre_archivo);
+        $nombre_archivo = 'Detalle-Ticket-' . $ticket['id_ticket'] . '.pdf';
+        $pdf->Output('D', $nombre_archivo); // D: Forzar descarga
         exit;
     }
 
@@ -489,8 +489,8 @@ class ClientController extends BaseController {
         $pdf->generar();
 
         // 4. Enviar el PDF al navegador para visualización en línea (Inline).
-        $nombre_archivo = 'Factura-Ticket-' . $ticket['id_ticket'] . '.pdf';
-        $pdf->Output('I', $nombre_archivo);
+        $nombre_archivo = 'Detalle-Ticket-' . $ticket['id_ticket'] . '.pdf';
+        $pdf->Output('I', $nombre_archivo); // I: Mostrar en línea
         exit;
     }
     private static function _getFacturacionConFiltros() {
@@ -552,7 +552,7 @@ class FacturaPDF extends \FPDF {
         
         $this->SetFont('Arial', 'B', 20);
         $this->Cell(80);
-        $this->Cell(30, 10, 'FACTURA', 0, 0, 'C');
+        $this->Cell(30, 10, 'DETALLE', 0, 0, 'C');
         $this->Ln(20);
 
         // Información de la empresa
@@ -569,12 +569,12 @@ class FacturaPDF extends \FPDF {
         // Datos del cliente
         $this->SetFont('Arial', 'B', 10);
         $this->Cell(100, 7, 'Facturar a:', 0, 0);
-        $this->SetFont('Arial', 'B', 10);
-        $this->Cell(0, 7, 'Detalles de la Factura:', 0, 1);
+        $this->SetFont('Arial', 'B', 10); // Título de la sección de detalles
+        $this->Cell(0, 7, 'Detalles del Servicio:', 0, 1);
 
         $this->SetFont('Arial', '', 10);
         $this->Cell(100, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $this->datos['cliente']), 0, 0);
-        $this->Cell(40, 7, 'Factura #: ', 0, 0);
+        $this->Cell(40, 7, 'Detalle #: ', 0, 0);
         $this->Cell(0, 7, 'T-' . $this->datos['id_ticket'], 0, 1);
 
         $this->Cell(100, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $this->datos['empresa_cliente'] ?? 'N/A'), 0, 0);
@@ -625,8 +625,8 @@ class FacturaPDF extends \FPDF {
     function Footer() {
         $this->SetY(-30);
         $this->SetFont('Arial', 'I', 8);
-        $this->Cell(0, 5, 'Gracias por su preferencia.', 0, 1, 'C');
-        $this->Cell(0, 5, 'Si tiene alguna pregunta sobre esta factura, por favor contactenos.', 0, 1, 'C');
+        $this->Cell(0, 5, 'Gracias por su preferencia.', 0, 1, 'C'); // Mensaje de agradecimiento
+        $this->Cell(0, 5, 'Si tiene alguna pregunta sobre este detalle, por favor contactenos.', 0, 1, 'C');
         $this->SetY(-15);
         $this->SetFont('Arial', 'I', 8);
         $this->Cell(0, 10, 'Pagina ' . $this->PageNo(), 0, 0, 'C');

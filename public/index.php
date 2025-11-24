@@ -41,8 +41,8 @@ Flight::route('GET /dashboard/exportar/@formato', ['App\Controllers\DashboardCon
 
 // --- RUTA DE FACTURACIÓN DEL CLIENTE --- (Corregido)
 Flight::route('GET /facturacion', ['App\Controllers\ClientController', 'facturacion']);
-Flight::route('GET /factura/pdf/@id_ticket:[0-9]+', ['App\Controllers\ClientController', 'generarFacturaPdf']);
-Flight::route('GET /factura/preview/@id_ticket:[0-9]+', ['App\Controllers\ClientController', 'previsualizarFacturaPdf']);
+Flight::route('GET /detalle/pdf/@id_ticket:[0-9]+', ['App\Controllers\ClientController', 'generarFacturaPdf']);
+Flight::route('GET /detalle/preview/@id_ticket:[0-9]+', ['App\Controllers\ClientController', 'previsualizarFacturaPdf']);
 
 // --- RUTAS DE CLIENTES ---
 Flight::route('GET /clientes', ['App\Controllers\ClientController', 'index']);

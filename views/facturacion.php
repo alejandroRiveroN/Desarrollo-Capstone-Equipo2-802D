@@ -111,10 +111,10 @@ function formatCurrency($amount, $currency = 'CLP') {
                                         </span>
                                     </td>
                                     <td class="text-center d-flex justify-content-center gap-1">
-                                        <a href="<?php echo Flight::get('base_url'); ?>/factura/preview/<?php echo $item['id_ticket']; ?>" class="btn btn-primary btn-sm" title="Previsualizar Factura" target="_blank">
+                                        <a href="<?php echo Flight::get('base_url'); ?>/detalle/preview/<?php echo $item['id_ticket']; ?>" class="btn btn-primary btn-sm" title="Previsualizar Detalle" target="_blank">
                                             <i class="bi bi-eye-fill"></i>
                                         </a>
-                                        <a href="<?php echo Flight::get('base_url'); ?>/factura/pdf/<?php echo $item['id_ticket']; ?>" class="btn btn-danger btn-sm" title="Descargar Factura en PDF" target="_blank">
+                                        <a href="<?php echo Flight::get('base_url'); ?>/detalle/pdf/<?php echo $item['id_ticket']; ?>" class="btn btn-danger btn-sm" title="Descargar Detalle en PDF" target="_blank">
                                             <i class="bi bi-file-earmark-pdf-fill"></i> PDF
                                         </a>
                                     </td>

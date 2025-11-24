@@ -10,7 +10,7 @@ $showFilters  = isset($showFilters) ? (bool)$showFilters : !((int)($_SESSION['id
 
 <main class="container-fluid py-4">
   <div class="d-flex align-items-center justify-content-between mb-3">
-    <h1 class="h3 mb-0">TTR por Tipo de Caso (Global)</h1>
+    <h1 class="h3 mb-0"><i class="bi bi-graph-up"></i> Rendimiento por Tipo de Caso (TTR)</h1>
     <a href="<?php echo $base; ?>/dashboard" class="btn btn-secondary">
       <i class="bi bi-arrow-left"></i> Volver
     </a>
@@ -28,9 +28,9 @@ $showFilters  = isset($showFilters) ? (bool)$showFilters : !((int)($_SESSION['id
     </div>
     <div class="col-md-6 align-self-end">
       <button class="btn btn-primary me-2"><i class="bi bi-funnel-fill me-1"></i> Filtrar</button>
-      <a class="btn btn-outline-secondary" href="<?php echo $base; ?>/analitica/tipos-caso">Limpiar</a>
-      <button type="button" id="toggleUnidad" class="btn btn-outline-info ms-2" data-unidad="horas">
-        Ver en días
+      <a class="btn btn-outline-secondary" href="<?php echo $base; ?>/analitica/tipos-caso">Limpiar Filtros</a>
+      <button type="button" id="toggleUnidad" class="btn btn-outline-info ms-2" data-unidad="minutos">
+        Ver en horas
       </button>
     </div>
   </form>
@@ -44,10 +44,10 @@ $showFilters  = isset($showFilters) ? (bool)$showFilters : !((int)($_SESSION['id
 
   <div class="card mb-4">
     <div class="card-body">
-      <h2 class="h6 mb-3"><i class="bi bi-bar-chart"></i> Tiempo Promedio de Resolución por Tipo</h2>
+      <h2 class="h6 mb-3 fw-bold"><i class="bi bi-bar-chart-line-fill"></i> Tiempo Promedio de Resolución por Tipo</h2>
       <canvas id="chartTTR" height="140"></canvas>
       <small class="text-muted d-block mt-2">
-        Barra: TTR promedio (horas/días).
+        Barra: TTR promedio (minutos/horas).
         <?php if ($canSeeTotals): ?>
           — <span class="text-danger">Línea roja:</span> total de tickets resueltos por tipo (eje derecho).
         <?php endif; ?>
@@ -56,14 +56,14 @@ $showFilters  = isset($showFilters) ? (bool)$showFilters : !((int)($_SESSION['id
   </div>
 
   <div class="card">
-    <div class="card-body table-responsive">
-      <h2 class="h6 mb-3">Detalle</h2>
+    <div class="card-body">
+      <h2 class="h6 mb-3 fw-bold"><i class="bi bi-table"></i> Detalle de Datos</h2>
       <table class="table table-striped align-middle">
         <thead>
           <tr>
             <th>Tipo de Caso</th>
             <?php if ($canSeeTotals): ?><th>Total Resueltos</th><?php endif; ?>
-            <th>TTR Promedio (horas)</th>
+            <th>TTR Promedio (minutos)</th>
           </tr>
         </thead>
         <tbody>
@@ -72,11 +72,13 @@ $showFilters  = isset($showFilters) ? (bool)$showFilters : !((int)($_SESSION['id
               <tr>
                 <td><?php echo htmlspecialchars($r['tipo_caso']); ?></td>
                 <?php if ($canSeeTotals): ?><td><?php echo (int)$r['total_resueltos']; ?></td><?php endif; ?>
-                <td><?php echo $r['ttr_promedio_horas'] !== null ? (float)$r['ttr_promedio_horas'] : '—'; ?></td>
+                <td><?php echo $r['ttr_promedio_horas'] !== null ? round((float)$r['ttr_promedio_horas'] * 60) : '—'; ?></td>
               </tr>
             <?php endforeach; ?>
           <?php else: ?>
-            <tr><td colspan="<?php echo $canSeeTotals ? 3 : 2; ?>" class="text-center text-muted">Sin datos para el período seleccionado.</td></tr>
+            <tr>
+              <td colspan="<?php echo $canSeeTotals ? 3 : 2; ?>" class="text-center text-muted py-4">No se encontraron tickets resueltos para los filtros seleccionados.</td>
+            </tr>
           <?php endif; ?>
         </tbody>
       </table>
@@ -91,13 +93,13 @@ $showFilters  = isset($showFilters) ? (bool)$showFilters : !((int)($_SESSION['id
   const totales  = <?php echo $chart_totales ?? '[]'; ?>;
   const canSeeTotals = <?php echo $canSeeTotals ? 'true' : 'false'; ?>;
 
-  let unidad = 'horas';
-  const toUnidad = (val) => unidad === 'horas' ? val : (val / 24);
+  let unidad = 'minutos';
+  const toUnidad = (val) => unidad === 'minutos' ? (val * 60) : val;
 
   const datasets = [{
     type: 'bar',
     label: 'TTR Promedio',
-    data: ttrHoras.map(toUnidad),
+    data: ttrHoras.map(h => h * 60), // Convertir a minutos por defecto
     borderWidth: 1,
     borderRadius: 6
   }];
@@ -128,8 +130,8 @@ $showFilters  = isset($showFilters) ? (bool)$showFilters : !((int)($_SESSION['id
             label: (ctx) => {
               const ds = ctx.dataset || {};
               if (ds.type === 'line') return ` Total: ${ctx.parsed.y ?? ctx.parsed.x}`;
-              const val = ctx.raw ?? 0;
-              return unidad === 'horas' ? ` ${val} h` : ` ${(val/24).toFixed(2)} días`;
+              const valMinutos = ctx.raw ?? 0;
+              return unidad === 'minutos' ? ` ${valMinutos.toFixed(0)} min` : ` ${(valMinutos/60).toFixed(2)} h`;
             }
           }
         }
@@ -137,7 +139,7 @@ $showFilters  = isset($showFilters) ? (bool)$showFilters : !((int)($_SESSION['id
       scales: {
         x: {
           beginAtZero: true,
-          title: { display: true, text: () => unidad === 'horas' ? 'Horas' : 'Días' }
+          title: { display: true, text: () => unidad === 'minutos' ? 'Minutos' : 'Horas' }
         },
         y: { ticks: { autoSkip: false } },
         <?php if ($canSeeTotals): ?>
@@ -148,10 +150,10 @@ $showFilters  = isset($showFilters) ? (bool)$showFilters : !((int)($_SESSION['id
   });
 
   document.getElementById('toggleUnidad').addEventListener('click', function() {
-    unidad = (unidad === 'horas') ? 'dias' : 'horas';
+    unidad = (unidad === 'minutos') ? 'horas' : 'minutos';
     chart.data.datasets[0].data = ttrHoras.map(toUnidad);
-    chart.options.scales.x.title.text = (unidad === 'horas') ? 'Horas' : 'Días';
-    this.textContent = (unidad === 'horas') ? 'Ver en días' : 'Ver en horas';
+    chart.options.scales.x.title.text = (unidad === 'minutos') ? 'Minutos' : 'Horas';
+    this.textContent = (unidad === 'minutos') ? 'Ver en horas' : 'Ver en minutos';
     this.dataset.unidad = unidad;
     chart.update();
   });
