@@ -352,6 +352,16 @@ class Ticket
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // PAGINACIÓN
+        $page = $filters['page'] ?? 1;
+        $perPage = $filters['per_page'] ?? 10;
+
+        $offset = ($page - 1) * $perPage;
+
+        $sql .= " LIMIT :per_page OFFSET :offset";
+        $params[':per_page'] = $perPage;
+        $params[':offset'] = $offset;
     }
 
     /**

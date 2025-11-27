@@ -282,6 +282,27 @@ require_once __DIR__ . '/partials/header.php';
                     <?php endif; ?>
                 </tbody>
             </table>
+            <nav>
+                <ul class="pagination">
+                    <?php if ($pagina_actual > 1): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?pagina=<?= $pagina_actual - 1 ?>">Anterior</a>
+                        </li>
+                    <?php endif; ?>
+
+                    <?php for ($i = 1; $i <= $total_paginas; $i++): ?>
+                        <li class="page-item <?= $i == $pagina_actual ? 'active' : '' ?>">
+                            <a class="page-link" href="?pagina=<?= $i ?>"><?= $i ?></a>
+                        </li>
+                    <?php endfor; ?>
+
+                    <?php if ($pagina_actual < $total_paginas): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?pagina=<?= $pagina_actual + 1 ?>">Siguiente</a>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
         </div>
     </div>
 </div>

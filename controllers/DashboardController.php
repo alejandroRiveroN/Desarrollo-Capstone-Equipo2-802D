@@ -233,6 +233,28 @@ class DashboardController extends BaseController
             $params[':fecha_fin'] = $filtro_fecha_fin;
         }
 
+        // --------- Paginación ---------
+        $items_por_pagina = 15;
+        $pagina_actual = isset($_GET['pagina']) ? max(1, intval($_GET['pagina'])) : 1;
+        $offset = ($pagina_actual - 1) * $items_por_pagina;
+
+        // Contar total de tickets filtrados
+        $sql_count = "SELECT COUNT(*) FROM ticket t 
+            JOIN cliente c ON t.id_cliente = c.id_cliente
+            LEFT JOIN agente ag ON t.id_agente_asignado = ag.id_agente
+            LEFT JOIN usuario u ON ag.id_usuario = u.id_usuario
+            LEFT JOIN tipodecaso tc ON t.id_tipo_caso = tc.id_tipo_caso";
+
+        if ($where_conditions) {
+            $sql_count .= " WHERE " . implode(' AND ', $where_conditions);
+        }
+
+        $stmt_count = $pdo->prepare($sql_count);
+        $stmt_count->execute($params);
+        $total_tickets_filtrados = $stmt_count->fetchColumn();
+
+        $total_paginas = max(1, ceil($total_tickets_filtrados / $items_por_pagina));
+
         // --------- Listado de tickets ---------
         $sql_lista = "
             SELECT 
@@ -252,10 +274,18 @@ class DashboardController extends BaseController
         if ($where_conditions) {
             $sql_lista .= " WHERE " . implode(' AND ', $where_conditions);
         }
-        $sql_lista .= " ORDER BY t.fecha_creacion DESC";
+        $sql_lista .= " ORDER BY t.fecha_creacion DESC LIMIT :limit OFFSET :offset";
 
         $stmt_lista = $pdo->prepare($sql_lista);
-        $stmt_lista->execute($params);
+
+        foreach ($params as $key => $value) {
+            $stmt_lista->bindValue($key, $value);
+        }
+
+        $stmt_lista->bindValue(':limit', $items_por_pagina, \PDO::PARAM_INT);
+        $stmt_lista->bindValue(':offset', $offset, \PDO::PARAM_INT);
+
+        $stmt_lista->execute();
         $tickets = $stmt_lista->fetchAll(\PDO::FETCH_ASSOC);
 
         // Procesar tickets para añadir lógica de presentación (SLA)
@@ -327,7 +357,9 @@ class DashboardController extends BaseController
             'clientes_disponibles'   => $clientes_disponibles,
             'mensaje_exito'          => $mensaje_exito,
             'mensaje_error'          => $mensaje_error,
-            'supervisor_metrics'     => $supervisor_metrics, // Pasar las nuevas métricas a la vista
+            'supervisor_metrics'     => $supervisor_metrics,
+            'pagina_actual'          => $pagina_actual,
+            'total_paginas'          => $total_paginas,
         ]);
     }
 
