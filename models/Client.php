@@ -207,7 +207,7 @@ class Client
         $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
-    public static function getAllBillingHistoryFiltered(array $where = [], array $params = []): array
+    public static function getAllBillingHistoryFiltered(array $where = [], array $params = [], int $limit = 0, int $offset = 0): array
     {
         $pdo = \Flight::db();
         $sql = "
@@ -230,12 +230,24 @@ class Client
 
         $sql .= " ORDER BY t.fecha_creacion DESC";
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
+        if ($limit > 0) {
+            $sql .= " LIMIT :limit OFFSET :offset";
+            $params[':limit'] = $limit;
+            $params[':offset'] = $offset;
+        }
 
+        $stmt = $pdo->prepare($sql);
+        // Necesario bindValue para enteros en LIMIT/OFFSET
+        foreach ($params as $key => $value) {
+            $type = is_int($value) ? \PDO::PARAM_INT : \PDO::PARAM_STR;
+            $stmt->bindValue($key, $value, $type);
+        }
+
+        $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
-    public static function getBillingHistoryFiltered(int $id_cliente, array $where = [], array $params = []): array
+
+    public static function getBillingHistoryFiltered(int $id_cliente, array $where = [], array $params = [], int $limit = 0, int $offset = 0): array
     {
         $pdo = \Flight::db();
         $sql = "
@@ -258,11 +270,187 @@ class Client
 
         $sql .= " ORDER BY t.fecha_creacion DESC";
 
+        if ($limit > 0) {
+            $sql .= " LIMIT :limit OFFSET :offset";
+            $params[':limit'] = $limit;
+            $params[':offset'] = $offset;
+        }
+
+        $stmt = $pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $type = is_int($value) ? \PDO::PARAM_INT : \PDO::PARAM_STR;
+            $stmt->bindValue($key, $value, $type);
+        }
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+
+    public static function countBillingHistoryFiltered($cliente_id, $fecha_desde = null, $fecha_hasta = null, $estado = null)
+    {
+        $pdo = \Flight::db();
+
+        // Evitar error "Array to string conversion"
+        if (is_array($cliente_id)) $cliente_id = $cliente_id['id_cliente'] ?? null;
+        if (is_array($fecha_desde)) $fecha_desde = null;
+        if (is_array($fecha_hasta)) $fecha_hasta = null;
+        if (is_array($estado)) $estado = null;
+
+        $sql = "SELECT COUNT(*) AS total
+                FROM ticket t
+                INNER JOIN cliente c ON t.id_cliente = c.id_cliente
+                WHERE t.costo IS NOT NULL AND t.costo > 0";
+
+        $params = [];
+
+        // Si NO es admin
+        if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
+            $sql .= " AND t.id_cliente = ?";
+            $params[] = $cliente_id;
+        } 
+        // Si es admin y hay cliente seleccionado
+        else if (!empty($cliente_id)) {
+            $sql .= " AND t.id_cliente = ?";
+            $params[] = $cliente_id;
+        }
+
+        if (!empty($fecha_desde)) {
+            $sql .= " AND DATE(t.fecha_creacion) >= ?";
+            $params[] = $fecha_desde;
+        }
+
+        if (!empty($fecha_hasta)) {
+            $sql .= " AND DATE(t.fecha_creacion) <= ?";
+            $params[] = $fecha_hasta;
+        }
+
+        if (!empty($estado)) {
+            $sql .= " AND t.estado_facturacion = ?";
+            $params[] = $estado;
+        }
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return (int)$stmt->fetchColumn();
+    }
+
+    public static function getBillingHistoryFilteredPaginated($cliente_id, $fecha_desde = null, $fecha_hasta = null, $estado = null, $limite = 10, $offset = 0)
+    {
+        $pdo = \Flight::db();
+
+        // Evitar error "Array to string conversion"
+        if (is_array($cliente_id)) $cliente_id = $cliente_id['id_cliente'] ?? null;
+        if (is_array($fecha_desde)) $fecha_desde = null;
+        if (is_array($fecha_hasta)) $fecha_hasta = null;
+        if (is_array($estado)) $estado = null;
+
+        $sql = "SELECT 
+                    t.*, 
+                    c.nombre AS nombre_cliente
+                FROM ticket t
+                INNER JOIN cliente c ON t.id_cliente = c.id_cliente
+                WHERE t.costo IS NOT NULL AND t.costo > 0";
+
+        $params = [];
+
+        // Si NO es admin → ver solo lo del cliente
+        if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
+            $sql .= " AND t.id_cliente = ?";
+            $params[] = $cliente_id;
+        } 
+        // Si es admin y hay filtro de cliente
+        else if (!empty($cliente_id)) {
+            $sql .= " AND t.id_cliente = ?";
+            $params[] = $cliente_id;
+        }
+
+        if (!empty($fecha_desde)) {
+            $sql .= " AND DATE(t.fecha_creacion) >= ?";
+            $params[] = $fecha_desde;
+        }
+
+        if (!empty($fecha_hasta)) {
+            $sql .= " AND DATE(t.fecha_creacion) <= ?";
+            $params[] = $fecha_hasta;
+        }
+
+        if (!empty($estado)) {
+            $sql .= " AND t.estado_facturacion = ?";
+            $params[] = $estado;
+        }
+
+        $sql .= " ORDER BY t.fecha_creacion DESC LIMIT ? OFFSET ?";
+        $params[] = $limite;
+        $params[] = $offset;
+
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
+
+    public static function getBillingHistoryFilteredWithPagination($filters, $sort, $limit, $offset)
+    {
+        $db = \Flight::db();
+        $sql = "SELECT * FROM billing_history WHERE 1=1";
+        $params = [];
+
+        // Filtros dinámicos
+        if (!empty($filters['cliente_id'])) {
+            $sql .= " AND cliente_id = :cliente_id";
+            $params[':cliente_id'] = $filters['cliente_id'];
+        }
+
+        if (!empty($filters['fecha_inicio'])) {
+            $sql .= " AND fecha >= :fecha_inicio";
+            $params[':fecha_inicio'] = $filters['fecha_inicio'];
+        }
+
+        if (!empty($filters['fecha_fin'])) {
+            $sql .= " AND fecha <= :fecha_fin";
+            $params[':fecha_fin'] = $filters['fecha_fin'];
+        }
+
+        // Orden
+        if (!empty($sort['column']) && !empty($sort['order'])) {
+            $sql .= " ORDER BY {$sort['column']} {$sort['order']}";
+        } else {
+            $sql .= " ORDER BY fecha DESC";
+        }
+
+        // LIMIT y OFFSET
+        $sql .= " LIMIT :limit OFFSET :offset";
+        $params[':limit'] = (int)$limit;
+        $params[':offset'] = (int)$offset;
+
+        $stmt = $db->prepare($sql);
+
+        // Bind correcto para limit/offset
+        foreach ($params as $key => $value) {
+            if ($key === ':limit' || $key === ':offset') {
+                $stmt->bindValue($key, $value, PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue($key, $value);
+            }
+        }
+
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function countAllBillingHistoryFiltered(array $where = [], array $params = []): int
+    {
+        $pdo = \Flight::db();
+        $sql = "SELECT COUNT(*) FROM ticket t JOIN cliente c ON t.id_cliente = c.id_cliente WHERE t.costo IS NOT NULL AND t.costo > 0";
+        if (!empty($where)) {
+            $sql .= " AND " . implode(" AND ", $where);
+        }
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn();
+    }
+
     public static function getAllBasic(): array
     {
         $pdo = \Flight::db();

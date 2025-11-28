@@ -1,4 +1,8 @@
 <?php
+
+$pagina_actual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+$total_paginas = $total_paginas ?? 1; // Si tu controlador no la define, por defecto 1
+
 // Incluir el encabezado y la barra de navegación.
 require_once __DIR__ . '/partials/header.php';
 
@@ -123,6 +127,28 @@ function formatCurrency($amount, $currency = 'CLP') {
                         <?php endif; ?>
                     </tbody>
                 </table>
+                <?php if ($total_paginas > 1): ?>
+                    <nav aria-label="Paginación">
+                        <ul class="pagination justify-content-center mt-3">
+                            <!-- Anterior -->
+                            <li class="page-item <?= ($pagina_actual <= 1) ? 'disabled' : '' ?>">
+                                <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['pagina' => $pagina_actual - 1])) ?>">Anterior</a>
+                            </li>
+
+                            <!-- Números de página -->
+                            <?php for ($i = 1; $i <= $total_paginas; $i++): ?>
+                                <li class="page-item <?= ($i == $pagina_actual) ? 'active' : '' ?>">
+                                    <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['pagina' => $i])) ?>"><?= $i ?></a>
+                                </li>
+                            <?php endfor; ?>
+
+                            <!-- Siguiente -->
+                            <li class="page-item <?= ($pagina_actual >= $total_paginas) ? 'disabled' : '' ?>">
+                                <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['pagina' => $pagina_actual + 1])) ?>">Siguiente</a>
+                            </li>
+                        </ul>
+                    </nav>
+                <?php endif; ?>
             </div>
         </div>
     </div>

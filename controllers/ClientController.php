@@ -351,56 +351,65 @@ class ClientController extends BaseController {
     public static function facturacion() {
         self::checkAuth();
         $rol = (int)$_SESSION['id_rol'];
-        $is_admin_view = in_array($rol, [1, 3]);
+        $is_admin_view = in_array($rol, [1, 3]); // admin o supervisor
         $historial = [];
         $lista_clientes = [];
 
-        // Obtener filtros del query string
         $request = \Flight::request();
         $filtros = [];
         $params = [];
 
+        // Admin / supervisor: pueden filtrar por cliente
         if ($is_admin_view) {
             $lista_clientes = Client::getAllBasic();
-        }
-
-        if ($is_admin_view) {
             if (!empty($request->query['cliente'])) {
                 $filtros[] = "c.id_cliente = :cliente";
                 $params[':cliente'] = $request->query['cliente'];
             }
         }
 
+        // Filtros comunes
         if (!empty($request->query['estado'])) {
             $filtros[] = "t.estado_facturacion = :estado";
             $params[':estado'] = $request->query['estado'];
         }
-
         if (!empty($request->query['fecha_desde'])) {
             $filtros[] = "t.fecha_creacion >= :fecha_desde";
             $params[':fecha_desde'] = $request->query['fecha_desde'];
         }
-
         if (!empty($request->query['fecha_hasta'])) {
             $filtros[] = "t.fecha_creacion <= :fecha_hasta";
             $params[':fecha_hasta'] = $request->query['fecha_hasta'];
         }
 
-        if ($is_admin_view) {
-            $historial = Client::getAllBillingHistoryFiltered($filtros, $params);
-        } elseif ($rol === 4) { // Cliente
-            $userData = \App\Models\User::findEssentialById((int)$_SESSION['id_usuario']);
-            $id_cliente = Client::findIdByEmail($userData['email']) ?? 0;
+        // Paginación
+        $page = max(1, (int)($request->query['pagina'] ?? 1));
+        $perPage = 10; 
+        $offset = ($page - 1) * $perPage;
 
-            $historial = Client::getBillingHistoryFiltered($id_cliente, $filtros, $params);
+        if ($is_admin_view) {
+            $total = Client::countAllBillingHistoryFiltered($filtros, $params);
+            $historial = Client::getAllBillingHistoryFiltered($filtros, $params, $perPage, $offset);
+        } else {
+            $userData = \App\Models\User::findEssentialById((int)$_SESSION['id_usuario']);
+            $id_cliente = $userData ? Client::findIdByEmail($userData['email']) : 0;
+
+            $total = Client::countBillingHistoryFiltered($id_cliente, $filtros, $params);
+            $historial = Client::getBillingHistoryFiltered($id_cliente, $filtros, $params, $perPage, $offset);
         }
+
+        $totalPages = ceil($total / $perPage);
 
         \Flight::render('facturacion.php', [
             'historial_facturacion' => $historial,
             'is_admin_view' => $is_admin_view,
-            'lista_clientes' => $lista_clientes
+            'lista_clientes' => $lista_clientes,
+            'pagina_actual' => $page,       
+            'total_paginas' => $totalPages, 
+            'per_page' => $perPage
         ]);
     }
+
 
     /**
      * Genera una factura en PDF para un ticket específico.
