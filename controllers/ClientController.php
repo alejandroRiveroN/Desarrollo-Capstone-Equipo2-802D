@@ -20,19 +20,21 @@ class ClientController extends BaseController {
         $params = [];
 
         if (!empty($filtro_termino)) {
-            $where_conditions[] = "(nombre LIKE :termino OR empresa LIKE :termino OR email LIKE :termino)";
-            $params[':termino'] = '%' . $filtro_termino . '%';
+            $where_conditions[] = "(c.nombre LIKE :termino_nombre OR c.empresa LIKE :termino_empresa OR u.email LIKE :termino_email)";
+            $params[':termino_nombre'] = '%' . $filtro_termino . '%';
+            $params[':termino_empresa'] = '%' . $filtro_termino . '%';
+            $params[':termino_email'] = '%' . $filtro_termino . '%';
         }
         if (!empty($filtro_telefono)) {
-            $where_conditions[] = "telefono LIKE :telefono";
+            $where_conditions[] = "c.telefono LIKE :telefono";
             $params[':telefono'] = '%' . $filtro_telefono . '%';
         }
         if (!empty($filtro_pais)) {
-            $where_conditions[] = "pais LIKE :pais";
+            $where_conditions[] = "c.pais LIKE :pais";
             $params[':pais'] = '%' . $filtro_pais . '%';
         }
         if ($filtro_estado !== '' && in_array($filtro_estado, ['0', '1'])) {
-            $where_conditions[] = "activo = :estado";
+            $where_conditions[] = "c.activo = :estado";
             $params[':estado'] = $filtro_estado;
         }
 
@@ -53,7 +55,47 @@ class ClientController extends BaseController {
     public static function index() {
         self::checkAuth();
         $request = \Flight::request();
-        $clientes = self::_getClientesFiltrados();
+
+        // 1. Obtener filtros
+        $filtros = self::_getClientesConFiltros($request);
+
+        // 2. Configurar paginación
+        $items_per_page = 15; // Clientes por página
+        $current_page = isset($request->query['page']) ? max(1, (int)$request->query['page']) : 1;
+        $offset = ($current_page - 1) * $items_per_page;
+
+        $pdo = \Flight::db();
+        $where_clause = !empty($filtros['where_conditions']) ? 'WHERE ' . implode(' AND ', $filtros['where_conditions']) : '';
+
+        // 3. Contar el total de clientes con los filtros aplicados
+        $sql_count = "
+            SELECT COUNT(*) 
+            FROM cliente c 
+            LEFT JOIN usuario u ON c.email = u.email
+            $where_clause";
+        $stmt_count = $pdo->prepare($sql_count);
+        $stmt_count->execute($filtros['params']);
+        $total_clientes = $stmt_count->fetchColumn();
+        $total_pages = ceil($total_clientes / $items_per_page);
+
+        // 4. Obtener solo los clientes para la página actual
+        $sql_select = "
+            SELECT c.*, u.email 
+            FROM cliente c
+            LEFT JOIN usuario u ON c.email = u.email
+            $where_clause
+            ORDER BY c.nombre ASC
+            LIMIT :limit OFFSET :offset
+        ";
+        $stmt_select = $pdo->prepare($sql_select);
+        
+        foreach ($filtros['params'] as $key => &$val) {
+            $stmt_select->bindParam($key, $val);
+        }
+        $stmt_select->bindValue(':limit', $items_per_page, \PDO::PARAM_INT);
+        $stmt_select->bindValue(':offset', $offset, \PDO::PARAM_INT);
+        $stmt_select->execute();
+        $clientes = $stmt_select->fetchAll(\PDO::FETCH_ASSOC);
 
         \Flight::render('gestionar_clientes.php', [
             'clientes' => $clientes,
@@ -61,6 +103,9 @@ class ClientController extends BaseController {
             'filtro_telefono' => $request->query['telefono'] ?? '',
             'filtro_pais' => $request->query['pais'] ?? '',
             'filtro_estado' => $request->query['estado'] ?? '',
+            'total_pages' => $total_pages,
+            'current_page' => $current_page,
+            'total_clientes' => $total_clientes
         ]);
     }
 
