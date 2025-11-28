@@ -23,7 +23,7 @@
     <div class="card-header fw-bold">
       <i class="bi bi-hourglass-split"></i> Solicitudes en curso
       <span class="badge bg-primary ms-2">
-        <?= isset($pendientes) ? count($pendientes) : 0; ?>
+        <?= $pend_total ?? 0; ?>
       </span>
     </div>
     <div class="card-body table-responsive">
@@ -68,6 +68,20 @@
           <?php endforeach; endif; ?>
         </tbody>
       </table>
+      <?php
+      $pendPages = ceil($pend_total / $pend_limit);
+      if ($pendPages > 1):
+      ?>
+      <nav>
+        <ul class="pagination">
+          <?php for ($i=1; $i <= $pendPages; $i++): ?>
+            <li class="page-item <?= $i == $pend_page ? 'active' : '' ?>">
+              <a class="page-link" href="?page_p=<?= $i ?>&page_r=1"><?= $i ?></a>
+            </li>
+          <?php endfor; ?>
+        </ul>
+      </nav>
+      <?php endif; ?>
     </div>
   </div>
 
@@ -76,7 +90,7 @@
     <div class="card-header fw-bold">
       <i class="bi bi-check2-circle"></i> Respondidas (cerradas)
       <span class="badge bg-success ms-2">
-        <?= isset($respondidas) ? count($respondidas) : 0; ?>
+        <?= $resp_total ?? 0; ?>
       </span>
     </div>
     <div class="card-body table-responsive">
@@ -125,6 +139,20 @@
           <?php endforeach; endif; ?>
         </tbody>
       </table>
+      <?php
+      $respPages = ceil($resp_total / $resp_limit);
+      if ($respPages > 1):
+      ?>
+      <nav>
+        <ul class="pagination">
+          <?php for ($i=1; $i <= $respPages; $i++): ?>
+            <li class="page-item <?= $i == $resp_page ? 'active' : '' ?>">
+              <a class="page-link" href="?page_r=<?= $i ?>&page_p=1"><?= $i ?></a>
+            </li>
+          <?php endfor; ?>
+        </ul>
+      </nav>
+      <?php endif; ?>
     </div>
   </div>
 </div>

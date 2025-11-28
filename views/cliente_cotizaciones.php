@@ -24,7 +24,7 @@
   <div class="card mb-4">
     <div class="card-header fw-bold">
       <i class="bi bi-hourglass-split"></i> Solicitudes en curso
-      <span class="badge bg-primary ms-2"><?= isset($pendientes) ? count($pendientes) : 0; ?></span>
+      <span class="badge bg-primary ms-2"><?= $pend_total ?? 0; ?></span>
     </div>
     <div class="card-body table-responsive">
       <table class="table table-hover align-middle">
@@ -55,6 +55,38 @@
           <?php endforeach; endif; ?>
         </tbody>
       </table>
+      <?php
+      $totalPagesPend = ceil($pend_total / $pend_limit);
+      ?>
+
+      <?php if ($totalPagesPend > 1): ?>
+      <nav class="mt-3">
+        <ul class="pagination justify-content-center">
+
+          <!-- Anterior -->
+          <?php if ($pend_page > 1): ?>
+            <li class="page-item">
+              <a class="page-link" href="?page_p=<?= $pend_page - 1 ?>">&laquo; Anterior</a>
+            </li>
+          <?php endif; ?>
+
+          <!-- Números -->
+          <?php for ($i = 1; $i <= $totalPagesPend; $i++): ?>
+            <li class="page-item <?= $i == $pend_page ? 'active' : '' ?>">
+              <a class="page-link" href="?page_p=<?= $i ?>"><?= $i ?></a>
+            </li>
+          <?php endfor; ?>
+
+          <!-- Siguiente -->
+          <?php if ($pend_page < $totalPagesPend): ?>
+            <li class="page-item">
+              <a class="page-link" href="?page_p=<?= $pend_page + 1 ?>">Siguiente &raquo;</a>
+            </li>
+          <?php endif; ?>
+
+        </ul>
+      </nav>
+      <?php endif; ?>
     </div>
   </div>
 
@@ -62,7 +94,7 @@
   <div class="card">
     <div class="card-header fw-bold">
       <i class="bi bi-check2-circle"></i> Respondidas (cerradas)
-      <span class="badge bg-success ms-2"><?= isset($respondidas) ? count($respondidas) : 0; ?></span>
+      <span class="badge bg-success ms-2"><?= $resp_total ?? 0; ?></span>
     </div>
     <div class="card-body table-responsive">
       <table class="table table-hover align-middle">
@@ -93,6 +125,38 @@
           <?php endforeach; endif; ?>
         </tbody>
       </table>
+      <?php
+      $totalPagesResp = ceil($resp_total / $resp_limit);
+      ?>
+
+      <?php if ($totalPagesResp > 1): ?>
+      <nav class="mt-3">
+        <ul class="pagination justify-content-center">
+
+          <!-- Anterior -->
+          <?php if ($resp_page > 1): ?>
+            <li class="page-item">
+              <a class="page-link" href="?page_r=<?= $resp_page - 1 ?>">&laquo; Anterior</a>
+            </li>
+          <?php endif; ?>
+
+          <!-- Números -->
+          <?php for ($i = 1; $i <= $totalPagesResp; $i++): ?>
+            <li class="page-item <?= $i == $resp_page ? 'active' : '' ?>">
+              <a class="page-link" href="?page_r=<?= $i ?>"><?= $i ?></a>
+            </li>
+          <?php endfor; ?>
+
+          <!-- Siguiente -->
+          <?php if ($resp_page < $totalPagesResp): ?>
+            <li class="page-item">
+              <a class="page-link" href="?page_r=<?= $resp_page + 1 ?>">Siguiente &raquo;</a>
+            </li>
+          <?php endif; ?>
+
+        </ul>
+      </nav>
+      <?php endif; ?>
     </div>
   </div>
 

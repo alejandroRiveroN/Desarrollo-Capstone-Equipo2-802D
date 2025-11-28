@@ -116,4 +116,125 @@ class Cotizacion
         ]);
         return $stmt->rowCount() > 0;
     }
+
+    /* === ADMIN: Pendientes con paginación === */
+    public static function findAllPendientesPaginated(int $limit, int $offset): array
+    {
+        $pdo = \Flight::db();
+
+        $stmt = $pdo->prepare("
+            SELECT SQL_CALC_FOUND_ROWS 
+                c.*, u.nombre_completo AS nombre_cliente, u.email AS email_cliente
+            FROM cotizacion c
+            JOIN usuario u ON u.id_usuario = c.id_cliente
+            WHERE c.estado != 'Respondida'
+            ORDER BY c.fecha_creacion DESC
+            LIMIT :limit OFFSET :offset
+        ");
+
+        $stmt->bindValue(":limit", $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(":offset", $offset, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        $data = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // Contar total real
+        $total = $pdo->query("SELECT FOUND_ROWS()")->fetchColumn();
+
+        return [
+            "data"  => $data,
+            "total" => (int)$total
+        ];
+    }
+
+    /* === ADMIN: Respondidas con paginación === */
+    public static function findAllRespondidasPaginated(int $limit, int $offset): array
+    {
+        $pdo = \Flight::db();
+
+        $stmt = $pdo->prepare("
+            SELECT SQL_CALC_FOUND_ROWS 
+                c.*, 
+                u.nombre_completo AS nombre_cliente,
+                u.email AS email_cliente
+            FROM cotizacion c
+            JOIN usuario u ON u.id_usuario = c.id_cliente
+            WHERE c.estado = 'Respondida'
+            ORDER BY c.fecha_respuesta DESC, c.fecha_creacion DESC
+            LIMIT :limit OFFSET :offset
+        ");
+
+        $stmt->bindValue(":limit", $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(":offset", $offset, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        $data = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $total = $pdo->query("SELECT FOUND_ROWS()")->fetchColumn();
+
+        return [
+            "data"  => $data,
+            "total" => (int)$total
+        ];
+    }
+
+    public static function findPendientesClientePaginated(int $clienteId, int $limit, int $offset): array
+    {
+        $pdo = \Flight::db();
+
+        // Obtener filas paginadas
+        $stmt = $pdo->prepare("
+            SELECT SQL_CALC_FOUND_ROWS *
+            FROM cotizacion
+            WHERE id_cliente = ?
+            AND estado = 'Nueva'
+            ORDER BY fecha_creacion DESC
+            LIMIT ? OFFSET ?
+        ");
+
+        $stmt->bindValue(1, $clienteId, \PDO::PARAM_INT);
+        $stmt->bindValue(2, $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(3, $offset, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        $data = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // Total real
+        $total = $pdo->query("SELECT FOUND_ROWS()")->fetchColumn();
+
+        return [
+            "data"  => $data,
+            "total" => (int)$total
+        ];
+    }
+
+    public static function findRespondidasClientePaginated(int $clienteId, int $limit, int $offset): array
+    {
+        $pdo = \Flight::db();
+
+        $stmt = $pdo->prepare("
+            SELECT SQL_CALC_FOUND_ROWS *
+            FROM cotizacion
+            WHERE id_cliente = ?
+            AND estado = 'Respondida'
+            ORDER BY fecha_respuesta DESC, fecha_creacion DESC
+            LIMIT ? OFFSET ?
+        ");
+
+        $stmt->bindValue(1, $clienteId, \PDO::PARAM_INT);
+        $stmt->bindValue(2, $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(3, $offset, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        $data = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $total = $pdo->query("SELECT FOUND_ROWS()")->fetchColumn();
+
+        return [
+            "data"  => $data,
+            "total" => (int)$total
+        ];
+    }
+
+
+
 }

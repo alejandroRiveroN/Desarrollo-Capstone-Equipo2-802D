@@ -79,19 +79,38 @@ class CotizacionController extends BaseController
         \Flight::redirect(self::abs('/cotizaciones'));
     }
 
-    /** Página B: Historial (en curso y respondidas) */
+    /** Página B: Historial con paginación */
     public static function myIndex()
     {
         if (!isset($_SESSION['id_rol']) || $_SESSION['id_rol'] != 4) {
             \Flight::redirect(self::abs('/'));
         }
 
-        $pendientes = Cotizacion::findByClienteAndEstado($_SESSION['id_usuario'], 'Nueva', 'fecha_creacion DESC');
-        $respondidas = Cotizacion::findByClienteAndEstado($_SESSION['id_usuario'], 'Respondida', 'fecha_respuesta DESC, fecha_creacion DESC');
+        // LÍMITE
+        $limit = 10;
+
+        // Página pendientes
+        $pagePend = isset($_GET['page_p']) ? max(1, (int)$_GET['page_p']) : 1;
+        $offsetPend = ($pagePend - 1) * $limit;
+
+        // Página respondidas
+        $pageResp = isset($_GET['page_r']) ? max(1, (int)$_GET['page_r']) : 1;
+        $offsetResp = ($pageResp - 1) * $limit;
+
+        // Modelo
+        $pend = Cotizacion::findPendientesClientePaginated($_SESSION['id_usuario'], $limit, $offsetPend);
+        $resp = Cotizacion::findRespondidasClientePaginated($_SESSION['id_usuario'], $limit, $offsetResp);
 
         \Flight::render('cliente_cotizaciones.php', [
-            'pendientes'  => $pendientes,
-            'respondidas' => $respondidas
+            "pendientes"  => $pend["data"],
+            "pend_total"  => $pend["total"],
+            "pend_page"   => $pagePend,
+            "pend_limit"  => $limit,
+
+            "respondidas" => $resp["data"],
+            "resp_total"  => $resp["total"],
+            "resp_page"   => $pageResp,
+            "resp_limit"  => $limit
         ]);
     }
 
@@ -124,32 +143,38 @@ class CotizacionController extends BaseController
 
     /** Bandeja general */
     public static function indexAdmin()
-    {
-        if (!isset($_SESSION['id_rol']) || !in_array($_SESSION['id_rol'], [1,3])) {
-            \Flight::redirect(self::abs('/'));
-        }
-
-        // Traemos todo como antes
-        $items = Cotizacion::findAllForAdmin();
-
-        // Separamos en dos listas: en curso vs respondidas
-        $pendientes  = [];
-        $respondidas = [];
-
-        foreach ($items as $c) {
-            if ($c['estado'] === 'Respondida') {
-                $respondidas[] = $c;
-            } else {
-                // Aquí entran 'Nueva' (y cualquier otro estado distinto de Respondida)
-                $pendientes[] = $c;
-            }
-        }
-
-        \Flight::render('admin_cotizaciones.php', [
-            'pendientes'  => $pendientes,
-            'respondidas' => $respondidas,
-        ]);
+{
+    if (!isset($_SESSION['id_rol']) || !in_array($_SESSION['id_rol'], [1,3])) {
+        \Flight::redirect(self::abs('/'));
     }
+
+    // LÍMITE POR PÁGINA
+    $limit = 10;
+
+    // Página de pendientes
+    $pagePend = isset($_GET['page_p']) ? max(1, (int)$_GET['page_p']) : 1;
+    $offsetPend = ($pagePend - 1) * $limit;
+
+    // Página de respondidas
+    $pageResp = isset($_GET['page_r']) ? max(1, (int)$_GET['page_r']) : 1;
+    $offsetResp = ($pageResp - 1) * $limit;
+
+    // Obtener paginados desde el modelo
+    $pend = Cotizacion::findAllPendientesPaginated($limit, $offsetPend);
+    $resp = Cotizacion::findAllRespondidasPaginated($limit, $offsetResp);
+
+    \Flight::render('admin_cotizaciones.php', [
+        "pendientes"        => $pend["data"],
+        "pend_total"        => $pend["total"],
+        "pend_page"         => $pagePend,
+        "pend_limit"        => $limit,
+
+        "respondidas"       => $resp["data"],
+        "resp_total"        => $resp["total"],
+        "resp_page"         => $pageResp,
+        "resp_limit"        => $limit,
+    ]);
+}
 
     /** Ver y responder */
     public static function showAdmin($id)
