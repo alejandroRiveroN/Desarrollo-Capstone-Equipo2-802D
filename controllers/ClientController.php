@@ -78,35 +78,75 @@ class ClientController extends BaseController {
         $total_clientes = $stmt_count->fetchColumn();
         $total_pages = ceil($total_clientes / $items_per_page);
 
-        // 4. Obtener solo los clientes para la página actual
-        $sql_select = "
-            SELECT c.*, u.email 
-            FROM cliente c
-            LEFT JOIN usuario u ON c.email = u.email
-            $where_clause
-            ORDER BY c.nombre ASC
-            LIMIT :limit OFFSET :offset
-        ";
-        $stmt_select = $pdo->prepare($sql_select);
+                // 4. Configurar ordenamiento
+                $sort_column = $request->query['sort'] ?? 'nombre'; // Columna por defecto
+                $sort_dir = $request->query['dir'] ?? 'asc'; // Dirección por defecto
         
-        foreach ($filtros['params'] as $key => &$val) {
-            $stmt_select->bindParam($key, $val);
-        }
-        $stmt_select->bindValue(':limit', $items_per_page, \PDO::PARAM_INT);
-        $stmt_select->bindValue(':offset', $offset, \PDO::PARAM_INT);
-        $stmt_select->execute();
-        $clientes = $stmt_select->fetchAll(\PDO::FETCH_ASSOC);
-
-        \Flight::render('gestionar_clientes.php', [
-            'clientes' => $clientes,
-            'filtro_termino' => $request->query['termino'] ?? '',
-            'filtro_telefono' => $request->query['telefono'] ?? '',
-            'filtro_pais' => $request->query['pais'] ?? '',
-            'filtro_estado' => $request->query['estado'] ?? '',
-            'total_pages' => $total_pages,
-            'current_page' => $current_page,
-            'total_clientes' => $total_clientes
-        ]);
+                // Whitelist para evitar inyección SQL en ORDER BY
+                $allowed_columns = ['id_cliente', 'nombre', 'empresa', 'pais', 'activo'];
+                if (!in_array($sort_column, $allowed_columns)) {
+                    $sort_column = 'nombre';
+                }
+                if (!in_array(strtolower($sort_dir), ['asc', 'desc'])) {
+                    $sort_dir = 'asc';
+                }
+        
+                // 5. Obtener solo los clientes para la página actual
+                $sql_select = "
+                    SELECT c.*, u.email 
+                    FROM cliente c
+                    LEFT JOIN usuario u ON c.email = u.email
+                    $where_clause
+                    ORDER BY $sort_column $sort_dir
+                    LIMIT :limit OFFSET :offset
+                ";
+                $stmt_select = $pdo->prepare($sql_select);
+                
+                foreach ($filtros['params'] as $key => &$val) {
+                    $stmt_select->bindParam($key, $val);
+                }
+                $stmt_select->bindValue(':limit', $items_per_page, \PDO::PARAM_INT);
+                $stmt_select->bindValue(':offset', $offset, \PDO::PARAM_INT);
+                $stmt_select->execute();
+                $clientes = $stmt_select->fetchAll(\PDO::FETCH_ASSOC);
+        
+                                $is_ajax = $request->query['ajax'] ?? false;
+        
+                                $view_data = [
+        
+                                    'clientes' => $clientes,
+        
+                                    'filtro_termino' => $request->query['termino'] ?? '',
+        
+                                    'filtro_telefono' => $request->query['telefono'] ?? '',
+        
+                                    'filtro_pais' => $request->query['pais'] ?? '',
+        
+                                    'filtro_estado' => $request->query['estado'] ?? '',
+        
+                                    'total_pages' => $total_pages,
+        
+                                    'current_page' => $current_page,
+        
+                                    'total_clientes' => $total_clientes,
+        
+                                    'sort_column' => $sort_column,
+        
+                                    'sort_dir' => $sort_dir
+        
+                                ];
+        
+                        
+        
+                                if ($is_ajax) {
+        
+                                    \Flight::render('partials/clientes_table.php', $view_data);
+        
+                                } else {
+        
+                                    \Flight::render('gestionar_clientes.php', $view_data);
+        
+                                }
     }
 
     public static function create() {
@@ -446,6 +486,68 @@ class ClientController extends BaseController {
         $totalPages = ceil($total / $perPage);
 
         \Flight::render('facturacion.php', [
+            'historial_facturacion' => $historial,
+            'is_admin_view' => $is_admin_view,
+            'lista_clientes' => $lista_clientes,
+            'pagina_actual' => $page,       
+            'total_paginas' => $totalPages, 
+            'per_page' => $perPage
+        ]);
+    }
+
+    public static function renderFacturacionTable() {
+        self::checkAuth();
+        $rol = (int)$_SESSION['id_rol'];
+        $is_admin_view = in_array($rol, [1, 3]); // admin o supervisor
+        $historial = [];
+        $lista_clientes = [];
+
+        $request = \Flight::request();
+        $filtros = [];
+        $params = [];
+
+        // Admin / supervisor: pueden filtrar por cliente
+        if ($is_admin_view) {
+            $lista_clientes = Client::getAllBasic();
+            if (!empty($request->query['cliente'])) {
+                $filtros[] = "c.id_cliente = :cliente";
+                $params[':cliente'] = $request->query['cliente'];
+            }
+        }
+
+        // Filtros comunes
+        if (!empty($request->query['estado'])) {
+            $filtros[] = "t.estado_facturacion = :estado";
+            $params[':estado'] = $request->query['estado'];
+        }
+        if (!empty($request->query['fecha_desde'])) {
+            $filtros[] = "t.fecha_creacion >= :fecha_desde";
+            $params[':fecha_desde'] = $request->query['fecha_desde'];
+        }
+        if (!empty($request->query['fecha_hasta'])) {
+            $filtros[] = "t.fecha_creacion <= :fecha_hasta";
+            $params[':fecha_hasta'] = $request->query['fecha_hasta'];
+        }
+
+        // Paginación
+        $page = max(1, (int)($request->query['pagina'] ?? 1));
+        $perPage = 10; 
+        $offset = ($page - 1) * $perPage;
+
+        if ($is_admin_view) {
+            $total = Client::countAllBillingHistoryFiltered($filtros, $params);
+            $historial = Client::getAllBillingHistoryFiltered($filtros, $params, $perPage, $offset);
+        } else {
+            $userData = \App\Models\User::findEssentialById((int)$_SESSION['id_usuario']);
+            $id_cliente = $userData ? Client::findIdByEmail($userData['email']) : 0;
+
+            $total = Client::countBillingHistoryFiltered($id_cliente, $filtros, $params);
+            $historial = Client::getBillingHistoryFiltered($id_cliente, $filtros, $params, $perPage, $offset);
+        }
+
+        $totalPages = ceil($total / $perPage);
+
+        \Flight::render('partials/facturacion_table.php', [
             'historial_facturacion' => $historial,
             'is_admin_view' => $is_admin_view,
             'lista_clientes' => $lista_clientes,

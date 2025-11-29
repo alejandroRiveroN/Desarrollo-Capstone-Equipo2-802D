@@ -53,13 +53,21 @@ class ReportController extends BaseController
         $stmt_evaluations->execute();
         $evaluations = $stmt_evaluations->fetchAll(\PDO::FETCH_ASSOC);
 
-        \Flight::render('admin_ticket_ratings_report.php', [
+        $is_ajax = isset($_GET['ajax']) && $_GET['ajax'] == 1;
+
+        $view_data = [
             'average_rating' => $average_rating,
             'evaluations' => $evaluations,
             'total_evaluations' => $total_evaluations,
             'total_pages' => $total_pages,
             'current_page' => $current_page
-        ]);
+        ];
+
+        if ($is_ajax) {
+            \Flight::render('partials/ratings_report_table.php', $view_data);
+        } else {
+            \Flight::render('admin_ticket_ratings_report.php', $view_data);
+        }
     }
 
     /**

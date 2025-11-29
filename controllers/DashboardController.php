@@ -239,11 +239,7 @@ class DashboardController extends BaseController
         $offset = ($pagina_actual - 1) * $items_por_pagina;
 
         // Contar total de tickets filtrados
-        $sql_count = "SELECT COUNT(*) FROM ticket t 
-            JOIN cliente c ON t.id_cliente = c.id_cliente
-            LEFT JOIN agente ag ON t.id_agente_asignado = ag.id_agente
-            LEFT JOIN usuario u ON ag.id_usuario = u.id_usuario
-            LEFT JOIN tipodecaso tc ON t.id_tipo_caso = tc.id_tipo_caso";
+        $sql_count = "SELECT COUNT(*) FROM ticket t";
 
         if ($where_conditions) {
             $sql_count .= " WHERE " . implode(' AND ', $where_conditions);
@@ -255,7 +251,7 @@ class DashboardController extends BaseController
 
         $total_paginas = max(1, ceil($total_tickets_filtrados / $items_por_pagina));
 
-        // --------- Listado de tickets ---------
+        // --------- Listado de tickets (se carga por AJAX, pero se necesita la primera página) ---------
         $sql_lista = "
             SELECT 
                 t.id_ticket, t.asunto, t.estado, t.prioridad, t.fecha_creacion,
@@ -307,7 +303,7 @@ class DashboardController extends BaseController
             }
         }
         unset($ticket); // Romper la referencia del último elemento
-
+        
         // --------- Datos para combos ---------
         $agentes_disponibles = $pdo->query("
             SELECT a.id_agente, u.nombre_completo
@@ -343,16 +339,6 @@ class DashboardController extends BaseController
             'filtro_fecha_inicio'    => $filtro_fecha_inicio,
             'filtro_fecha_fin'       => $filtro_fecha_fin,
             'tickets'                => $tickets,
-            'status_classes'         => [
-                'Abierto' => 'primary', 'En Progreso' => 'info', 'En Espera' => 'warning',
-                'Resuelto' => 'success', 'Cerrado' => 'secondary', 'Anulado' => 'dark'
-            ],
-            'priority_classes'       => [
-                'Baja' => 'success', 'Media' => 'warning', 'Alta' => 'danger', 'Urgente' => 'danger fw-bold'
-            ],
-            'facturacion_classes'    => [
-                'Pendiente' => 'warning', 'Facturado' => 'info', 'Pagado' => 'success', 'Anulado' => 'secondary'
-            ],
             'agentes_disponibles'    => $agentes_disponibles,
             'clientes_disponibles'   => $clientes_disponibles,
             'mensaje_exito'          => $mensaje_exito,
@@ -360,6 +346,7 @@ class DashboardController extends BaseController
             'supervisor_metrics'     => $supervisor_metrics,
             'pagina_actual'          => $pagina_actual,
             'total_paginas'          => $total_paginas,
+            'total_tickets_filtrados' => $total_tickets_filtrados,
         ]);
     }
 
@@ -428,5 +415,164 @@ class DashboardController extends BaseController
                 \Flight::redirect('/dashboard');
                 break;
         }
+    }
+
+    public static function renderTicketsTable() {
+        self::checkAuth();
+        /** @var \PDO $pdo */
+        $pdo = \Flight::db();
+        $request = \Flight::request();
+
+        // --------- Filtros desde la URL ---------
+        $filtro_termino       = $request->query['termino']       ?? '';
+        $filtro_cliente       = $request->query['cliente']       ?? '';
+        $filtro_agente        = $request->query['agente']        ?? '';
+        $filtro_prioridad     = $request->query['prioridad']     ?? '';
+        $filtro_estado_tabla  = $request->query['estado_tabla']  ?? '';
+        $filtro_facturacion   = $request->query['facturacion']   ?? '';
+        $filtro_fecha_inicio  = $request->query['fecha_inicio']  ?? '';
+        $filtro_fecha_fin     = $request->query['fecha_fin']     ?? '';
+
+        $where_conditions = [];
+        $params = [];
+
+        // Restricción por rol en listado (agente/supervisor/cliente)
+        if ((int)$_SESSION['id_rol'] === 2) {
+            $stmt_agente = $pdo->prepare("SELECT id_agente FROM agente WHERE id_usuario = ?");
+            $stmt_agente->execute([ (int)$_SESSION['id_usuario'] ]);
+            $id_agente_actual = $stmt_agente->fetchColumn();
+            if ($id_agente_actual) {
+                $where_conditions[] = "t.id_agente_asignado = :id_agente_logueado";
+                $params[':id_agente_logueado'] = (int)$id_agente_actual;
+            } else {
+                $where_conditions[] = "1=0";
+            }
+        } elseif ((int)$_SESSION['id_rol'] === 4) {
+            // Cliente: solo sus tickets (vinculo por email)
+            $stmt_cliente = $pdo->prepare("
+                SELECT c.id_cliente
+                FROM cliente c
+                INNER JOIN usuario u ON u.email = c.email
+                WHERE u.id_usuario = ?
+                LIMIT 1
+            ");
+            $stmt_cliente->execute([ (int)$_SESSION['id_usuario'] ]);
+            $id_cliente_actual = $stmt_cliente->fetchColumn();
+
+            if ($id_cliente_actual) {
+                $where_conditions[] = "t.id_cliente = :id_cliente";
+                $params[':id_cliente'] = (int)$id_cliente_actual;
+            } else {
+                $where_conditions[] = "1=0";
+            }
+        }
+        
+        // Filtros adicionales
+        if ($filtro_termino !== '') {
+            $where_conditions[]  = "(t.asunto LIKE :termino OR t.id_ticket = :id_ticket)";
+            $params[':termino']  = '%' . $filtro_termino . '%';
+            $params[':id_ticket'] = $filtro_termino;
+        }
+        if ($filtro_cliente !== '') {
+            $where_conditions[] = "t.id_cliente = :cliente";
+            $params[':cliente'] = (int)$filtro_cliente;
+        }
+        if ($filtro_agente !== '' && (int)$_SESSION['id_rol'] === 1) {
+            $where_conditions[] = "t.id_agente_asignado = :agente";
+            $params[':agente'] = (int)$filtro_agente;
+        }
+        if ($filtro_prioridad !== '') {
+            $where_conditions[] = "t.prioridad = :prioridad";
+            $params[':prioridad'] = $filtro_prioridad;
+        }
+        if ($filtro_estado_tabla !== '') {
+            $where_conditions[] = "t.estado = :estado_tabla";
+            $params[':estado_tabla'] = $filtro_estado_tabla;
+        }
+        if ($filtro_facturacion !== '' && (int)$_SESSION['id_rol'] === 1) {
+            $where_conditions[] = "t.estado_facturacion = :facturacion";
+            $params[':facturacion'] = $filtro_facturacion;
+        }
+        if ($filtro_fecha_inicio !== '') {
+            $where_conditions[] = "DATE(t.fecha_creacion) >= :fecha_inicio";
+            $params[':fecha_inicio'] = $filtro_fecha_inicio;
+        }
+        if ($filtro_fecha_fin !== '') {
+            $where_conditions[] = "DATE(t.fecha_creacion) <= :fecha_fin";
+            $params[':fecha_fin'] = $filtro_fecha_fin;
+        }
+
+        // Paginación
+        $items_por_pagina = 15;
+        $pagina_actual = isset($_GET['pagina']) ? max(1, intval($_GET['pagina'])) : 1;
+        $offset = ($pagina_actual - 1) * $items_por_pagina;
+
+        // Contar total de tickets filtrados
+        $sql_count = "SELECT COUNT(*) FROM ticket t";
+        if ($where_conditions) {
+            $sql_count .= " WHERE " . implode(' AND ', $where_conditions);
+        }
+
+        $stmt_count = $pdo->prepare($sql_count);
+        $stmt_count->execute($params);
+        $total_tickets_filtrados = $stmt_count->fetchColumn();
+
+        $total_paginas = max(1, ceil($total_tickets_filtrados / $items_por_pagina));
+
+        // Listado de tickets
+        $sql_lista = "
+            SELECT 
+                t.id_ticket, t.asunto, t.estado, t.prioridad, t.fecha_creacion,
+                c.nombre AS nombre_cliente,
+                u.nombre_completo AS nombre_agente,
+                tc.nombre_tipo,
+                t.fecha_vencimiento, t.costo, t.moneda, t.estado_facturacion,
+                CASE WHEN te.id_evaluacion IS NOT NULL THEN 1 ELSE 0 END AS ya_evaluado
+            FROM ticket AS t
+            JOIN cliente AS c ON t.id_cliente = c.id_cliente
+            LEFT JOIN agente AS ag ON t.id_agente_asignado = ag.id_agente
+            LEFT JOIN usuario AS u ON ag.id_usuario = u.id_usuario
+            LEFT JOIN tipodecaso AS tc ON t.id_tipo_caso = tc.id_tipo_caso
+            LEFT JOIN ticket_evaluacion AS te ON t.id_ticket = te.id_ticket
+        ";
+        if ($where_conditions) {
+            $sql_lista .= " WHERE " . implode(' AND ', $where_conditions);
+        }
+        $sql_lista .= " ORDER BY t.fecha_creacion DESC LIMIT :limit OFFSET :offset";
+
+        $stmt_lista = $pdo->prepare($sql_lista);
+        foreach ($params as $key => $value) {
+            $stmt_lista->bindValue($key, $value);
+        }
+        $stmt_lista->bindValue(':limit', $items_por_pagina, \PDO::PARAM_INT);
+        $stmt_lista->bindValue(':offset', $offset, \PDO::PARAM_INT);
+        $stmt_lista->execute();
+        $tickets = $stmt_lista->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($tickets as &$ticket) {
+            $ticket['sla_status'] = '';
+            $ticket['sla_class'] = '';
+            $ticket['sla_icon'] = '';
+
+            if ($ticket['fecha_vencimiento'] && !in_array($ticket['estado'], ['Resuelto', 'Cerrado', 'Anulado'])) {
+                $ahora = new \DateTime();
+                $vencimiento = new \DateTime($ticket['fecha_vencimiento']);
+                $diferencia = $ahora->diff($vencimiento);
+
+                if ($ahora > $vencimiento) {
+                    $ticket['sla_status'] = 'Vencido'; $ticket['sla_class'] = 'text-danger'; $ticket['sla_icon'] = 'bi-x-circle-fill';
+                } elseif ($diferencia->days < 2) {
+                    $ticket['sla_status'] = 'Por Vencer'; $ticket['sla_class'] = 'text-warning'; $ticket['sla_icon'] = 'bi-exclamation-triangle-fill';
+                }
+            }
+        }
+        unset($ticket);
+
+        \Flight::render('partials/dashboard_tickets_table.php', [
+            'tickets' => $tickets,
+            'pagina_actual' => $pagina_actual,
+            'total_paginas' => $total_paginas,
+            'total_tickets_filtrados' => $total_tickets_filtrados,
+        ]);
     }
 }

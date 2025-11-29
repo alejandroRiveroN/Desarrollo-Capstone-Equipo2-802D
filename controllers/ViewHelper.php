@@ -54,4 +54,26 @@ class ViewHelper
         ];
         return $map[$estado] ?? 'light';
     }
+
+    /**
+     * Genera un enlace de encabezado de tabla para ordenamiento.
+     *
+     * @param string $column El nombre de la columna en la BBDD.
+     * @param string $text El texto a mostrar en el encabezado.
+     * @param string $current_sort La columna de ordenamiento actual.
+     * @param string $current_dir La dirección de ordenamiento actual.
+     */
+    public static function sort_link(string $column, string $text, string $current_sort, string $current_dir): void
+    {
+        $dir = ($current_sort === $column && $current_dir === 'asc') ? 'desc' : 'asc';
+        $icon = $current_sort === $column ? ($current_dir === 'asc' ? '<i class="bi bi-sort-up"></i>' : '<i class="bi bi-sort-down"></i>') : '';
+        
+        $query_params = $_GET;
+        $query_params['sort'] = $column;
+        $query_params['dir'] = $dir;
+        
+        $query = http_build_query($query_params);
+        
+        echo "<th><a href=\"?$query\" class=\"text-white text-decoration-none\">$text $icon</a></th>";
+    }
 }

@@ -1,29 +1,25 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const tableContainer = document.getElementById('dashboard-tickets-container');
+    const tableContainer = document.getElementById('facturacion-table-container');
 
     if (tableContainer) {
         tableContainer.addEventListener('click', function (event) {
-            // Asegurarse de que el clic fue en un enlace de paginación
+            //  clic en un enlace de paginación
             if (event.target.matches('.pagination a')) {
                 event.preventDefault(); // Prevenir la recarga de la página
 
                 const url = new URL(event.target.href);
-                const page = url.searchParams.get('pagina');
-                
-                // Construir la URL para la petición fetch, manteniendo los parámetros de filtro existentes
+                // mantener los parámetros de filtro existentes
                 const fetchUrl = new URL(`${window.location.origin}${window.location.pathname}/tabla`);
                 
                 // Copiar todos los parámetros de la URL actual (filtros) a la nueva URL de fetch
                 new URLSearchParams(window.location.search).forEach((value, key) => {
-                    if (key !== 'pagina') { // No queremos el parámetro de página antiguo
+                    if (key !== 'pagina') { // parámetro de página antiguo
                         fetchUrl.searchParams.append(key, value);
                     }
                 });
 
                 // Añadir el nuevo número de página
-                if (page) {
-                    fetchUrl.searchParams.set('pagina', page);
-                }
+                fetchUrl.searchParams.append('pagina', url.searchParams.get('pagina'));
 
                 fetch(fetchUrl)
                     .then(response => {
@@ -38,14 +34,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         // Actualizar la URL en el navegador sin recargar
                         const newUrl = new URL(window.location.href);
-                        if (page) {
-                            newUrl.searchParams.set('pagina', page);
-                        } else {
-                            newUrl.searchParams.delete('pagina');
-                        }
+                        newUrl.searchParams.set('pagina', url.searchParams.get('pagina'));
                         history.pushState({ path: newUrl.href }, '', newUrl.href);
-
-                        // Opcional: hacer scroll suave hacia el inicio de la tabla
                         tableContainer.scrollIntoView({ behavior: 'smooth' });
                     })
                     .catch(error => {
@@ -54,7 +44,4 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
-
-    // La función de exportar ya existe en el HTML inline, pero sería mejor moverla aquí a futuro.
-    // window.exportar = function(formato) { ... }
 });

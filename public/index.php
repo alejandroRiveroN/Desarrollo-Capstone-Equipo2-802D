@@ -35,12 +35,14 @@ Flight::route('GET /', function () {
 });
 Flight::route('POST /contact', ['App\Controllers\ContactController', 'send']);
 Flight::route('GET /dashboard', ['App\Controllers\DashboardController', 'index']);
+Flight::route('GET /dashboard/tabla', ['App\Controllers\DashboardController', 'renderTicketsTable']);
 
 // --- RUTA DE EXPORTACIÓN DEL DASHBOARD ---
 Flight::route('GET /dashboard/exportar/@formato', ['App\Controllers\DashboardController', 'exportar']);
 
-// --- RUTA DE FACTURACIÓN DEL CLIENTE --- (Corregido)
+// --- RUTA DE FACTURACIÓN DEL CLIENTE ---
 Flight::route('GET /facturacion', ['App\Controllers\ClientController', 'facturacion']);
+Flight::route('GET /facturacion/tabla', ['App\Controllers\ClientController', 'renderFacturacionTable']);
 Flight::route('GET /detalle/pdf/@id_ticket:[0-9]+', ['App\Controllers\ClientController', 'generarFacturaPdf']);
 Flight::route('GET /detalle/preview/@id_ticket:[0-9]+', ['App\Controllers\ClientController', 'previsualizarFacturaPdf']);
 
@@ -69,6 +71,7 @@ Flight::route('GET /reenviar-verificacion', ['App\Controllers\VerificationContro
 
 // --- RUTAS DE USUARIOS ---
 Flight::route('GET /usuarios', ['App\Controllers\UserController', 'index']);
+Flight::route('GET /usuarios/tabla', ['App\Controllers\UserController', 'renderUsuariosTable']);
 Flight::route('GET /usuarios/crear', ['App\Controllers\UserController', 'create']);
 Flight::route('POST /usuarios', ['App\Controllers\UserController', 'store']);
 Flight::route('GET /usuarios/editar/@id', ['App\Controllers\UserController', 'edit']);
