@@ -6,12 +6,37 @@ class User
 {
     /**
      * Obtiene todos los usuarios con su rol.
+     * @param int|null $limit
+     * @param int|null $offset
+     * @return array
      */
-    public static function getAllWithRoles(): array
+    public static function getAllWithRoles(?int $limit = null, ?int $offset = null): array
     {
         $pdo = \Flight::db();
-        $stmt = $pdo->query("SELECT u.id_usuario, u.nombre_completo, u.email, u.activo, u.telefono, u.ruta_foto, r.nombre_rol FROM usuario u JOIN rol r ON u.id_rol = r.id_rol ORDER BY u.nombre_completo");
+        $sql = "SELECT u.id_usuario, u.nombre_completo, u.email, u.activo, u.telefono, u.ruta_foto, r.nombre_rol 
+                FROM usuario u 
+                JOIN rol r ON u.id_rol = r.id_rol 
+                ORDER BY u.nombre_completo";
+
+        if ($limit !== null && $offset !== null) {
+            $sql .= " LIMIT :limit OFFSET :offset";
+        }
+
+        $stmt = $pdo->prepare($sql);
+
+        if ($limit !== null && $offset !== null) {
+            $stmt->bindParam(':limit', $limit, \PDO::PARAM_INT);
+            $stmt->bindParam(':offset', $offset, \PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+    public static function countAll(): int
+    {
+        $pdo = \Flight::db();
+        $stmt = $pdo->query("SELECT COUNT(id_usuario) FROM usuario");
+        return (int)$stmt->fetchColumn();
     }
 
     /**

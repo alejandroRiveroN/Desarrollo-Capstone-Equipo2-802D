@@ -8,8 +8,27 @@ class UserController extends BaseController {
 
     public static function index() {
         self::checkAdmin();
-        $usuarios = User::getAllWithRoles();
-        \Flight::render('gestionar_usuarios.php', ['usuarios' => $usuarios]);
+        $request = \Flight::request();
+
+        // 1. Configuración de la paginación
+        $usuarios_por_pagina = 10; // Puedes ajustar este número
+        $pagina_actual = isset($request->query['pagina']) ? max(1, (int)$request->query['pagina']) : 1;
+        $offset = ($pagina_actual - 1) * $usuarios_por_pagina;
+
+        // 2. Contar el total de usuarios para calcular las páginas
+        $total_usuarios = User::countAll();
+        $total_paginas = ceil($total_usuarios / $usuarios_por_pagina);
+
+        // 3. Obtener los usuarios para la página actual
+        // Asumimos que el método `getAllWithRoles` ahora acepta limit y offset.
+        $usuarios = User::getAllWithRoles($usuarios_por_pagina, $offset);
+
+        // 4. Renderizar la vista con las variables de paginación
+        \Flight::render('gestionar_usuarios.php', [
+            'usuarios' => $usuarios,
+            'total_paginas' => $total_paginas,
+            'pagina_actual' => $pagina_actual
+        ]);
     }
 
     public static function create() {

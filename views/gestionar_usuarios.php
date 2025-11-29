@@ -50,6 +50,30 @@ if (isset($_SESSION['mensaje_error'])) {
                 </tbody>
             </table>
         </div>
+
+        <?php if (isset($total_paginas) && $total_paginas > 1): ?>
+            <nav aria-label="Paginación de usuarios">
+                <ul class="pagination justify-content-center mt-4">
+                    <!-- Botón Anterior -->
+                    <li class="page-item <?php echo ($pagina_actual <= 1) ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['pagina' => $pagina_actual - 1])); ?>">Anterior</a>
+                    </li>
+
+                    <!-- Números de página -->
+                    <?php for ($i = 1; $i <= $total_paginas; $i++): ?>
+                        <li class="page-item <?php echo ($i == $pagina_actual) ? 'active' : ''; ?>">
+                            <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['pagina' => $i])); ?>"><?php echo $i; ?></a>
+                        </li>
+                    <?php endfor; ?>
+
+                    <!-- Botón Siguiente -->
+                    <li class="page-item <?php echo ($pagina_actual >= $total_paginas) ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['pagina' => $pagina_actual + 1])); ?>">Siguiente</a>
+                    </li>
+                </ul>
+            </nav>
+        <?php endif; ?>
+
     </div>
 </div>
 
