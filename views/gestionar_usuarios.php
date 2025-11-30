@@ -39,6 +39,7 @@ if (isset($_SESSION['mensaje_error'])) {
       </div>
       <div class="modal-footer">
         <form id="deleteUserForm" method="POST">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
             <button type="submit" class="btn btn-danger">Confirmar Eliminación</button>
         </form>

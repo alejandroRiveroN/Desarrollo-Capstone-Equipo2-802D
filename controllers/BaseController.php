@@ -56,6 +56,37 @@ abstract class BaseController {
     }
 
     /**
+     * Genera y almacena un token CSRF en la sesión si no existe uno.
+     * Este método debe llamarse antes de renderizar cualquier formulario que modifique datos.
+     */
+    protected static function generateCsrfToken(): void
+    {
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+    }
+
+    /**
+     * Valida el token CSRF enviado en una petición contra el almacenado en la sesión.
+     * Si la validación falla, redirige con un mensaje de error y termina la ejecución.
+     * Este método debe llamarse al inicio de cada acción que procesa un formulario (store, update, delete).
+     */
+    protected static function validateCsrfToken(): void
+    {
+        $request = \Flight::request();
+        $submitted_token = $request->data->csrf_token ?? $request->query['csrf_token'] ?? null;
+
+        if (!isset($_SESSION['csrf_token']) || !$submitted_token || !hash_equals($_SESSION['csrf_token'], $submitted_token)) {
+            // El token es inválido o no se ha enviado.
+            $_SESSION['mensaje_error'] = 'Error de validación de seguridad. Por favor, inténtelo de nuevo.';
+            // Invalidar el token actual para forzar la generación de uno nuevo.
+            unset($_SESSION['csrf_token']);
+            \Flight::redirect($_SERVER['HTTP_REFERER'] ?? '/');
+            exit();
+        }
+    }
+
+    /**
      * Redirige al usuario a la página de login.
      * Construye una URL absoluta para funcionar correctamente detrás de proxies inversos.
      */

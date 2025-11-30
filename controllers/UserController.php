@@ -8,6 +8,7 @@ class UserController extends BaseController {
 
     public static function index() {
         self::checkAdmin();
+        self::generateCsrfToken(); // Asegurarse de que el token esté disponible en la vista
         $request = \Flight::request();
 
         // 1. Configuración de la paginación
@@ -33,11 +34,13 @@ class UserController extends BaseController {
 
     public static function create() {
         self::checkAdmin();
+        self::generateCsrfToken(); // Generar token para el formulario
         $roles = User::getRoles();
         \Flight::render('crear_usuario_admin.php', ['roles' => $roles, 'error_msg' => '']);
     }
 
     public static function store() {
+        self::validateCsrfToken(); // Validar token al recibir el formulario
         self::checkAdmin();
         $request = \Flight::request();
         $data = $request->data;
@@ -46,22 +49,29 @@ class UserController extends BaseController {
         $email = $data->email;
         $password = $data->password;
         $id_rol = (int)$data->id_rol;
-        $puesto = $data->puesto;
         $telefono = $data->telefono;
+
+        // El puesto solo es relevante para roles que no son de Administrador (id_rol != 1)
+        $puesto = ($id_rol !== 1) ? $data->puesto : null;
 
         try {
             $ruta_foto = User::handleAvatarUpload();
-            User::createUser($id_rol, $nombre_completo, $email, $password, $telefono, $puesto, $ruta_foto);
+            User::createUser($id_rol, $nombre_completo, $email, $password, $telefono, $puesto, $ruta_foto); // Pasamos el puesto ajustado
+
+            
+            // Calcular la última página para redirigir al usuario allí y que vea el nuevo registro.
+            $usuarios_por_pagina = 10; // Debe coincidir con el valor en el método index()
+            $total_usuarios = User::countAll();
+            $ultima_pagina = ceil($total_usuarios / $usuarios_por_pagina);
 
             // Guardar mensaje de éxito y forzar redirección absoluta
             $_SESSION['mensaje_exito'] = '¡Usuario creado correctamente!';
-            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/usuarios';
+            $url = 'http://' . $_SERVER['HTTP_HOST'] . \Flight::get('base_url') . '/usuarios?pagina=' . $ultima_pagina;
             \Flight::redirect($url);
-            exit();
         } catch (\Exception $e) {
             $roles = User::getRoles();
 
-            // --- INICIO DE LA CORRECCIÓN ---
+            
             // Verificar si el error es por una entrada duplicada (código de error 23000)
             if ($e instanceof \PDOException && $e->getCode() == '23000') {
                 $error_message = "El correo electrónico ya se encuentra registrado. Por favor, utiliza otro.";
@@ -69,12 +79,13 @@ class UserController extends BaseController {
                 $error_message = "Error al crear el usuario: " . $e->getMessage();
             }
             \Flight::render('crear_usuario_admin.php', ['roles' => $roles, 'error_msg' => $error_message]);
-            // --- FIN DE LA CORRECCIÓN ---
+            
         }
     }
 
     public static function edit($id) {
         self::checkAdmin();
+        self::generateCsrfToken(); // Generar token para el formulario de edición
         $usuario = User::findById($id);
 
         if (!$usuario) {
@@ -93,6 +104,7 @@ class UserController extends BaseController {
     }
 
     public static function update($id) {
+        self::validateCsrfToken(); // Validar token al recibir la actualización
         self::checkAdmin();
         $request = \Flight::request();
         $data = $request->data;
@@ -102,7 +114,9 @@ class UserController extends BaseController {
         $id_rol = $data->id_rol;
         $activo = isset($data->activo) ? 1 : 0;
         $telefono = $data->telefono;
-        $puesto = $data->puesto ?? null; // Recoger el puesto para cuando se cambia a Agente.
+
+        // El puesto solo es relevante para roles que no son de Administrador (id_rol != 1)
+        $puesto = ($id_rol != 1 && isset($data->puesto)) ? $data->puesto : null;
 
         try {
             $old_user_data = User::findEssentialById($id); // Se necesita para la foto
@@ -123,6 +137,7 @@ class UserController extends BaseController {
     }
 
     public static function delete($id) {
+        self::validateCsrfToken(); // Validar token para la acción de eliminar
         self::checkAdmin();
 
         // Medida de seguridad: no permitir que un usuario se elimine a sí mismo.

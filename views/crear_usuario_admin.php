@@ -7,6 +7,7 @@
             <div class="alert alert-danger"><?php echo htmlspecialchars($error_msg); ?></div>
         <?php endif; ?>
         <form id="formUsuario" action="<?php echo Flight::get('base_url'); ?>/usuarios" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="nombre_completo" class="form-label">Nombre Completo <span class="text-danger">*</span></label>
@@ -48,7 +49,7 @@
                 </div>
             </div>
 
-            <div class="mb-3">
+            <div class="mb-3" id="puesto-container">
                 <label for="puesto" class="form-label">Puesto del Agente <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="puesto" name="puesto" placeholder="Ej: Soporte Nivel 1" required>
             </div>
@@ -73,5 +74,31 @@
 </div>
 
 <script src="<?php echo Flight::get('base_url'); ?>/js/crear_usuario_admin.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rolSelect = document.getElementById('id_rol');
+    const puestoContainer = document.getElementById('puesto-container');
+    const puestoInput = document.getElementById('puesto');
+
+    function togglePuestoField() {
+        // El id_rol para 'Administrador' es 1.
+        // Si el rol seleccionado es 'Administrador', ocultamos el campo de puesto.
+        if (rolSelect.value == '1') {
+            puestoContainer.style.display = 'none';
+            puestoInput.required = false; // Quitamos el 'required' para que el formulario se pueda enviar.
+        } else {
+            puestoContainer.style.display = 'block';
+            puestoInput.required = true; // Lo hacemos requerido para otros roles.
+        }
+    }
+
+    // Ejecutamos la función al cargar la página por si el rol por defecto necesita ocultar el campo.
+    togglePuestoField();
+
+    // Añadimos un listener para que la función se ejecute cada vez que cambie el rol.
+    rolSelect.addEventListener('change', togglePuestoField);
+});
+</script>
 
 <?php require_once __DIR__ . '/partials/footer.php'; ?>

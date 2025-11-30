@@ -187,6 +187,9 @@ class User
             } elseif (in_array($id_rol, [2, 3])) { // Si es Agente (2) o Agente Supervisor (3)
                 $id_usuario = self::create($id_rol, $nombre, $email, $password, $telefono, $ruta_foto);
                 self::createAgent($id_usuario, $puesto);
+            } else { // Para otros roles como Administrador (1)
+                // Simplemente creamos el registro en la tabla de usuarios.
+                self::create($id_rol, $nombre, $email, $password, $telefono, $ruta_foto);
             }
 
             $pdo->commit();
