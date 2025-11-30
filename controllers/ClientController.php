@@ -54,6 +54,7 @@ class ClientController extends BaseController {
 
     public static function index() {
         self::checkAuth();
+        self::generateCsrfToken(); // Para el formulario de borrado en el modal
         $request = \Flight::request();
 
         // 1. Obtener filtros
@@ -150,11 +151,13 @@ class ClientController extends BaseController {
     }
 
     public static function create() {
+        self::generateCsrfToken(); // Para el formulario de creación
         \Flight::render('crear_cliente.php', ['mensaje_error' => '']);
     }
 
     public static function store() {
         self::checkAuth();
+        self::validateCsrfToken(); // Validar token al crear
         $request = \Flight::request();
         $data = $request->data;
 
@@ -198,6 +201,7 @@ class ClientController extends BaseController {
 
     public static function edit($id) {
         self::checkAuth();
+        self::generateCsrfToken(); // Para el formulario de edición
         $cliente = Client::findById($id);
 
         if (!$cliente) {
@@ -214,6 +218,7 @@ class ClientController extends BaseController {
 
     public static function update($id) {
         self::checkAuth();
+        self::validateCsrfToken(); // Validar token al actualizar
         $request = \Flight::request();
         $data = $request->data;
 
@@ -250,6 +255,7 @@ class ClientController extends BaseController {
 
     public static function delete($id) {
         self::checkAdmin(); // Solo los administradores pueden eliminar
+        self::validateCsrfToken(); // Validar token al eliminar
 
         try {
             Client::deleteWithUser($id);
