@@ -46,7 +46,7 @@ $titulo_reporte = "Reporte de Calificaciones de Tickets";
                         <td><?php echo htmlspecialchars($eval['nombre_agente'] ?? 'N/A'); ?></td>
                         <td style="text-align: center;"><?php echo htmlspecialchars($eval['calificacion']); ?>/5</td>
                         <td><?php echo htmlspecialchars($eval['comentario']); ?></td>
-                        <td><?php echo date('d/m/Y', strtotime($eval['fecha_evaluacion'])); ?></td>
+                        <td><?php echo date('d/m/Y', strtotime($eval['fecha_creacion'])); ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>
