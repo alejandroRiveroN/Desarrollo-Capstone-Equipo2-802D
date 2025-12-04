@@ -43,27 +43,86 @@
 </div>
 
 <?php if ($total_pages > 1): ?>
-    <nav aria-label="Paginación de clientes">
+
+    <?php
+    // ----- Preparar query base manteniendo filtros -----
+    $query = $_GET;
+    unset($query['page']);
+    $baseQuery = http_build_query($query);
+    $baseUrl = '?' . ($baseQuery ? $baseQuery . '&' : '');
+
+    // ----- Configuración -----
+    $max_links = 5;
+
+    // ----- Calcular ventana -----
+    $start = max(1, $current_page - intdiv($max_links, 2));
+    $end   = min($total_pages, $start + $max_links - 1);
+
+    // Ajustar inicio cuando está cerca del final
+    if (($end - $start + 1) < $max_links) {
+        $start = max(1, $end - $max_links + 1);
+    }
+    ?>
+
+    <nav aria-label="Paginación">
         <ul class="pagination justify-content-center mt-4">
+
             <!-- Botón Anterior -->
-            <li class="page-item <?php echo ($current_page <= 1) ? 'disabled' : ''; ?>">
-                <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $current_page - 1])); ?>">Anterior</a>
+            <li class="page-item <?= ($current_page <= 1) ? 'disabled' : ''; ?>">
+                <a class="page-link" 
+                   href="<?= $baseUrl . 'page=' . ($current_page - 1); ?>">
+                   Anterior
+                </a>
             </li>
 
-            <!-- Números de página -->
-            <?php for ($i = 1; $i <= $total_pages; $i++):
-            ?>
-                <li class="page-item <?php echo ($i == $current_page) ? 'active' : ''; ?>">
-                    <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>"><?php echo $i; ?></a>
+            <!-- Mostrar 1 y "..." si la ventana no empieza en 1 -->
+            <?php if ($start > 1): ?>
+                <li class="page-item">
+                    <a class="page-link" href="<?= $baseUrl . 'page=1'; ?>">1</a>
                 </li>
-            <?php endfor;
-            ?>
+
+                <?php if ($start > 2): ?>
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                <?php endif; ?>
+            <?php endif; ?>
+
+            <!-- Ventana dinámica -->
+            <?php for ($i = $start; $i <= $end; $i++): ?>
+                <li class="page-item <?= ($i == $current_page) ? 'active' : ''; ?>">
+                    <a class="page-link" 
+                       href="<?= $baseUrl . 'page=' . $i; ?>">
+                       <?= $i; ?>
+                    </a>
+                </li>
+            <?php endfor; ?>
+
+            <!-- Mostrar "..." y última página si no está visible -->
+            <?php if ($end < $total_pages): ?>
+
+                <?php if ($end < $total_pages - 1): ?>
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                <?php endif; ?>
+
+                <li class="page-item">
+                    <a class="page-link" href="<?= $baseUrl . 'page=' . $total_pages; ?>">
+                        <?= $total_pages; ?>
+                    </a>
+                </li>
+
+            <?php endif; ?>
 
             <!-- Botón Siguiente -->
-            <li class="page-item <?php echo ($current_page >= $total_pages) ? 'disabled' : ''; ?>">
-                <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $current_page + 1])); ?>">Siguiente</a>
+            <li class="page-item <?= ($current_page >= $total_pages) ? 'disabled' : ''; ?>">
+                <a class="page-link" 
+                   href="<?= $baseUrl . 'page=' . ($current_page + 1); ?>">
+                   Siguiente
+                </a>
             </li>
+
         </ul>
     </nav>
-<?php endif;
-?>
+<?php endif; ?>

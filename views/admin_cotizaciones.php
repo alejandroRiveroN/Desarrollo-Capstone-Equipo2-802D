@@ -71,15 +71,88 @@
       <?php
       $pendPages = ceil($pend_total / $pend_limit);
       if ($pendPages > 1):
+
+          // Mantener otros filtros, pero limpiar page_p y page_r
+          $query = $_GET ?? [];
+          unset($query['page_p'], $query['page_r']);
+          $baseQuery = http_build_query($query);
+          $baseUrl = '?' . ($baseQuery ? $baseQuery . '&' : '');
+
+          $max_links = 5;
+          $current = $pend_page;
+
+          // Calcular ventana
+          $start = max(1, $current - intdiv($max_links, 2));
+          $end   = min($pendPages, $start + $max_links - 1);
+
+          // Ajustar si la ventana queda corta
+          if (($end - $start + 1) < $max_links) {
+              $start = max(1, $end - $max_links + 1);
+          }
       ?>
-      <nav>
-        <ul class="pagination">
-          <?php for ($i=1; $i <= $pendPages; $i++): ?>
-            <li class="page-item <?= $i == $pend_page ? 'active' : '' ?>">
-              <a class="page-link" href="?page_p=<?= $i ?>&page_r=1"><?= $i ?></a>
-            </li>
-          <?php endfor; ?>
-        </ul>
+      <nav aria-label="Paginación cotizaciones pendientes">
+          <ul class="pagination justify-content-center mt-3">
+
+              <!-- Botón Anterior -->
+              <li class="page-item <?= ($current <= 1) ? 'disabled' : ''; ?>">
+                  <a class="page-link"
+                    href="<?= $baseUrl . 'page_p=' . ($current - 1) . '&page_r=1'; ?>">
+                      Anterior
+                  </a>
+              </li>
+
+              <!-- Mostrar 1 + "..." si la ventana no empieza en 1 -->
+              <?php if ($start > 1): ?>
+                  <li class="page-item">
+                      <a class="page-link"
+                        href="<?= $baseUrl . 'page_p=1&page_r=1'; ?>">
+                          1
+                      </a>
+                  </li>
+
+                  <?php if ($start > 2): ?>
+                      <li class="page-item disabled">
+                          <span class="page-link">...</span>
+                      </li>
+                  <?php endif; ?>
+              <?php endif; ?>
+
+              <!-- Números dentro de la ventana -->
+              <?php for ($i = $start; $i <= $end; $i++): ?>
+                  <li class="page-item <?= ($i == $current) ? 'active' : ''; ?>">
+                      <a class="page-link"
+                        href="<?= $baseUrl . 'page_p=' . $i . '&page_r=1'; ?>">
+                          <?= $i; ?>
+                      </a>
+                  </li>
+              <?php endfor; ?>
+
+              <!-- "..." + última si la ventana no llega al final -->
+              <?php if ($end < $pendPages): ?>
+
+                  <?php if ($end < $pendPages - 1): ?>
+                      <li class="page-item disabled">
+                          <span class="page-link">...</span>
+                      </li>
+                  <?php endif; ?>
+
+                  <li class="page-item">
+                      <a class="page-link"
+                        href="<?= $baseUrl . 'page_p=' . $pendPages . '&page_r=1'; ?>">
+                          <?= $pendPages; ?>
+                      </a>
+                  </li>
+              <?php endif; ?>
+
+              <!-- Botón Siguiente -->
+              <li class="page-item <?= ($current >= $pendPages) ? 'disabled' : ''; ?>">
+                  <a class="page-link"
+                    href="<?= $baseUrl . 'page_p=' . ($current + 1) . '&page_r=1'; ?>">
+                      Siguiente
+                  </a>
+              </li>
+
+          </ul>
       </nav>
       <?php endif; ?>
     </div>
@@ -142,15 +215,88 @@
       <?php
       $respPages = ceil($resp_total / $resp_limit);
       if ($respPages > 1):
+
+          // Mantener otros filtros, pero limpiar page_p y page_r
+          $query = $_GET ?? [];
+          unset($query['page_p'], $query['page_r']);
+          $baseQuery = http_build_query($query);
+          $baseUrl = '?' . ($baseQuery ? $baseQuery . '&' : '');
+
+          $max_links = 5;
+          $current = $resp_page;
+
+          // Calcular ventana
+          $start = max(1, $current - intdiv($max_links, 2));
+          $end   = min($respPages, $start + $max_links - 1);
+
+          // Ajustar si la ventana queda corta
+          if (($end - $start + 1) < $max_links) {
+              $start = max(1, $end - $max_links + 1);
+          }
       ?>
-      <nav>
-        <ul class="pagination">
-          <?php for ($i=1; $i <= $respPages; $i++): ?>
-            <li class="page-item <?= $i == $resp_page ? 'active' : '' ?>">
-              <a class="page-link" href="?page_r=<?= $i ?>&page_p=1"><?= $i ?></a>
-            </li>
-          <?php endfor; ?>
-        </ul>
+      <nav aria-label="Paginación cotizaciones respondidas">
+          <ul class="pagination justify-content-center mt-3">
+
+              <!-- Botón Anterior -->
+              <li class="page-item <?= ($current <= 1) ? 'disabled' : ''; ?>">
+                  <a class="page-link"
+                    href="<?= $baseUrl . 'page_r=' . ($current - 1) . '&page_p=1'; ?>">
+                      Anterior
+                  </a>
+              </li>
+
+              <!-- Mostrar 1 + "..." si la ventana no empieza en 1 -->
+              <?php if ($start > 1): ?>
+                  <li class="page-item">
+                      <a class="page-link"
+                        href="<?= $baseUrl . 'page_r=1&page_p=1'; ?>">
+                          1
+                      </a>
+                  </li>
+
+                  <?php if ($start > 2): ?>
+                      <li class="page-item disabled">
+                          <span class="page-link">...</span>
+                      </li>
+                  <?php endif; ?>
+              <?php endif; ?>
+
+              <!-- Números dentro de la ventana -->
+              <?php for ($i = $start; $i <= $end; $i++): ?>
+                  <li class="page-item <?= ($i == $current) ? 'active' : ''; ?>">
+                      <a class="page-link"
+                        href="<?= $baseUrl . 'page_r=' . $i . '&page_p=1'; ?>">
+                          <?= $i; ?>
+                      </a>
+                  </li>
+              <?php endfor; ?>
+
+              <!-- "..." + última si la ventana no llega al final -->
+              <?php if ($end < $respPages): ?>
+
+                  <?php if ($end < $respPages - 1): ?>
+                      <li class="page-item disabled">
+                          <span class="page-link">...</span>
+                      </li>
+                  <?php endif; ?>
+
+                  <li class="page-item">
+                      <a class="page-link"
+                        href="<?= $baseUrl . 'page_r=' . $respPages . '&page_p=1'; ?>">
+                          <?= $respPages; ?>
+                      </a>
+                  </li>
+              <?php endif; ?>
+
+              <!-- Botón Siguiente -->
+              <li class="page-item <?= ($current >= $respPages) ? 'disabled' : ''; ?>">
+                  <a class="page-link"
+                    href="<?= $baseUrl . 'page_r=' . ($current + 1) . '&page_p=1'; ?>">
+                      Siguiente
+                  </a>
+              </li>
+
+          </ul>
       </nav>
       <?php endif; ?>
     </div>

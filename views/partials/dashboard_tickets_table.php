@@ -77,23 +77,78 @@
                 <?php endif; ?>
             </tbody>
         </table>
-        <nav aria-label="Paginación de tickets">
-            <ul class="pagination justify-content-center mt-4">
+        <?php
+        // Construir base de la query para NO perder los filtros al cambiar de página
+        $query = $_GET;
+        unset($query['pagina']); // quitamos solo la página actual
+        $baseQuery = http_build_query($query);
+        $baseUrl = '?' . ($baseQuery ? $baseQuery . '&' : '');
+
+        // Configuración de la ventana de paginación
+        $max_links = 5;
+
+        // Calcular página inicial y final de la ventana
+        $start = max(1, $pagina_actual - intdiv($max_links, 2));
+        $end   = min($total_paginas, $start + $max_links - 1);
+
+        // Ajustar inicio si hay menos de 5 páginas al final
+        if (($end - $start + 1) < $max_links) {
+            $start = max(1, $end - $max_links + 1);
+        }
+        ?>
+
+        <nav>
+            <ul class="pagination">
+                <!-- Botón Anterior -->
                 <?php if ($pagina_actual > 1): ?>
                     <li class="page-item">
-                        <a class="page-link" href="?pagina=<?= $pagina_actual - 1 ?>">Anterior</a>
+                        <a class="page-link" href="<?= $baseUrl . 'pagina=' . ($pagina_actual - 1); ?>">
+                            Anterior
+                        </a>
                     </li>
                 <?php endif; ?>
 
-                <?php for ($i = 1; $i <= $total_paginas; $i++): ?>
+                <!-- Si no estamos cerca del inicio, mostramos el 1 y "..." -->
+                <?php if ($start > 1): ?>
+                    <li class="page-item">
+                        <a class="page-link" href="<?= $baseUrl . 'pagina=1'; ?>">1</a>
+                    </li>
+                    <?php if ($start > 2): ?>
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    <?php endif; ?>
+                <?php endif; ?>
+
+                <!-- Páginas de la ventana -->
+                <?php for ($i = $start; $i <= $end; $i++): ?>
                     <li class="page-item <?= $i == $pagina_actual ? 'active' : '' ?>">
-                        <a class="page-link" href="?pagina=<?= $i ?>"><?= $i ?></a>
+                        <a class="page-link" href="<?= $baseUrl . 'pagina=' . $i; ?>">
+                            <?= $i ?>
+                        </a>
                     </li>
                 <?php endfor; ?>
 
+                <!-- Si no estamos cerca del final, mostramos "..." y la última -->
+                <?php if ($end < $total_paginas): ?>
+                    <?php if ($end < $total_paginas - 1): ?>
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    <?php endif; ?>
+                    <li class="page-item">
+                        <a class="page-link" href="<?= $baseUrl . 'pagina=' . $total_paginas; ?>">
+                            <?= $total_paginas ?>
+                        </a>
+                    </li>
+                <?php endif; ?>
+
+                <!-- Botón Siguiente -->
                 <?php if ($pagina_actual < $total_paginas): ?>
                     <li class="page-item">
-                        <a class="page-link" href="?pagina=<?= $pagina_actual + 1 ?>">Siguiente</a>
+                        <a class="page-link" href="<?= $baseUrl . 'pagina=' . ($pagina_actual + 1); ?>">
+                            Siguiente
+                        </a>
                     </li>
                 <?php endif; ?>
             </ul>

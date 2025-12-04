@@ -87,10 +87,63 @@ class AdminController extends BaseController {
     {
         self::checkAdmin();
         $pdo = \Flight::db();
-        $stmt = $pdo->query("SELECT * FROM formulario_contacto ORDER BY fecha_creacion DESC");
-        $mensajes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        \Flight::render('admin_mensajes.php', ['mensajes' => $mensajes]);
+        // Límite por página
+        $limit = 10;
+
+        // Página de nuevos
+        $pageNew = isset($_GET['page_n']) ? max(1, (int)$_GET['page_n']) : 1;
+        $offsetNew = ($pageNew - 1) * $limit;
+
+        // Página de respondidos
+        $pageResp = isset($_GET['page_r']) ? max(1, (int)$_GET['page_r']) : 1;
+        $offsetResp = ($pageResp - 1) * $limit;
+
+        // NUEVOS
+        $stmt = $pdo->prepare("
+            SELECT * FROM formulario_contacto
+            WHERE estado = 'Nuevo'
+            ORDER BY fecha_creacion DESC
+            LIMIT ? OFFSET ?
+        ");
+        $stmt->bindValue(1, $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(2, $offsetNew, \PDO::PARAM_INT);
+        $stmt->execute();
+        $nuevos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // Total nuevos
+        $totalNew = $pdo->query("
+            SELECT COUNT(*) FROM formulario_contacto WHERE estado='Nuevo'
+        ")->fetchColumn();
+
+        // RESPONDIDOS
+        $stmt = $pdo->prepare("
+            SELECT * FROM formulario_contacto
+            WHERE estado = 'Respondido'
+            ORDER BY fecha_respuesta DESC, fecha_creacion DESC
+            LIMIT ? OFFSET ?
+        ");
+        $stmt->bindValue(1, $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(2, $offsetResp, \PDO::PARAM_INT);
+        $stmt->execute();
+        $respondidos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // Total respondidos
+        $totalResp = $pdo->query("
+            SELECT COUNT(*) FROM formulario_contacto WHERE estado='Respondido'
+        ")->fetchColumn();
+
+        \Flight::render('admin_mensajes.php', [
+            "nuevos"       => $nuevos,
+            "new_total"    => $totalNew,
+            "new_page"     => $pageNew,
+            "new_limit"    => $limit,
+
+            "respondidos"  => $respondidos,
+            "resp_total"   => $totalResp,
+            "resp_page"    => $pageResp,
+            "resp_limit"   => $limit
+        ]);
     }
 
     /**
