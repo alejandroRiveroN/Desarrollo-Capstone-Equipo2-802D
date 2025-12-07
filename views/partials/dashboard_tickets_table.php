@@ -98,7 +98,7 @@
         ?>
 
         <nav>
-            <ul class="pagination">
+            <ul class="pagination justify-content-center mt-4">
                 <!-- Botón Anterior -->
                 <?php if ($pagina_actual > 1): ?>
                     <li class="page-item">
