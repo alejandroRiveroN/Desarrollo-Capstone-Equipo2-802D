@@ -97,26 +97,9 @@
         }
         ?>
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-        <nav>
-            <ul class="pagination justify-content-center mt-4">
-=======
         <nav aria-label="Paginación de tickets">
             <ul class="pagination justify-content-center mt-3">
 
->>>>>>> Stashed changes
-=======
-        <nav aria-label="Paginación de tickets">
-            <ul class="pagination justify-content-center mt-3">
-
->>>>>>> Stashed changes
-=======
-        <nav aria-label="Paginación de tickets">
-            <ul class="pagination justify-content-center mt-3">
-
->>>>>>> Stashed changes
                 <!-- Botón Anterior -->
                 <li class="page-item <?= ($pagina_actual <= 1) ? 'disabled' : ''; ?>">
                     <a class="page-link" href="<?= $baseUrl . 'pagina=' . ($pagina_actual - 1); ?>">
