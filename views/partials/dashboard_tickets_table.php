@@ -99,8 +99,14 @@
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         <nav>
             <ul class="pagination justify-content-center mt-4">
+=======
+        <nav aria-label="Paginación de tickets">
+            <ul class="pagination justify-content-center mt-3">
+
+>>>>>>> Stashed changes
 =======
         <nav aria-label="Paginación de tickets">
             <ul class="pagination justify-content-center mt-3">
