@@ -204,7 +204,7 @@ require_once __DIR__ . '/partials/header.php';
 <!-- Muestra un mensaje de éxito si existe en la sesión -->
 <?php echo $mensaje_exito; ?>
 <div id="dashboard-tickets-container">
-    <div class="card">
+    <div class="card" id="dashboard-card">
         <?php require_once __DIR__ . '/partials/dashboard_tickets_table.php'; ?>
     </div>
 </div>

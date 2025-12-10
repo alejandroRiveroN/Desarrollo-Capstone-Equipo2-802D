@@ -97,16 +97,20 @@
         }
         ?>
 
+<<<<<<< Updated upstream
         <nav>
             <ul class="pagination justify-content-center mt-4">
+=======
+        <nav aria-label="Paginación de tickets">
+            <ul class="pagination justify-content-center mt-3">
+
+>>>>>>> Stashed changes
                 <!-- Botón Anterior -->
-                <?php if ($pagina_actual > 1): ?>
-                    <li class="page-item">
-                        <a class="page-link" href="<?= $baseUrl . 'pagina=' . ($pagina_actual - 1); ?>">
-                            Anterior
-                        </a>
-                    </li>
-                <?php endif; ?>
+                <li class="page-item <?= ($pagina_actual <= 1) ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="<?= $baseUrl . 'pagina=' . ($pagina_actual - 1); ?>">
+                        Anterior
+                    </a>
+                </li>
 
                 <!-- Si no estamos cerca del inicio, mostramos el 1 y "..." -->
                 <?php if ($start > 1): ?>
@@ -122,9 +126,9 @@
 
                 <!-- Páginas de la ventana -->
                 <?php for ($i = $start; $i <= $end; $i++): ?>
-                    <li class="page-item <?= $i == $pagina_actual ? 'active' : '' ?>">
+                    <li class="page-item <?= ($i == $pagina_actual) ? 'active' : ''; ?>">
                         <a class="page-link" href="<?= $baseUrl . 'pagina=' . $i; ?>">
-                            <?= $i ?>
+                            <?= $i; ?>
                         </a>
                     </li>
                 <?php endfor; ?>
@@ -138,19 +142,17 @@
                     <?php endif; ?>
                     <li class="page-item">
                         <a class="page-link" href="<?= $baseUrl . 'pagina=' . $total_paginas; ?>">
-                            <?= $total_paginas ?>
+                            <?= $total_paginas; ?>
                         </a>
                     </li>
                 <?php endif; ?>
 
                 <!-- Botón Siguiente -->
-                <?php if ($pagina_actual < $total_paginas): ?>
-                    <li class="page-item">
-                        <a class="page-link" href="<?= $baseUrl . 'pagina=' . ($pagina_actual + 1); ?>">
-                            Siguiente
-                        </a>
-                    </li>
-                <?php endif; ?>
+                <li class="page-item <?= ($pagina_actual >= $total_paginas) ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="<?= $baseUrl . 'pagina=' . ($pagina_actual + 1); ?>">
+                        Siguiente
+                    </a>
+                </li>
             </ul>
         </nav>
     </div>

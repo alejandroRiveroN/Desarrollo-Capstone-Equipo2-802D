@@ -15,10 +15,10 @@
 
     /* Paleta de colores para el Dashboard */
     --color-dashboard-fondo: #f8f9fa;
-    --color-sidebar-bg: #212529;
-    --color-sidebar-texto: rgba(255, 255, 255, 0.65);
+    --color-sidebar-bg: #133C55; /* Azul corporativo */
+    --color-sidebar-texto: rgba(255, 255, 255, 0.8); /* Texto más legible */
     --color-sidebar-texto-hover: #fff;
-    --color-sidebar-borde: rgba(255, 255, 255, 0.1);
+    --color-sidebar-borde: rgba(255, 255, 255, 0.15); /* Borde más visible */
 }
 
 body {
@@ -70,11 +70,20 @@ body {
     color: var(--color-sidebar-texto);
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
+    font-weight: 400; /* Peso normal para enlaces inactivos */
+    transition: background-color 0.2s ease, color 0.2s ease; /* Transición suave */
+    border-left: 3px solid transparent; /* Borde izquierdo transparente por defecto */
 }
 
 .sidebar .nav-link:hover, .sidebar .nav-link.active {
     color: var(--color-sidebar-texto-hover);
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.2); /* Fondo más oscuro al pasar el mouse */
+    border-left: 3px solid var(--color-acento, #00b894); /* Usa color de acento o fallback */
+}
+
+/* El texto del enlace activo se hace más bold */
+.sidebar .nav-link.active {
+    font-weight: 600; /* Semi-bold para el enlace activo */
 }
 
 .sidebar .nav-link .bi {
@@ -122,7 +131,7 @@ body {
 /* Desktop: El sidebar es visible y empuja el contenido */
 @media (min-width: 992px) {
     .main-content, .user-bar { margin-left: var(--sidebar-width); }
-    .main-content { padding: var(--main-content-padding); }
+    .main-content { padding: 0; }
 }
 
 /* Móvil: El sidebar se oculta y el contenido ocupa todo el ancho */
@@ -144,4 +153,11 @@ body {
 /* Hover para resaltar la fila sobre la que está el cursor */
 .table-hover tbody tr:hover {
     background-color: rgba(0, 0, 0, 0.075);
+}
+
+/* --- Mejoras de Contraste Adicionales --- */
+
+/* Oscurecer el color del texto silenciado para mejorar la legibilidad */
+.text-muted {
+    color: #5a6268 !important; /* Usamos !important para asegurar la anulación sobre Bootstrap */
 }

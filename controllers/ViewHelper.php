@@ -76,4 +76,30 @@ class ViewHelper
         
         echo "<th><a href=\"?$query\" class=\"text-white text-decoration-none\">$text $icon</a></th>";
     }
+
+    /**
+     * Formatea una cantidad de minutos a un formato legible (ej. "2 horas y 10 minutos").
+     *
+     * @param int|null $minutes El número total de minutos.
+     * @return string La cadena de tiempo formateada o un guion si no es válido.
+     */
+    public static function formatMinutes(?int $minutes): string
+    {
+        if ($minutes === null || $minutes < 1) {
+            return '—';
+        }
+
+        $hours = floor($minutes / 60);
+        $mins = $minutes % 60;
+
+        $parts = [];
+        if ($hours > 0) {
+            $parts[] = $hours . ' ' . ($hours > 1 ? 'horas' : 'hora');
+        }
+        if ($mins > 0) {
+            $parts[] = $mins . ' ' . ($mins > 1 ? 'minutos' : 'minuto');
+        }
+
+        return !empty($parts) ? implode(' y ', $parts) : '0 minutos';
+    }
 }

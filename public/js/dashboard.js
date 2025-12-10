@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const tableContainer = document.getElementById('dashboard-tickets-container');
+    const ticketsContainer = document.getElementById('dashboard-tickets-container'); // Contenedor para delegación de eventos
 
-    if (tableContainer) {
-        tableContainer.addEventListener('click', function (event) {
+    if (ticketsContainer) {
+        ticketsContainer.addEventListener('click', function (event) {
             // Asegurarse de que el clic fue en un enlace de paginación
             if (event.target.matches('.pagination a')) {
                 event.preventDefault(); // Prevenir la recarga de la página
@@ -33,8 +33,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         return response.text();
                     })
                     .then(html => {
-                        // Reemplazar el contenido de la tabla y la paginación
-                        tableContainer.innerHTML = html;
+                        // Encontrar el contenedor interior y reemplazar solo su contenido
+                        const cardContent = ticketsContainer.querySelector('#dashboard-card');
+                        if (cardContent) {
+                            cardContent.innerHTML = html;
+                        }
 
                         // Actualizar la URL en el navegador sin recargar
                         const newUrl = new URL(window.location.href);
@@ -46,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         history.pushState({ path: newUrl.href }, '', newUrl.href);
 
                         // Opcional: hacer scroll suave hacia el inicio de la tabla
-                        tableContainer.scrollIntoView({ behavior: 'smooth' });
+                        ticketsContainer.scrollIntoView({ behavior: 'smooth' });
                     })
                     .catch(error => {
                         console.error('Error al cargar la página:', error);

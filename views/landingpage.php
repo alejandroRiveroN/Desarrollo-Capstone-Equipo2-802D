@@ -53,12 +53,22 @@ if (isset($_SESSION['mensaje_exito'])) {
 </head>
 <body class="font-sans bg-mce-bg text-gray-800">
     <?php if ($mensaje): ?>
-        <div class="
-            <?php echo $tipo_mensaje === 'exito' ? 'bg-green-500' : 'bg-red-500'; ?>
-            text-white text-center p-3 font-semibold"
-            role="alert"
-        >
-            <?php echo htmlspecialchars($mensaje); ?>
+        <div class="fixed top-5 right-5 z-[100] max-w-sm" id="alert-banner">
+            <div class="
+                <?php echo $tipo_mensaje === 'exito' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'; ?>
+                border-l-4 p-4 rounded-lg shadow-lg"
+                role="alert"
+            >
+                <div class="flex">
+                    <div class="py-1">
+                        <!-- Ícono de éxito o error -->
+                        <svg class="h-6 w-6 <?php echo $tipo_mensaje === 'exito' ? 'text-green-500' : 'text-red-500'; ?> mr-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="<?php echo $tipo_mensaje === 'exito' ? 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z' : 'M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z'; ?>" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <div>
+                        <p class="font-bold"><?php echo htmlspecialchars($mensaje); ?></p>
+                    </div>
+                </div>
+            </div>
         </div>
     <?php endif; ?>
 
@@ -429,5 +439,18 @@ if (isset($_SESSION['mensaje_exito'])) {
 
     <!-- JavaScript -->
     <script src="<?php echo Flight::get('base_url'); ?>/js/landingpage.js"></script>
+    <script>
+        // Script para ocultar la alerta después de 5 segundos
+        document.addEventListener('DOMContentLoaded', function() {
+            const alertBanner = document.getElementById('alert-banner');
+            if (alertBanner) {
+                setTimeout(() => {
+                    alertBanner.style.transition = 'opacity 0.5s ease';
+                    alertBanner.style.opacity = '0';
+                    setTimeout(() => alertBanner.remove(), 500);
+                }, 5000);
+            }
+        });
+    </script>
 </body>
 </html>

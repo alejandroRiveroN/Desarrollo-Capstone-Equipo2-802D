@@ -1,11 +1,10 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
+use App\Controllers\ViewHelper;
+
 $base = Flight::get('base_url') ?? '';
 include __DIR__ . '/partials/header.php';
-
-/** flags desde el controller */
-$canSeeTotals = isset($canSeeTotals) ? (bool)$canSeeTotals : in_array((int)($_SESSION['id_rol'] ?? 0), [1,3], true);
-$showFilters  = isset($showFilters) ? (bool)$showFilters : !((int)($_SESSION['id_rol'] ?? 0) === 4);
 ?>
 
 <main class="container-fluid py-4">
@@ -63,7 +62,7 @@ $showFilters  = isset($showFilters) ? (bool)$showFilters : !((int)($_SESSION['id
           <tr>
             <th>Tipo de Caso</th>
             <?php if ($canSeeTotals): ?><th>Total Resueltos</th><?php endif; ?>
-            <th>TTR Promedio (minutos)</th>
+            <th>TTR Promedio</th>
           </tr>
         </thead>
         <tbody>
@@ -72,7 +71,7 @@ $showFilters  = isset($showFilters) ? (bool)$showFilters : !((int)($_SESSION['id
               <tr>
                 <td><?php echo htmlspecialchars($r['tipo_caso']); ?></td>
                 <?php if ($canSeeTotals): ?><td><?php echo (int)$r['total_resueltos']; ?></td><?php endif; ?>
-                <td><?php echo $r['ttr_promedio_horas'] !== null ? round((float)$r['ttr_promedio_horas'] * 60) : '—'; ?></td>
+                <td><?php echo ViewHelper::formatMinutes($r['ttr_promedio_horas'] !== null ? round((float)$r['ttr_promedio_horas'] * 60) : null); ?></td>
               </tr>
             <?php endforeach; ?>
           <?php else: ?>
