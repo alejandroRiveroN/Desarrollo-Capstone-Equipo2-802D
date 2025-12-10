@@ -111,15 +111,15 @@ Flight::route('GET /admin/reports/ticket-ratings/print', ['App\Controllers\Repor
 
 
 // COTIZACIONES CLIENTE 
-\Flight::route('GET /cotizaciones',        ['App\Controllers\CotizacionController', 'myIndex']);   
-\Flight::route('GET /cotizaciones/crear',  ['App\Controllers\CotizacionController', 'createForm']); 
-\Flight::route('POST /cotizaciones',       ['App\Controllers\CotizacionController', 'store']);       
-\Flight::route('GET /cotizaciones/ver/@id',['App\Controllers\CotizacionController', 'showClient']);  
+Flight::route('GET /cotizaciones',        ['App\Controllers\CotizacionController', 'myIndex']);   
+Flight::route('GET /cotizaciones/crear',  ['App\Controllers\CotizacionController', 'createForm']); 
+Flight::route('POST /cotizaciones',       ['App\Controllers\CotizacionController', 'store']);       
+Flight::route('GET /cotizaciones/ver/@id',['App\Controllers\CotizacionController', 'showClient']);  
 
 // COTIZACIONES ADMIN / SUPERVISOR 
-\Flight::route('GET /admin/cotizaciones',          ['App\Controllers\CotizacionController', 'indexAdmin']);
-\Flight::route('GET /admin/cotizaciones/ver/@id',  ['App\Controllers\CotizacionController', 'showAdmin']);
-\Flight::route('POST /admin/cotizaciones/responder/@id', ['App\Controllers\CotizacionController', 'respond']);
+Flight::route('GET /admin/cotizaciones',          ['App\Controllers\CotizacionController', 'indexAdmin']);
+Flight::route('GET /admin/cotizaciones/ver/@id',  ['App\Controllers\CotizacionController', 'showAdmin']);
+Flight::route('POST /admin/cotizaciones/responder/@id', ['App\Controllers\CotizacionController', 'respond']);
 
 // --- RUTA DE ANALÍTICA DE AGENTES (Admin y Supervisor) ---
 Flight::route('GET /admin/analitica/agentes', ['App\Controllers\AnalyticsController', 'agentsPerformance']);
@@ -130,7 +130,7 @@ Flight::route('GET /admin/analitica/agentes/exportar/pdf', ['App\Controllers\Ana
 Flight::route('GET /admin/analitica/agentes/exportar/imprimir', ['App\Controllers\AnalyticsController', 'printAgents']);
 
 // --- RUTA DE ANALÍTICA DE TIPOS DE CASO ---
-Flight::route('/analitica/tipos-caso', ['App\\Controllers\\TicketController', 'analiticaTiposCaso']);
+Flight::route('/analitica/tipos-caso', ['App\Controllers\TicketController', 'analiticaTiposCaso']);
 
 // --- RUTAS DE TICKETS ---
 Flight::route('GET /tickets/crear', ['App\Controllers\TicketController', 'create']);
