@@ -1,5 +1,7 @@
 <?php
+use App\Controllers\ViewHelper;
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 $base = Flight::get('base_url') ?? '';
 include __DIR__ . '/partials/header.php';
 ?>
@@ -94,9 +96,9 @@ include __DIR__ . '/partials/header.php';
                 <td class="text-success fw-bold"><?php echo (int)$a['cerrados']; ?></td>
                 <td><?php echo (int)$a['anulados']; ?></td>
                 <td class="fw-bold"><?php echo (int)$a['total_tickets']; ?></td>
-                <td><?php echo $a['ttr_promedio_min'] !== null ? (int)$a['ttr_promedio_min'] : '—'; ?></td>
+                <td><?php echo ViewHelper::formatMinutes($a['ttr_promedio_min'] !== null ? (int)$a['ttr_promedio_min'] : null); ?></td>
                 <td><?php echo $a['calificacion_prom'] !== null ? number_format((float)$a['calificacion_prom'], 2) : '—'; ?></td>
-                <td class="bg-light fw-bold"><?php echo $a['total_pagado'] !== null ? number_format((float)$a['total_pagado'], 2) : '0.00'; ?></td>
+                <td class="bg-light fw-bold"><?php echo $a['total_pagado'] !== null ? number_format((float)$a['total_pagado'], 0, ',', '.') : '0'; ?></td>
               </tr>
             <?php endforeach; ?>
           <?php else: ?>

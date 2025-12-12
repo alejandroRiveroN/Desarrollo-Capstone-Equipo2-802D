@@ -46,7 +46,7 @@
                             <td><span class="badge bg-<?php echo ViewHelper::getPriorityClass($ticket['prioridad']); ?>"><?php echo htmlspecialchars($ticket['prioridad']); ?></span></td>
                             <td><?php echo date('d/m/Y', strtotime($ticket['fecha_creacion'])); ?></td>
                             <?php if ($_SESSION['id_rol'] == 1): /* Columnas de facturación solo para Admins */ ?>
-                                <td><?php echo $ticket['costo'] ? number_format($ticket['costo'], 2) : 'N/A'; ?></td>
+                                <td><?php echo $ticket['costo'] ? number_format($ticket['costo'], 0, ',', '.') : 'N/A'; ?></td>
                                 <td><?php echo htmlspecialchars($ticket['moneda'] ?? 'N/A'); ?></td>
                                 <td><span class="badge bg-<?php echo ViewHelper::getFacturacionClass($ticket['estado_facturacion']); ?>"><?php echo htmlspecialchars($ticket['estado_facturacion'] ?? 'N/A'); ?></span></td>
                             <?php endif; ?>
